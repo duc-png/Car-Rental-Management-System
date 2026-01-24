@@ -20,14 +20,14 @@ public class GlobalExceptionHandler {
     private static final String MIN_ATTRIBUTE = "min";
 
     @ExceptionHandler(value = Exception.class)
-    ResponseEntity<ApiResponse> handlingRuntimeException(RuntimeException exception) {
+    ResponseEntity<ApiResponse> handlingException(Exception exception) {
         log.error("Exception: ", exception);
         ApiResponse apiResponse = new ApiResponse();
 
         apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode());
         apiResponse.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
 
-        return ResponseEntity.badRequest().body(apiResponse);
+        return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode()).body(apiResponse);
     }
 
     @ExceptionHandler(value = AppException.class)
@@ -63,31 +63,42 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     ResponseEntity<ApiResponse> handlingValidation(MethodArgumentNotValidException exception) {
-        String enumKey = exception.getFieldError().getDefaultMessage();
+        String enumKey = null;
+        if (exception.getFieldError() != null) {
+            enumKey = exception.getFieldError().getDefaultMessage();
+        }
 
         ErrorCode errorCode = ErrorCode.INVALID_KEY;
         Map<String, Object> attributes = null;
+
+        // 1) resolve ErrorCode theo enumKey nếu có
+        if (enumKey != null) {
+            try {
+                errorCode = ErrorCode.valueOf(enumKey);
+            } catch (IllegalArgumentException ignored) {
+                // enumKey không khớp với ErrorCode
+            }
+        }
+
+        // 2) lấy constraint attributes (min, max, ...) nếu unwrap được
         try {
-            errorCode = ErrorCode.valueOf(enumKey);
-
-            var constraintViolation =
-                    exception.getBindingResult().getAllErrors().getFirst().unwrap(ConstraintViolation.class);
-
-            attributes = constraintViolation.getConstraintDescriptor().getAttributes();
-
-            log.info(attributes.toString());
-
-        } catch (IllegalArgumentException e) {
-
+            var allErrors = exception.getBindingResult().getAllErrors();
+            if (allErrors != null && !allErrors.isEmpty()) {
+                ConstraintViolation<?> violation = allErrors.get(0).unwrap(ConstraintViolation.class);
+                attributes = violation.getConstraintDescriptor().getAttributes();
+                log.info("Constraint attributes: {}", attributes);
+            }
+        } catch (Exception ignored) {
+            // không unwrap được thì thôi, fallback message
         }
 
         ApiResponse apiResponse = new ApiResponse();
-
         apiResponse.setCode(errorCode.getCode());
         apiResponse.setMessage(
-                Objects.nonNull(attributes)
+                (attributes != null)
                         ? mapAttribute(errorCode.getMessage(), attributes)
-                        : errorCode.getMessage());
+                        : errorCode.getMessage()
+        );
 
         return ResponseEntity.badRequest().body(apiResponse);
     }

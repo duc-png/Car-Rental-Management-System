@@ -1,1 +1,17 @@
-spring.application.name=car_management
+spring:
+  application:
+    name: car_management
+
+  datasource:
+    url: jdbc:mysql://localhost:3308/car_manager?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Bangkok
+    username: root
+    password: "123456789@"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+
+server:
+  port: 8081
