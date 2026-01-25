@@ -16,7 +16,7 @@ spring:
 cloudinary:
   cloud-name: dntzdrmc8
   api-key: 392795975793191
-  api-secret: 427zykyU45YUoK_Kose6_3RGknk
+  api-secret: XXXXXX-xxxx-XXXXXX
 
 
 server:
