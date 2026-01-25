@@ -3,15 +3,21 @@ spring:
     name: car_management
 
   datasource:
-    url: jdbc:mysql://localhost:3308/car_manager?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Bangkok
+    url: jdbc:mysql://localhost:3306/car_management?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Bangkok
     username: root
-    password: "123456789@"
+    password: "123456"
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
     hibernate:
       ddl-auto: none
     show-sql: true
+
+cloudinary:
+  cloud-name: dntzdrmc8
+  api-key: 392795975793191
+  api-secret: 427zykyU45YUoK_Kose6_3RGknk
+
 
 server:
   port: 8081
