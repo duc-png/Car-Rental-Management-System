@@ -1,0 +1,139 @@
+/* Embla Carousel Styles */
+.slider-wrapper {
+    position: relative;
+    margin-bottom: 60px;
+}
+
+.embla {
+    overflow: hidden;
+    width: 100%;
+}
+
+.embla__container {
+    display: flex;
+    gap: 32px;
+}
+
+.embla__slide {
+    flex: 0 0 calc(33.333% - 22px);
+    min-width: 0;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+/* Slider Navigation Buttons */
+.slider-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+    color: var(--white);
+    border: none;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    transition: var(--transition);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+    z-index: 10;
+}
+
+.slider-button:hover {
+    transform: translateY(-50%) scale(1.1);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.3);
+    background: linear-gradient(135deg, var(--accent-color) 0%, #f0c969 100%);
+    color: var(--primary-color);
+}
+
+.slider-button--prev {
+    left: -80px;
+}
+
+.slider-button--next {
+    right: -80px;
+}
+
+/* Slider Dots */
+.slider-dots {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 40px;
+}
+
+.slider-dots .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--accent-color);
+    background-color: transparent;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.slider-dots .dot.active {
+    background-color: var(--accent-color);
+    box-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
+}
+
+.slider-dots .dot:hover {
+    transform: scale(1.2);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .embla__slide {
+        flex: 0 0 calc(50% - 16px);
+    }
+
+    .slider-button--prev {
+        left: -60px;
+    }
+
+    .slider-button--next {
+        right: -60px;
+    }
+}
+
+@media (max-width: 768px) {
+    .embla__slide {
+        flex: 0 0 100%;
+    }
+
+    .embla__container {
+        gap: 20px;
+    }
+
+    .slider-button {
+        width: 44px;
+        height: 44px;
+        font-size: 1.2rem;
+    }
+
+    .slider-button--prev {
+        left: 8px;
+        top: 8px;
+        transform: translateY(0);
+    }
+
+    .slider-button--prev:hover {
+        transform: scale(1.1);
+    }
+
+    .slider-button--next {
+        right: 8px;
+        top: 8px;
+        transform: translateY(0);
+    }
+
+    .slider-button--next:hover {
+        transform: scale(1.1);
+    }
+
+    .slider-dots {
+        margin-bottom: 30px;
+    }
+}
