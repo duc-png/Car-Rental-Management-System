@@ -51,15 +51,15 @@
   position: absolute;
   bottom: 16px;
   right: 16px;
-  background: linear-gradient(135deg, var(--accent-color) 0%, #f0c969 100%);
-  color: var(--primary-color);
+  background: rgba(255, 255, 255, 0.98);
+  color: #0f172a;
   padding: 12px 20px;
   border-radius: var(--radius-lg);
   font-weight: 900;
   font-size: 1rem;
   backdrop-filter: blur(10px);
-  box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  border: 2px solid var(--accent-color);
 }
 
 .status-badge {

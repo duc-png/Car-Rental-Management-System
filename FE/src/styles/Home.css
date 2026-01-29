@@ -22,6 +22,8 @@
   50% {
     background-position: 100% 50%;
   }
+
+  overflow-x: hidden;
 }
 
 .hero-background {

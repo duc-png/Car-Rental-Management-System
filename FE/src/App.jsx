@@ -4,9 +4,12 @@ import Footer from './components/Footer'
 import Home from './pages/Home'
 import Cars from './pages/Cars'
 import MyBookings from './pages/MyBookings'
+import CarDetails from './pages/CarDetails'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
 import './styles/App.css'
 import './index.css'
-import CarDetails from './pages/CarDetails'
 
 function App() {
   return (
@@ -19,6 +22,9 @@ function App() {
           <Route path="/car/:id" element={<CarDetails />} />
           <Route path="/cars/:id" element={<CarDetails />} />
           <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
         </Routes>
       </main>
       <Footer />
