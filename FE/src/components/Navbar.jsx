@@ -2,10 +2,12 @@
 
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTheme } from '../contexts/ThemeContext'
 import '../styles/Navbar.css'
 
 function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { theme, toggleTheme } = useTheme()
 
   return (
     <nav className="navbar">
@@ -46,6 +48,13 @@ function Navbar() {
         </ul>
 
         <div className="nav-actions">
+          <button
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+          >
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
           <Link to="/login" className="btn-login">
             Login
           </Link>

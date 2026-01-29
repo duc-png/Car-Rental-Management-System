@@ -1,30 +1,39 @@
 /* Location Modal Styles */
 .location-modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
+    /* Giữ nguyên để full */
+    width: 100vw !important;
+    /* Explicit full width */
+    height: 100vh !important;
+    /* Explicit full height, dùng 100dvh nếu iOS */
     background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 9999;
     backdrop-filter: blur(2px);
+    /* Xóa padding để full thực sự */
+    /* padding: 24px;  <-- Comment hoặc xóa dòng này */
+    overflow: hidden;
+    /* Thêm để tránh scroll làm co kích thước */
 }
 
 .location-modal {
     background: white;
     border-radius: 12px;
     width: 90%;
-    max-width: 600px;
-    max-height: 80vh;
+    max-width: 700px;
+    max-height: 85vh;
     overflow-y: auto;
     overflow-x: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
     animation: slideUp 0.3s ease;
     -ms-overflow-style: none;
     scrollbar-width: none;
+    margin: 0 auto;
+    position: relative;
+    /* Giữ nguyên */
 }
 
 @keyframes slideUp {

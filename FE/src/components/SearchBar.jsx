@@ -30,12 +30,13 @@ function SearchBar({ onSearch }) {
 
   const handleTimeSelect = (timeData) => {
     if (timeData.type === 'day') {
-      const monthNames = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
-      setPickupDate(`${timeData.startDate}/${monthNames[0]}/2026`)
-      setReturnDate(`${timeData.endDate}/${monthNames[0]}/2026`)
+      // timeData.startDate và endDate đã là định dạng 'dd/mm/yyyy' từ TimeModal
+      setPickupDate(timeData.startDate)
+      setReturnDate(timeData.endDate)
     } else {
-      setPickupDate(`${timeData.startDate}/01/2026`)
-      setReturnDate(`${timeData.startDate}/01/2026`)
+      // Hour rental - chỉ hiển thị ngày, không thêm /01/2026
+      setPickupDate(timeData.startDate)
+      setReturnDate(timeData.startDate)
     }
   }
 

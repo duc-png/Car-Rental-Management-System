@@ -1,11 +1,12 @@
 .footer {
-  background: linear-gradient(135deg, rgb(248, 250, 252) 0%, rgb(224, 231, 255) 50%, rgb(240, 244, 255) 100%);
+  background: linear-gradient(135deg, var(--hero-gradient-1) 0%, var(--hero-gradient-2) 50%, var(--hero-gradient-3) 100%);
   color: var(--text-primary);
   padding: 100px 40px 40px;
   margin-top: 120px;
-  border-top: 1px solid rgba(226, 232, 240, 0.5);
+  border-top: 1px solid var(--border-color);
   position: relative;
   overflow: hidden;
+  transition: var(--transition);
 }
 
 .footer::before {
@@ -68,7 +69,7 @@
   font-weight: 700;
   margin-bottom: 8px;
   letter-spacing: -0.01em;
-  color: var(--primary-color);
+  color: var(--text-primary);
 }
 
 .footer-section a,
@@ -81,7 +82,7 @@
 }
 
 .footer-section a:hover {
-  color: var(--primary-color);
+  color: var(--accent-color);
   padding-left: 8px;
 }
 
@@ -98,26 +99,24 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: rgba(251, 250, 250, 0.989);
-  color: white;
-  border: 2px solid white;
+  background: var(--card-bg);
+  color: var(--accent-color);
+  border: 2px solid var(--border-color);
   transition: var(--transition);
   font-weight: 700;
   font-size: 1.2rem;
 }
 
 .social-links a:hover {
-  background: var(--primary-color);
-  color: white;
+  background: var(--accent-color);
+  color: var(--primary-color);
   transform: translateY(-4px);
-  border-color: var(--primary-color);
-  box-shadow: white;
+  border-color: var(--accent-color);
+  box-shadow: 0 4px 12px var(--shadow-hover);
 }
 
-.social-links a:active {
-  background: white;
-  color: var(--primary-color);
-  border-color: white;
+[data-theme='dark'] .social-links a:hover {
+  color: #0f172a;
 }
 
 .footer-section h5 {

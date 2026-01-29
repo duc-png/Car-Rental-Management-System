@@ -17,12 +17,13 @@
     right: 0;
     bottom: 0;
     background: linear-gradient(135deg,
-            #f8fafc 0%,
-            #e0e7ff 25%,
-            #dbeafe 50%,
-            #e0f2fe 75%,
-            #f0f9ff 100%);
+            var(--hero-gradient-1) 0%,
+            var(--hero-gradient-2) 25%,
+            var(--hero-gradient-2) 50%,
+            var(--hero-gradient-3) 75%,
+            var(--hero-gradient-3) 100%);
     z-index: 0;
+    transition: var(--transition);
 }
 
 .auth-shape {
@@ -99,15 +100,12 @@
 
 /* Auth Card */
 .auth-card {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--card-bg);
     backdrop-filter: blur(20px);
     border-radius: 24px;
     padding: 32px 48px;
-    box-shadow:
-        0 20px 60px rgba(0, 0, 0, 0.08),
-        0 0 1px rgba(0, 0, 0, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 20px 60px var(--shadow-color);
+    border: 1px solid var(--border-color);
 }
 
 .register-card {
