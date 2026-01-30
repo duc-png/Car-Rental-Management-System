@@ -4,11 +4,10 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
-<<<<<<< HEAD
-=======
+
 import java.util.HashSet;
 import java.util.Set;
->>>>>>> ducmito
+
 
 @Getter
 @Setter
@@ -43,13 +42,11 @@ public class UserEntity {
 
     @Column(name = "created_at")
     private Instant createdAt;
-<<<<<<< HEAD
-=======
+
 
     // Many-to-Many with Role
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     @Builder.Default
     private Set<RoleEntity> roles = new HashSet<>();
->>>>>>> ducmito
 }
