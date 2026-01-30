@@ -1,18 +1,12 @@
 'use client';
 
 import { useState } from 'react'
-<<<<<<< HEAD
-import { Link } from 'react-router-dom'
-=======
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
->>>>>>> ducmito
 import '../styles/Navbar.css'
 
 function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-<<<<<<< HEAD
-=======
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
   const { user, isAuthenticated, logout } = useAuth()
@@ -23,7 +17,6 @@ function Navbar() {
     setIsUserMenuOpen(false)
     navigate('/login')
   }
->>>>>>> ducmito
 
   return (
     <nav className="navbar">
@@ -43,28 +36,11 @@ function Navbar() {
         <ul className={`nav-menu ${isMobileMenuOpen ? 'active' : ''}`}>
           <li>
             <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
-<<<<<<< HEAD
-              Home
-=======
               Trang chủ
->>>>>>> ducmito
             </Link>
           </li>
           <li>
             <Link to="/cars" onClick={() => setIsMobileMenuOpen(false)}>
-<<<<<<< HEAD
-              Cars
-            </Link>
-          </li>
-          {/* <li>
-            <Link to="/my-bookings" onClick={() => setIsMobileMenuOpen(false)}>
-              My Bookings
-            </Link>
-          </li> */}
-          <li>
-            <a href="#search" onClick={() => setIsMobileMenuOpen(false)}>
-              About us
-=======
               Danh sách xe
             </Link>
           </li>
@@ -78,14 +54,10 @@ function Navbar() {
           <li>
             <a href="#about" onClick={() => setIsMobileMenuOpen(false)}>
               Về chúng tôi
->>>>>>> ducmito
             </a>
           </li>
         </ul>
 
-<<<<<<< HEAD
-        <button className="btn-login">Login</button>
-=======
         {/* Auth UI */}
         <div className="auth-section">
           {isAuthenticated ? (
@@ -147,7 +119,6 @@ function Navbar() {
             </Link>
           )}
         </div>
->>>>>>> ducmito
       </div>
     </nav>
   )
