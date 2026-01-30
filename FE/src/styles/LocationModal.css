@@ -1,0 +1,249 @@
+/* Location Modal Styles */
+.location-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.location-modal {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Modal Header */
+.location-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 10;
+}
+
+.location-modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.location-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6b7280;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.location-modal-close:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+}
+
+/* Modal Content */
+.location-modal-content {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Search */
+.location-search {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: white;
+    transition: all 0.3s ease;
+}
+
+.location-search:focus-within {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+.location-search svg {
+    color: #9ca3af;
+    flex-shrink: 0;
+}
+
+.location-search input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    color: #1f2937;
+    outline: none;
+}
+
+.location-search input::placeholder {
+    color: #d1d5db;
+}
+
+/* Sections */
+.location-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.location-section h3 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Current Location Button */
+.current-location {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #1f2937;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.current-location:hover {
+    background: #e5e7eb;
+}
+
+.current-location svg {
+    color: #9ca3af;
+}
+
+/* Location Grid */
+.location-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+}
+
+.location-airport-btn,
+.location-city-btn {
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    text-align: center;
+}
+
+.location-airport-btn svg {
+    width: 16px;
+    height: 16px;
+    color: #9ca3af;
+}
+
+.location-airport-btn:hover,
+.location-city-btn:hover {
+    border-color: #22c55e;
+    background: #f0fdf4;
+    color: #22c55e;
+}
+
+.location-airport-btn.active,
+.location-city-btn.active {
+    background: #22c55e;
+    color: white;
+    border-color: #22c55e;
+}
+
+.location-airport-btn.active svg {
+    color: white;
+}
+
+/* Scrollbar */
+.location-modal::-webkit-scrollbar {
+    width: 6px;
+}
+
+.location-modal::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.location-modal::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+.location-modal::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .location-modal {
+        width: 95%;
+        max-height: 90vh;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .location-modal-header {
+        padding: 16px;
+    }
+
+    .location-modal-content {
+        padding: 16px;
+        gap: 16px;
+    }
+
+    .location-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
