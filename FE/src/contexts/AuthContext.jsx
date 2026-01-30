@@ -41,9 +41,9 @@ export function AuthProvider({ children }) {
             // Gọi API login
             const data = await apiLogin(email, password)
 
-            // Lưu token
-            setToken(data.token)
-            localStorage.setItem('token', data.token)
+            // Lưu token (backend trả về { code, result: { token, authenticated } })
+            setToken(data.result.token)
+            localStorage.setItem('token', data.result.token)
 
             // Lưu thông tin user (decode JWT để lấy thêm info nếu cần)
             const userInfo = {
