@@ -13,6 +13,9 @@ SELECT 1, 'ADMIN' WHERE NOT EXISTS (SELECT 1 FROM roles WHERE id = 1);
 
 INSERT INTO roles (id, name) 
 SELECT 2, 'USER' WHERE NOT EXISTS (SELECT 1 FROM roles WHERE id = 2);
+INSERT INTO roles (id, name) 
+SELECT 3, 'CAR_OWNER'WHERE NOT EXISTS (SELECT 1 FROM roles WHERE id = 3);
+
 
 -- Insert user mới
 INSERT INTO users (full_name, email, password, phone, license_number, is_verified, created_at)
