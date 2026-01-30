@@ -90,6 +90,16 @@
   width: 100%;
 }
 
+<<<<<<< HEAD
+=======
+/* Auth Section */
+.auth-section {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+>>>>>>> ducmito
 .btn-login {
   background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
   color: var(--white);
@@ -103,6 +113,11 @@
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
   position: relative;
   overflow: hidden;
+<<<<<<< HEAD
+=======
+  text-decoration: none;
+  display: inline-block;
+>>>>>>> ducmito
 }
 
 .btn-login::before {
@@ -126,6 +141,147 @@
   left: 0;
 }
 
+<<<<<<< HEAD
+=======
+/* User Menu */
+.user-menu-container {
+  position: relative;
+}
+
+.user-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 8px 16px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.user-menu-btn:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.user-email {
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 0.9rem;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron-icon {
+  width: 16px;
+  height: 16px;
+  color: #64748b;
+  transition: transform 0.3s ease;
+}
+
+.user-menu-btn:hover .chevron-icon {
+  transform: translateY(2px);
+}
+
+/* Dropdown Menu */
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 220px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 8px;
+  animation: fadeIn 0.2s ease;
+  z-index: 1000;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  color: #334155;
+  font-weight: 500;
+  font-size: 0.9rem;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+.dropdown-icon {
+  width: 18px;
+  height: 18px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.dropdown-item:hover .dropdown-icon {
+  color: #3b82f6;
+}
+
+.dropdown-divider {
+  margin: 8px 0;
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.logout-item {
+  color: #dc2626;
+}
+
+.logout-item:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.logout-item:hover .dropdown-icon {
+  color: #dc2626;
+}
+
+>>>>>>> ducmito
 .mobile-menu-btn {
   display: none;
   background: none;
@@ -184,12 +340,31 @@
   .btn-login {
     padding: 10px 24px;
     font-size: 0.9rem;
+<<<<<<< HEAD
     width: 100%;
     margin-top: 12px;
+=======
+>>>>>>> ducmito
   }
 
   .nav-menu a {
     padding: 10px 0;
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   }
+<<<<<<< HEAD
+=======
+
+  .user-email {
+    display: none;
+  }
+
+  .user-menu-btn {
+    padding: 6px 12px;
+  }
+
+  .user-dropdown {
+    right: -16px;
+    min-width: 200px;
+  }
+>>>>>>> ducmito
 }

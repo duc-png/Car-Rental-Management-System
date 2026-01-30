@@ -1,0 +1,25 @@
+package com.example.car_management.dto.response;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.Instant;
+import java.util.Set;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserResponse {
+
+    private Long id;
+    private String fullName;
+    private String email;
+    private String phone;
+    private String licenseNumber;
+    private Boolean isVerified;
+    private Instant createdAt;
+    private Set<String> roles; 
+}

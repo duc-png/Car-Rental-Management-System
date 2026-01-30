@@ -14,7 +14,10 @@ import lombok.experimental.FieldDefaults;
 public class ApiResponse<T> {
     @Builder.Default
     private int code = 1000;
+<<<<<<< HEAD
 
+=======
+>>>>>>> ducmito
     private String message;
     private T result;
 }
