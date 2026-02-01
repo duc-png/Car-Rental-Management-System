@@ -26,6 +26,12 @@ public enum ErrorCode {
     LICENSE_PLATE_EXISTED(2004, "License plate existed", HttpStatus.BAD_REQUEST),
     IMAGE_NOT_FOUND(2005, "Vehicle image not found", HttpStatus.NOT_FOUND),
     FORBIDDEN_RESOURCE(2006, "You do not have permission", HttpStatus.FORBIDDEN);
+    // ===== Cloudinary / Image =====
+//    IMAGE_UPLOAD_FAILED(2007, "Upload image failed", HttpStatus.BAD_REQUEST);
+//
+//    IMAGE_DELETE_FAILED(2008,"Delete image failed",HttpStatus.BAD_REQUEST) {
+//
+//    }
 
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

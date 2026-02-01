@@ -1,17 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import '../styles/TimeModal.css';
 
 function TimeModal({ isOpen, onClose, onSelect }) {
-    const [activeTab, setActiveTab] = useState('day'); // 'day' or 'hour'
-    const [currentMonth, setCurrentMonth] = useState(new Date(2026, 0)); // January 2026
-    const [startDate, setStartDate] = useState(25);
-    const [endDate, setEndDate] = useState(26);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to compare dates only
+
+    const [activeTab, setActiveTab] = useState('day');
+    const [currentMonth, setCurrentMonth] = useState(new Date(today.getFullYear(), today.getMonth()));
+    const [startDate, setStartDate] = useState(null);
+    const [endDate, setEndDate] = useState(null);
     const [startTime, setStartTime] = useState('21:00');
     const [endTime, setEndTime] = useState('20:00');
     const [rentalHours, setRentalHours] = useState(5);
     const [showHourDropdown, setShowHourDropdown] = useState(false);
+    const [showStartTimeDropdown, setShowStartTimeDropdown] = useState(false);
+    const [showEndTimeDropdown, setShowEndTimeDropdown] = useState(false);
+    const startTimeMenuRef = useRef(null);
+    const endTimeMenuRef = useRef(null);
 
     const hours = Array.from({ length: 24 }, (_, i) =>
         `${String(i).padStart(2, '0')}:00`
@@ -23,6 +31,32 @@ function TimeModal({ isOpen, onClose, onSelect }) {
         const [hour] = start.split(':').map(Number);
         const endHour = (hour + duration) % 24;
         return `${String(endHour).padStart(2, '0')}:00`;
+    };
+
+    // Tính số ngày thuê chính xác
+    const calculateRentalDays = () => {
+        if (!startDate || !endDate) return 0;
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffTime = end - start;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        return diffDays > 0 ? diffDays : 1;
+    };
+
+    // Kiểm tra ngày quá khứ
+    const isPastDate = (date) => {
+        const checkDate = new Date(date);
+        checkDate.setHours(0, 0, 0, 0);
+        return checkDate < today;
+    };
+
+    // Kiểm tra ngày hôm nay
+    const isToday = (date) => {
+        const checkDate = new Date(date);
+        checkDate.setHours(0, 0, 0, 0);
+        return checkDate.getTime() === today.getTime();
     };
 
     const getDaysInMonth = (date) => {
@@ -51,20 +85,38 @@ function TimeModal({ isOpen, onClose, onSelect }) {
 
         // Days of month
         for (let day = 1; day <= daysInMonth; day++) {
-            const isStart = day === startDate;
-            const isEnd = day === endDate;
-            const isBetween = day > Math.min(startDate, endDate) && day < Math.max(startDate, endDate);
+            const currentDate = new Date(date.getFullYear(), date.getMonth(), day);
+            const isPast = isPastDate(currentDate);
+            const isTodayDate = isToday(currentDate);
+
+            const isStart = startDate && currentDate.toDateString() === startDate.toDateString();
+            const isEnd = endDate && currentDate.toDateString() === endDate.toDateString();
+            const isBetween = startDate && endDate && currentDate > startDate && currentDate < endDate;
 
             days.push(
                 <button
                     key={day}
-                    className={`calendar-day ${isStart || isEnd ? 'selected' : ''} ${isBetween ? 'between' : ''
-                        } ${day > 15 && day < 22 ? 'highlight' : ''}`}
+                    disabled={isPast}
+                    className={`calendar-day 
+                        ${isPast ? 'past-date' : ''} 
+                        ${isTodayDate ? 'today' : ''}
+                        ${isStart ? 'selected start-date' : ''} 
+                        ${isEnd ? 'selected end-date' : ''}
+                        ${isBetween ? 'between' : ''}
+                    `}
                     onClick={() => {
-                        if (day < startDate) {
-                            setStartDate(day);
-                        } else {
-                            setEndDate(day);
+                        if (!isPast) {
+                            if (!startDate || (startDate && endDate)) {
+                                // Chọn ngày bắt đầu mới
+                                setStartDate(currentDate);
+                                setEndDate(null);
+                            } else if (currentDate < startDate) {
+                                // Click vào ngày trước startDate → thay đổi startDate
+                                setStartDate(currentDate);
+                            } else {
+                                // Click vào ngày sau startDate → set endDate
+                                setEndDate(currentDate);
+                            }
                         }
                     }}
                 >
@@ -100,28 +152,49 @@ function TimeModal({ isOpen, onClose, onSelect }) {
     );
 
     const handleConfirm = () => {
-        if (activeTab === 'day') {
+        if (activeTab === 'day' && startDate && endDate) {
             onSelect({
                 type: 'day',
-                startDate,
-                endDate,
+                startDate: startDate.toLocaleDateString('vi-VN'),
+                endDate: endDate.toLocaleDateString('vi-VN'),
                 startTime,
                 endTime,
+                rentalDays: calculateRentalDays(),
             });
-        } else {
+            onClose();
+        } else if (activeTab === 'hour' && startDate) {
             onSelect({
                 type: 'hour',
-                startDate,
+                startDate: startDate.toLocaleDateString('vi-VN'),
                 startTime,
                 rentalHours,
             });
+            onClose();
         }
-        onClose();
     };
+
+    // Auto-scroll dropdown to active item
+    useEffect(() => {
+        if (showStartTimeDropdown && startTimeMenuRef.current) {
+            const activeItem = startTimeMenuRef.current.querySelector('.time-dropdown-item.active');
+            if (activeItem) {
+                activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+    }, [showStartTimeDropdown]);
+
+    useEffect(() => {
+        if (showEndTimeDropdown && endTimeMenuRef.current) {
+            const activeItem = endTimeMenuRef.current.querySelector('.time-dropdown-item.active');
+            if (activeItem) {
+                activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
+    }, [showEndTimeDropdown]);
 
     if (!isOpen) return null;
 
-    return (
+    const modalContent = (
         <div className="time-modal-overlay" onClick={onClose}>
             <div className="time-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="time-modal-header">
@@ -191,13 +264,33 @@ function TimeModal({ isOpen, onClose, onSelect }) {
                             <div className="time-inputs">
                                 <div className="time-input-group">
                                     <label>Nhận xe</label>
-                                    <select value={startTime} onChange={(e) => setStartTime(e.target.value)}>
-                                        {hours.map((hour) => (
-                                            <option key={hour} value={hour}>
-                                                {hour}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="custom-time-dropdown">
+                                        <button
+                                            className="time-dropdown-button"
+                                            onClick={() => setShowStartTimeDropdown(!showStartTimeDropdown)}
+                                        >
+                                            {startTime}
+                                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <polyline points="2 4 6 8 10 4"></polyline>
+                                            </svg>
+                                        </button>
+                                        {showStartTimeDropdown && (
+                                            <div className="time-dropdown-menu" ref={startTimeMenuRef}>
+                                                {hours.map((hour) => (
+                                                    <button
+                                                        key={hour}
+                                                        className={`time-dropdown-item ${startTime === hour ? 'active' : ''}`}
+                                                        onClick={() => {
+                                                            setStartTime(hour);
+                                                            setShowStartTimeDropdown(false);
+                                                        }}
+                                                    >
+                                                        {hour}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="time-reset">
@@ -206,13 +299,33 @@ function TimeModal({ isOpen, onClose, onSelect }) {
 
                                 <div className="time-input-group">
                                     <label>Trả xe</label>
-                                    <select value={endTime} onChange={(e) => setEndTime(e.target.value)}>
-                                        {hours.map((hour) => (
-                                            <option key={hour} value={hour}>
-                                                {hour}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="custom-time-dropdown">
+                                        <button
+                                            className="time-dropdown-button"
+                                            onClick={() => setShowEndTimeDropdown(!showEndTimeDropdown)}
+                                        >
+                                            {endTime}
+                                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <polyline points="2 4 6 8 10 4"></polyline>
+                                            </svg>
+                                        </button>
+                                        {showEndTimeDropdown && (
+                                            <div className="time-dropdown-menu" ref={endTimeMenuRef}>
+                                                {hours.map((hour) => (
+                                                    <button
+                                                        key={hour}
+                                                        className={`time-dropdown-item ${endTime === hour ? 'active' : ''}`}
+                                                        onClick={() => {
+                                                            setEndTime(hour);
+                                                            setShowEndTimeDropdown(false);
+                                                        }}
+                                                    >
+                                                        {hour}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </>
@@ -222,13 +335,16 @@ function TimeModal({ isOpen, onClose, onSelect }) {
                             <div className="hour-inputs">
                                 <div className="hour-input-group">
                                     <label>Ngày bắt đầu</label>
-                                    <select value={String(startDate)} onChange={(e) => setStartDate(Number(e.target.value))}>
-                                        {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                                            <option key={day} value={day}>
-                                                {String(day).padStart(2, '0')}/01/2026
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <input
+                                        type="date"
+                                        value={startDate ? startDate.toISOString().split('T')[0] : ''}
+                                        min={today.toISOString().split('T')[0]}
+                                        onChange={(e) => {
+                                            if (e.target.value) {
+                                                setStartDate(new Date(e.target.value));
+                                            }
+                                        }}
+                                    />
                                 </div>
 
                                 <div className="hour-input-group">
@@ -283,12 +399,22 @@ function TimeModal({ isOpen, onClose, onSelect }) {
                     {/* Duration info and confirm button */}
                     <div className="time-modal-footer">
                         <div className="duration-info">
-                            <span>{startTime}, {String(startDate).padStart(2, '0')}/01 - {activeTab === 'day' ? `${endTime}, 26/01` : `${calculateEndTime(startTime, rentalHours)}, ${String(startDate).padStart(2, '0')}/01`}</span>
                             <span>
-                                Thời gian thuê: {activeTab === 'day' ? '1 ngày' : `${rentalHours} giờ`}
+                                {startDate && `${startTime}, ${startDate.toLocaleDateString('vi-VN')}`}
+                                {endDate && ` - ${endTime}, ${endDate.toLocaleDateString('vi-VN')}`}
+                                {!startDate && 'Vui lòng chọn ngày'}
+                            </span>
+                            <span>
+                                Thời gian thuê: {activeTab === 'day'
+                                    ? `${calculateRentalDays()} ngày`
+                                    : `${rentalHours} giờ`}
                             </span>
                         </div>
-                        <button className="confirm-button" onClick={handleConfirm}>
+                        <button
+                            className="confirm-button"
+                            onClick={handleConfirm}
+                            disabled={activeTab === 'day' ? !startDate || !endDate : !startDate}
+                        >
                             Tiếp tục
                         </button>
                     </div>
@@ -296,6 +422,8 @@ function TimeModal({ isOpen, onClose, onSelect }) {
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }
 
 export default TimeModal;

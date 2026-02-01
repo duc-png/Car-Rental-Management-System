@@ -7,8 +7,10 @@ import com.example.car_management.service.VehicleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -116,4 +118,17 @@ public class VehicleController {
         return ResponseEntity.ok(ApiResponse.builder()
                 .code(1000).message("Deleted").build());
     }
+    @PostMapping(
+            value = "/{id}/images/upload",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<?> uploadImages(
+            @PathVariable Integer id,
+            @RequestParam Integer ownerId,
+            @RequestParam(required = false) Boolean setFirstAsMain,
+            @RequestParam("files") List<MultipartFile> files
+    ) {
+        return ResponseEntity.ok(vehicleService.uploadImages(id, ownerId, files, setFirstAsMain));
+    }
+
 }

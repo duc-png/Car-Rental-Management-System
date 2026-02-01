@@ -365,10 +365,10 @@
 }
 
 .panel-card.highlight {
-    background: linear-gradient(145deg, #0f172a, #1f2f4b);
-    color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 16px 44px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(145deg, #6366f1, #8b5cf6);
+    color: #ffffff;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 20px 50px rgba(99, 102, 241, 0.4);
 }
 
 .panel-price {
@@ -379,14 +379,42 @@
 }
 
 .panel-price span {
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.95);
     font-weight: 700;
     letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 13px;
 }
 
 .panel-price strong {
-    font-size: 22px;
-    color: #f5d061;
+    font-size: 26px;
+    color: #fef08a;
+    font-weight: 900;
+}
+
+.panel-card.highlight .btn-primary {
+    background: linear-gradient(135deg, #fef08a, #fde047);
+    color: #1e293b;
+    box-shadow: 0 8px 24px rgba(254, 240, 138, 0.5);
+    font-weight: 800;
+}
+
+.panel-card.highlight .btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(254, 240, 138, 0.6);
+}
+
+.panel-card.highlight .btn-secondary.ghost {
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(8px);
+}
+
+.panel-card.highlight .btn-secondary.ghost:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.8);
+    transform: translateY(-2px);
 }
 
 @media (max-width: 1100px) {

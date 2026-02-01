@@ -16,8 +16,8 @@ function CallToAction() {
           </div>
           <div className="cta-image">
             <img
-              src="https://res.cloudinary.com/dntzdrmc8/image/upload/v1769344789/RR-removebg-preview_tr10r4.png"
-              alt="RR car"
+              src="https://res.cloudinary.com/dntzdrmc8/image/upload/v1769501417/download-removebg-preview_vhpzlh.png"
+              alt="vehhicle"
             />
           </div>
         </div>

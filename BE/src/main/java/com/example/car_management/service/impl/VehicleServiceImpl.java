@@ -9,9 +9,11 @@ import com.example.car_management.exception.ErrorCode;
 import com.example.car_management.mapper.VehicleMapper;
 import com.example.car_management.repository.*;
 import com.example.car_management.service.VehicleService;
+import com.example.car_management.service.cloud.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -28,6 +30,7 @@ public class VehicleServiceImpl implements VehicleService {
     private final UserRepository userRepository;
     private final VehicleImageRepository vehicleImageRepository;
     private final BookingRepository bookingRepository;
+    private final CloudinaryService cloudinaryService;
 
     @Override
     @Transactional
@@ -280,6 +283,57 @@ public class VehicleServiceImpl implements VehicleService {
         }
 
         vehicleImageRepository.delete(img);
+    }
+
+    @Override
+    @Transactional
+    public List<VehicleImageResponse> uploadImages(
+            Integer vehicleId,
+            Integer ownerId,
+            List<org.springframework.web.multipart.MultipartFile> files,
+            Boolean setFirstAsMainFlag
+    ) {
+        VehicleEntity v = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_NOT_FOUND));
+        assertOwner(v, ownerId);
+
+        if (files == null || files.isEmpty()) {
+            throw new AppException(ErrorCode.INVALID_KEY);
+        }
+
+        boolean setFirstAsMain = Boolean.TRUE.equals(setFirstAsMainFlag);
+
+        // nếu setFirstAsMain => clear main hiện tại
+        if (setFirstAsMain) {
+            List<VehicleImageEntity> current = vehicleImageRepository.findByVehicle_Id(vehicleId);
+            boolean changed = false;
+            for (VehicleImageEntity img : current) {
+                if (Boolean.TRUE.equals(img.getIsMain())) {
+                    img.setIsMain(false);
+                    changed = true;
+                }
+            }
+            if (changed) vehicleImageRepository.saveAll(current);
+        }
+
+        // upload cloudinary -> lấy URL -> lưu DB
+        List<VehicleImageEntity> toSave = new java.util.ArrayList<>(files.size());
+        for (int i = 0; i < files.size(); i++) {
+            org.springframework.web.multipart.MultipartFile f = files.get(i);
+
+            String url = cloudinaryService.uploadVehicleImage(f, vehicleId);
+
+            VehicleImageEntity img = VehicleImageEntity.builder()
+                    .vehicle(v)
+                    .imageUrl(url)
+                    .isMain(setFirstAsMain && i == 0)
+                    .build();
+            toSave.add(img);
+        }
+
+        vehicleImageRepository.saveAll(toSave);
+
+        return VehicleMapper.toImageResponses(vehicleImageRepository.findByVehicle_Id(vehicleId));
     }
 
     private void assertOwner(VehicleEntity v, Integer ownerId) {

@@ -1,301 +1,255 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import '../styles/Register.css'
+import { Link, useNavigate } from 'react-router-dom'
+import '../styles/Auth.css'
 
-export default function Register() {
+function Register() {
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
         password: '',
         confirmPassword: '',
         phone: '',
-        licenseNumber: ''
+        agreeToTerms: false
     })
-    const [error, setError] = useState('')
-    const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
-    const { register } = useAuth()
+    const [errors, setErrors] = useState({})
     const navigate = useNavigate()
 
     const handleChange = (e) => {
-        const { name, value } = e.target
+        const { name, value, type, checked } = e.target
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: type === 'checkbox' ? checked : value
         }))
+        // Xóa lỗi khi người dùng bắt đầu nhập
+        if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: '' }))
+        }
     }
 
     const validateForm = () => {
-        // Validate full name
+        const newErrors = {}
+
         if (formData.fullName.trim().length < 2) {
-            setError('Họ tên phải có ít nhất 2 ký tự')
-            return false
+            newErrors.fullName = 'Full name must be at least 2 characters'
         }
 
-        // Validate email
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-        if (!emailRegex.test(formData.email)) {
-            setError('Email không hợp lệ')
-            return false
+        if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            newErrors.email = 'Please enter a valid email address'
         }
 
-        // Validate password
         if (formData.password.length < 6) {
-            setError('Mật khẩu phải có ít nhất 6 ký tự')
-            return false
+            newErrors.password = 'Password must be at least 6 characters'
         }
 
-        // Validate password confirmation
         if (formData.password !== formData.confirmPassword) {
-            setError('Mật khẩu xác nhận không khớp')
-            return false
+            newErrors.confirmPassword = 'Passwords do not match'
         }
 
-        // Validate phone
-        const phoneRegex = /^[0-9]{10,15}$/
-        if (!phoneRegex.test(formData.phone.replace(/\s/g, ''))) {
-            setError('Số điện thoại phải có 10-15 chữ số')
-            return false
+        if (formData.phone && !/^\+?[\d\s-()]+$/.test(formData.phone)) {
+            newErrors.phone = 'Please enter a valid phone number'
         }
 
-        return true
+        if (!formData.agreeToTerms) {
+            newErrors.agreeToTerms = 'You must agree to the terms and conditions'
+        }
+
+        setErrors(newErrors)
+        return Object.keys(newErrors).length === 0
     }
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault()
-        setError('')
 
-        if (!validateForm()) {
-            return
+        if (validateForm()) {
+            // Xử lý đăng ký ở đây
+            console.log('Register data:', formData)
+            // Sau khi đăng ký thành công, chuyển hướng đến trang đăng nhập
+            navigate('/login')
         }
-
-        setLoading(true)
-
-        // Prepare data (exclude confirmPassword)
-        const { confirmPassword, ...registerData } = formData
-
-        const result = await register(registerData)
-
-        if (result.success) {
-            // Đăng ký thành công, chuyển về trang chủ
-            navigate('/', { replace: true })
-        } else {
-            setError(result.error)
-        }
-
-        setLoading(false)
     }
 
     return (
-        <div className="register-container">
-            <div className="register-wrapper">
-                {/* Logo */}
-                <div className="register-logo">
-                    <h1>Car Rental</h1>
-                    <p>Bắt đầu hành trình của bạn</p>
-                </div>
+        <div className="auth-container">
+            <div className="auth-background">
+                <div className="auth-shape shape-1"></div>
+                <div className="auth-shape shape-2"></div>
+                <div className="auth-shape shape-3"></div>
+            </div>
 
-                {/* Form Card */}
-                <div className="register-card">
-                    <h2>Đăng ký</h2>
-                    <p>Tạo tài khoản mới để thuê xe</p>
-
-                    {/* Error message */}
-                    {error && (
-                        <div className="error-alert">
-                            <svg fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <span>{error}</span>
+            <div className="auth-content">
+                <div className="auth-card register-card">
+                    <div className="auth-header">
+                        <div className="auth-logo">
+                            <img src="/favicon.svg" alt="CarRental Logo" />
                         </div>
-                    )}
+                        <h1>Create Account</h1>
+                        <p>Join us and start your journey today</p>
+                    </div>
 
-                    <form onSubmit={handleSubmit}>
-                        {/* Full Name Input */}
+                    <form className="auth-form" onSubmit={handleSubmit}>
                         <div className="form-group">
-                            <label htmlFor="fullName" className="form-label">
-                                Họ và tên <span className="required">*</span>
-                            </label>
-                            <input
-                                id="fullName"
-                                name="fullName"
-                                type="text"
-                                value={formData.fullName}
-                                onChange={handleChange}
-                                className="form-input"
-                                placeholder="Nguyễn Văn A"
-                                required
-                                disabled={loading}
-                            />
-                        </div>
-
-                        {/* Email Input */}
-                        <div className="form-group">
-                            <label htmlFor="email" className="form-label">
-                                Email <span className="required">*</span>
-                            </label>
-                            <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                className="form-input"
-                                placeholder="example@email.com"
-                                required
-                                disabled={loading}
-                            />
-                        </div>
-
-                        {/* Password Input */}
-                        <div className="form-group">
-                            <label htmlFor="password" className="form-label">
-                                Mật khẩu <span className="required">*</span>
-                            </label>
-                            <div className="password-wrapper">
+                            <label htmlFor="fullName">Full Name</label>
+                            <div className="input-wrapper">
+                                <span className="input-icon">👤</span>
                                 <input
-                                    id="password"
-                                    name="password"
-                                    type={showPassword ? "text" : "password"}
-                                    value={formData.password}
+                                    type="text"
+                                    id="fullName"
+                                    name="fullName"
+                                    value={formData.fullName}
                                     onChange={handleChange}
-                                    className="form-input"
-                                    placeholder="••••••••"
+                                    placeholder="Enter your full name"
                                     required
-                                    disabled={loading}
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="password-toggle"
-                                >
-                                    {showPassword ? (
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                        </svg>
-                                    ) : (
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                        </svg>
-                                    )}
-                                </button>
+                            </div>
+                            {errors.fullName && <span className="error-message">{errors.fullName}</span>}
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="email">Email Address</label>
+                            <div className="input-wrapper">
+                                <span className="input-icon">✉️</span>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    placeholder="Enter your email"
+                                    required
+                                />
+                            </div>
+                            {errors.email && <span className="error-message">{errors.email}</span>}
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="phone">Phone Number (Optional)</label>
+                            <div className="input-wrapper">
+                                <span className="input-icon">📱</span>
+                                <input
+                                    type="tel"
+                                    id="phone"
+                                    name="phone"
+                                    value={formData.phone}
+                                    onChange={handleChange}
+                                    placeholder="Enter your phone number"
+                                />
+                            </div>
+                            {errors.phone && <span className="error-message">{errors.phone}</span>}
+                        </div>
+
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label htmlFor="password">Password</label>
+                                <div className="input-wrapper">
+                                    <span className="input-icon">🔒</span>
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        id="password"
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        placeholder="Create password"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        className="toggle-password"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        {showPassword ? '👁️' : '👁️‍🗨️'}
+                                    </button>
+                                </div>
+                                {errors.password && <span className="error-message">{errors.password}</span>}
+                            </div>
+
+                            <div className="form-group">
+                                <label htmlFor="confirmPassword">Confirm Password</label>
+                                <div className="input-wrapper">
+                                    <span className="input-icon">🔒</span>
+                                    <input
+                                        type={showConfirmPassword ? 'text' : 'password'}
+                                        id="confirmPassword"
+                                        name="confirmPassword"
+                                        value={formData.confirmPassword}
+                                        onChange={handleChange}
+                                        placeholder="Confirm password"
+                                        required
+                                    />
+                                    <button
+                                        type="button"
+                                        className="toggle-password"
+                                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    >
+                                        {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                                    </button>
+                                </div>
+                                {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
                             </div>
                         </div>
 
-                        {/* Confirm Password Input */}
                         <div className="form-group">
-                            <label htmlFor="confirmPassword" className="form-label">
-                                Xác nhận mật khẩu <span className="required">*</span>
-                            </label>
-                            <div className="password-wrapper">
+                            <label className="checkbox-label terms-label">
                                 <input
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    type={showConfirmPassword ? "text" : "password"}
-                                    value={formData.confirmPassword}
+                                    type="checkbox"
+                                    name="agreeToTerms"
+                                    checked={formData.agreeToTerms}
                                     onChange={handleChange}
-                                    className="form-input"
-                                    placeholder="••••••••"
-                                    required
-                                    disabled={loading}
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="password-toggle"
-                                >
-                                    {showConfirmPassword ? (
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                        </svg>
-                                    ) : (
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                        </svg>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Phone Input */}
-                        <div className="form-group">
-                            <label htmlFor="phone" className="form-label">
-                                Số điện thoại <span className="required">*</span>
+                                <span>
+                                    I agree to the{' '}
+                                    <Link to="/terms" className="inline-link">
+                                        Terms of Service
+                                    </Link>
+                                    {' '}and{' '}
+                                    <Link to="/privacy" className="inline-link">
+                                        Privacy Policy
+                                    </Link>
+                                </span>
                             </label>
-                            <input
-                                id="phone"
-                                name="phone"
-                                type="tel"
-                                value={formData.phone}
-                                onChange={handleChange}
-                                className="form-input"
-                                placeholder="0901234567"
-                                required
-                                disabled={loading}
-                            />
+                            {errors.agreeToTerms && <span className="error-message">{errors.agreeToTerms}</span>}
                         </div>
 
-                        {/* License Number Input (Optional) */}
-                        <div className="form-group">
-                            <label htmlFor="licenseNumber" className="form-label">
-                                Số bằng lái xe <span className="optional">(Tùy chọn)</span>
-                            </label>
-                            <input
-                                id="licenseNumber"
-                                name="licenseNumber"
-                                type="text"
-                                value={formData.licenseNumber}
-                                onChange={handleChange}
-                                className="form-input"
-                                placeholder="B2-123456"
-                                disabled={loading}
-                            />
-                        </div>
-
-                        {/* Submit Button */}
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="btn-submit"
-                        >
-                            {loading ? (
-                                <>
-                                    <svg fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Đang đăng ký...
-                                </>
-                            ) : (
-                                'Đăng ký'
-                            )}
+                        <button type="submit" className="btn-submit">
+                            Create Account
                         </button>
                     </form>
 
-                    {/* Divider */}
-                    <div className="divider">
-                        <div className="divider-line">
-                            <div></div>
-                        </div>
-                        <div className="divider-text">
-                            <span>Hoặc</span>
-                        </div>
+                    <div className="auth-divider">
+                        <span>OR</span>
                     </div>
 
-                    {/* Login Link */}
-                    <p className="login-text">
-                        Đã có tài khoản?{' '}
-                        <Link to="/login" className="login-link">
-                            Đăng nhập ngay
-                        </Link>
-                    </p>
+                    <div className="social-login">
+                        <button className="btn-social btn-google">
+                            <svg width="20" height="20" viewBox="0 0 20 20">
+                                <path fill="#4285F4" d="M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z" />
+                                <path fill="#34A853" d="M13.46 15.13c-.83.59-1.96 1-3.46 1-2.64 0-4.88-1.74-5.68-4.15H1.07v2.52C2.72 17.75 6.09 20 10 20c2.7 0 4.96-.89 6.62-2.42l-3.16-2.45z" />
+                                <path fill="#FBBC05" d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07A9.973 9.973 0 000 10c0 1.61.39 3.14 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z" />
+                                <path fill="#EA4335" d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z" />
+                            </svg>
+                            Sign up with Google
+                        </button>
+                        <button className="btn-social btn-facebook">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="#1877F2">
+                                <path d="M20 10c0-5.523-4.477-10-10-10S0 4.477 0 10c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V10h2.54V7.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V10h2.773l-.443 2.89h-2.33v6.988C16.343 19.128 20 14.991 20 10z" />
+                            </svg>
+                            Sign up with Facebook
+                        </button>
+                    </div>
+
+                    <div className="auth-footer">
+                        <p>
+                            Already have an account?{' '}
+                            <Link to="/login" className="auth-link">
+                                Sign in
+                            </Link>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     )
 }
+
+export default Register

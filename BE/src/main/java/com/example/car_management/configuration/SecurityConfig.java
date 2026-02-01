@@ -1,5 +1,4 @@
 package com.example.car_management.configuration;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,7 +32,6 @@ import java.util.List;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
         private final String[] PUBLIC_ENDPOINTS = {
                         "/auth/token", "/auth/logout", "/auth/refresh", "/auth/register"
         };
@@ -80,27 +78,3 @@ public class SecurityConfig {
                 config.setAllowCredentials(true);
 
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                source.registerCorsConfiguration("/**", config);
-                return source;
-        }
-
-        @Bean
-        JwtAuthenticationConverter jwtAuthenticationConverter() {
-
-                //
-                JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-                jwtGrantedAuthoritiesConverter.setAuthorityPrefix("");
-
-                JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
-                jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
-
-                return jwtAuthenticationConverter;
-        }
-
-        // Cau hinh pass word theo Bcrypt
-        @Bean
-        PasswordEncoder passwordEncoder() {
-                return new BCryptPasswordEncoder(10);
-        }
-
-}

@@ -19,4 +19,7 @@ public interface VehicleService {
     List<VehicleImageResponse> addImages(Integer vehicleId, Integer ownerId, AddVehicleImagesRequest req);
     List<VehicleImageResponse> setMainImage(Integer vehicleId, Integer ownerId, Integer imageId);
     void deleteImage(Integer vehicleId, Integer ownerId, Integer imageId);
+
+    List<VehicleImageResponse> uploadImages(Integer vehicleId, Integer ownerId, List<org.springframework.web.multipart.MultipartFile> files, Boolean setFirstAsMain);
+
 }

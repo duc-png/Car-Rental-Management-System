@@ -1,11 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import '../styles/LocationModal.css';
 
 function LocationModal({ isOpen, onClose, onSelect }) {
     const [searchInput, setSearchInput] = useState('TP. Hồ Chí Minh');
     const [selectedLocation, setSelectedLocation] = useState('TP. Hồ Chí Minh');
+    const [currentLocationName, setCurrentLocationName] = useState(null);
+    const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
     const airports = [
         { id: 1, name: 'Tân Sơn Nhất', icon: '✈️' },
@@ -38,9 +41,52 @@ function LocationModal({ isOpen, onClose, onSelect }) {
         onClose();
     };
 
+    const handleCurrentLocation = () => {
+        if (!navigator.geolocation) {
+            alert('Trình duyệt của bạn không hỗ trợ lấy vị trí');
+            return;
+        }
+
+        setIsLoadingLocation(true);
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const { latitude, longitude } = position.coords;
+
+                // Lấy tên địa điểm từ tọa độ (reverse geocoding)
+                try {
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+                    );
+                    const data = await response.json();
+                    const locationName = data.address?.city || data.address?.province || data.address?.county || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+
+                    setCurrentLocationName(locationName);
+                    setSelectedLocation(locationName);
+                    onSelect(locationName);
+                    onClose();
+                } catch (error) {
+                    console.error('Lỗi lấy tên địa điểm:', error);
+                    const locationName = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                    setCurrentLocationName(locationName);
+                    setSelectedLocation(locationName);
+                    onSelect(locationName);
+                    onClose();
+                } finally {
+                    setIsLoadingLocation(false);
+                }
+            },
+            (error) => {
+                console.error('Lỗi lấy vị trí:', error);
+                alert('Không thể lấy vị trí của bạn. Vui lòng kiểm tra quyền truy cập hoặc thử lại.');
+                setIsLoadingLocation(false);
+            }
+        );
+    };
+
     if (!isOpen) return null;
 
-    return (
+    const modalContent = (
         <div className="location-modal-overlay" onClick={onClose}>
             <div className="location-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="location-modal-header">
@@ -74,7 +120,11 @@ function LocationModal({ isOpen, onClose, onSelect }) {
 
                     {/* Current Location */}
                     <div className="location-section">
-                        <button className="location-item current-location">
+                        <button
+                            className="location-item current-location"
+                            onClick={handleCurrentLocation}
+                            disabled={isLoadingLocation}
+                        >
                             <svg
                                 width="20"
                                 height="20"
@@ -86,7 +136,7 @@ function LocationModal({ isOpen, onClose, onSelect }) {
                                 <circle cx="12" cy="12" r="1"></circle>
                                 <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m2.12 2.12l4.24 4.24M1 12h6m6 0h6M4.22 19.78l4.24-4.24m2.12-2.12l4.24-4.24M19.78 19.78l-4.24-4.24m-2.12-2.12l-4.24-4.24"></path>
                             </svg>
-                            <span>Vị trí hiện tại</span>
+                            <span>{isLoadingLocation ? 'Đang tìm vị trí...' : currentLocationName || 'Vị trí hiện tại'}</span>
                         </button>
                     </div>
 
@@ -135,6 +185,8 @@ function LocationModal({ isOpen, onClose, onSelect }) {
             </div>
         </div>
     );
+
+    return createPortal(modalContent, document.body);
 }
 
 export default LocationModal;

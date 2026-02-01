@@ -173,16 +173,7 @@ function Cars() {
 
           <button
             onClick={clearFilters}
-            style={{
-              width: '100%',
-              padding: '12px',
-              borderRadius: '10px',
-              border: 'none',
-              background: 'var(--primary-color)',
-              color: '#fff',
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}
+            className="clear-btn full-width"
           >
             Xóa bộ lọc
           </button>

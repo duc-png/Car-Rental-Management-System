@@ -1,15 +1,17 @@
 .cars-page {
   min-height: 100vh;
-  background: #f8fafc;
+  background: var(--bg-light);
+  transition: var(--transition);
 }
 
 .cars-header {
-  background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #ede9fe 100%);
-  color: #0f172a;
+  background: linear-gradient(135deg, var(--hero-gradient-1) 0%, var(--hero-gradient-2) 50%, var(--hero-gradient-3) 100%);
+  color: var(--text-primary);
   padding: 72px 20px 64px;
   margin-bottom: 32px;
   text-align: center;
-  box-shadow: 0 16px 40px rgba(99, 102, 241, 0.18);
+  box-shadow: 0 16px 40px var(--shadow-color);
+  transition: var(--transition);
 }
 
 .cars-header h1 {
@@ -36,11 +38,11 @@
 .cars-sidebar {
   position: sticky;
   top: 100px;
-  background: #ffffff;
+  background: var(--card-bg);
   padding: 22px;
   border-radius: 16px;
-  box-shadow: 0 14px 30px rgba(99, 102, 241, 0.12);
-  border: 1px solid rgba(99, 102, 241, 0.12);
+  box-shadow: 0 14px 30px var(--shadow-color);
+  border: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -48,7 +50,7 @@
 
 .filter-group {
   padding-bottom: 12px;
-  border-bottom: 1px dashed #e5e7eb;
+  border-bottom: 1px dashed var(--border-color);
 }
 
 .filter-group:last-of-type {
@@ -59,7 +61,7 @@
 .filter-group h3 {
   font-size: 1rem;
   margin: 0 0 12px 0;
-  color: #0f172a;
+  color: var(--text-primary);
   font-weight: 800;
 }
 
@@ -69,26 +71,26 @@
   gap: 10px;
   margin-bottom: 10px;
   cursor: pointer;
-  color: #4b5563;
+  color: var(--text-secondary);
   transition: color 0.2s ease;
   font-weight: 600;
 }
 
 .filter-group label:hover {
-  color: #6366f1;
+  color: var(--accent-color);
 }
 
 .filter-group input[type='radio'] {
   cursor: pointer;
-  accent-color: #6366f1;
+  accent-color: var(--accent-color);
 }
 
 .cars-content {
-  background: #ffffff;
+  background: var(--card-bg);
   padding: 26px;
   border-radius: 16px;
-  box-shadow: 0 14px 30px rgba(99, 102, 241, 0.12);
-  border: 1px solid rgba(99, 102, 241, 0.12);
+  box-shadow: 0 14px 30px var(--shadow-color);
+  border: 1px solid var(--border-color);
 }
 
 .cars-toolbar {
@@ -102,7 +104,7 @@
 
 .toolbar-kicker {
   margin: 0;
-  color: #64748b;
+  color: var(--text-tertiary);
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
@@ -113,29 +115,40 @@
   margin: 4px 0;
   font-size: 24px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .toolbar-sub {
   margin: 0;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-weight: 600;
 }
 
 .clear-btn {
-  border: 1px solid #c7d2fe;
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-  color: #1f2937;
-  padding: 10px 14px;
+  border: 1px solid var(--accent-color);
+  background: var(--accent-color);
+  color: var(--primary-color);
+  padding: 12px 16px;
   border-radius: 12px;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(99, 102, 241, 0.2);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 10px 24px var(--shadow-hover);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+[data-theme='dark'] .clear-btn {
+  color: #0f172a;
 }
 
 .clear-btn:hover {
   transform: translateY(-1px);
+  box-shadow: 0 12px 28px var(--shadow-hover);
+  background: var(--accent-light);
+}
+
+.full-width {
+  width: 100%;
+  text-align: center;
 }
 
 .vehicles-grid {

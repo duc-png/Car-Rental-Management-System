@@ -1,168 +1,144 @@
 import { useState } from 'react'
-import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import '../styles/Login.css'
+import { Link, useNavigate } from 'react-router-dom'
+import '../styles/Auth.css'
 
-export default function Login() {
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
-    const [error, setError] = useState('')
-    const [loading, setLoading] = useState(false)
+function Login() {
+    const [formData, setFormData] = useState({
+        email: '',
+        password: '',
+        rememberMe: false
+    })
     const [showPassword, setShowPassword] = useState(false)
-
-    const { login } = useAuth()
     const navigate = useNavigate()
-    const location = useLocation()
 
-    // Lấy return URL từ query params (nếu có)
-    const from = location.state?.from?.pathname || '/'
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }))
+    }
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault()
-        setError('')
-        setLoading(true)
-
-        const result = await login(email, password)
-
-        if (result.success) {
-            // Chuyển về trang user muốn vào ban đầu (hoặc trang chủ)
-            navigate(from, { replace: true })
-        } else {
-            setError(result.error)
-        }
-
-        setLoading(false)
+        // Xử lý đăng nhập ở đây
+        console.log('Login data:', formData)
+        // Sau khi đăng nhập thành công, chuyển hướng về trang chủ
+        navigate('/')
     }
 
     return (
-        <div className="login-container">
-            <div className="login-wrapper">
-                {/* Logo */}
-                <div className="login-logo">
-                    <h1>Car Rental</h1>
-                    <p>Thuê xe dễ dàng, lái xe thoải mái</p>
-                </div>
+        <div className="auth-container">
+            <div className="auth-background">
+                <div className="auth-shape shape-1"></div>
+                <div className="auth-shape shape-2"></div>
+                <div className="auth-shape shape-3"></div>
+            </div>
 
-                {/* Form Card */}
-                <div className="login-card">
-                    <h2>Đăng nhập</h2>
-                    <p>Chào mừng bạn quay trở lại!</p>
-
-                    {/* Error message */}
-                    {error && (
-                        <div className="error-alert">
-                            <svg fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                            </svg>
-                            <span>{error}</span>
+            <div className="auth-content">
+                <div className="auth-card">
+                    <div className="auth-header">
+                        <div className="auth-logo">
+                            <img src="/favicon.svg" alt="CarRental Logo" />
                         </div>
-                    )}
+                        <h1>Welcome Back</h1>
+                        <p>Sign in to your account to continue</p>
+                    </div>
 
-                    <form onSubmit={handleSubmit}>
-                        {/* Email Input */}
+                    <form className="auth-form" onSubmit={handleSubmit}>
                         <div className="form-group">
-                            <label htmlFor="email" className="form-label">
-                                Email
-                            </label>
-                            <input
-                                id="email"
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="form-input"
-                                placeholder="example@email.com"
-                                required
-                                disabled={loading}
-                            />
-                        </div>
-
-                        {/* Password Input */}
-                        <div className="form-group">
-                            <label htmlFor="password" className="form-label">
-                                Mật khẩu
-                            </label>
-                            <div className="password-wrapper">
+                            <label htmlFor="email">Email Address</label>
+                            <div className="input-wrapper">
+                                <span className="input-icon">✉️</span>
                                 <input
-                                    id="password"
-                                    type={showPassword ? "text" : "password"}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="form-input"
-                                    placeholder="••••••••"
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    placeholder="Enter your email"
                                     required
-                                    disabled={loading}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="password">Password</label>
+                            <div className="input-wrapper">
+                                <span className="input-icon">🔒</span>
+                                <input
+                                    type={showPassword ? 'text' : 'password'}
+                                    id="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    placeholder="Enter your password"
+                                    required
                                 />
                                 <button
                                     type="button"
+                                    className="toggle-password"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="password-toggle"
                                 >
-                                    {showPassword ? (
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                        </svg>
-                                    ) : (
-                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                        </svg>
-                                    )}
+                                    {showPassword ? '👁️' : '👁️‍🗨️'}
                                 </button>
                             </div>
                         </div>
 
-                        {/* Remember Me & Forgot Password */}
-                        <div className="form-footer">
+                        <div className="form-options">
                             <label className="checkbox-label">
                                 <input
                                     type="checkbox"
+                                    name="rememberMe"
+                                    checked={formData.rememberMe}
+                                    onChange={handleChange}
                                 />
-                                <span>Ghi nhớ đăng nhập</span>
+                                <span>Remember me</span>
                             </label>
                             <Link to="/forgot-password" className="forgot-link">
-                                Quên mật khẩu?
+                                Forgot Password?
                             </Link>
                         </div>
 
-                        {/* Submit Button */}
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="btn-submit"
-                        >
-                            {loading ? (
-                                <>
-                                    <svg fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Đang đăng nhập...
-                                </>
-                            ) : (
-                                'Đăng nhập'
-                            )}
+                        <button type="submit" className="btn-submit">
+                            Sign In
                         </button>
                     </form>
 
-                    {/* Divider */}
-                    <div className="divider">
-                        <div className="divider-line">
-                            <div></div>
-                        </div>
-                        <div className="divider-text">
-                            <span>Hoặc</span>
-                        </div>
+                    <div className="auth-divider">
+                        <span>OR</span>
                     </div>
 
-                    {/* Register Link */}
-                    <p className="register-text">
-                        Chưa có tài khoản?{' '}
-                        <Link to="/register" className="register-link">
-                            Đăng ký ngay
-                        </Link>
-                    </p>
+                    <div className="social-login">
+                        <button className="btn-social btn-google">
+                            <svg width="20" height="20" viewBox="0 0 20 20">
+                                <path fill="#4285F4" d="M19.6 10.23c0-.82-.1-1.42-.25-2.05H10v3.72h5.5c-.15.96-.74 2.31-2.04 3.22v2.45h3.16c1.89-1.73 2.98-4.3 2.98-7.34z" />
+                                <path fill="#34A853" d="M13.46 15.13c-.83.59-1.96 1-3.46 1-2.64 0-4.88-1.74-5.68-4.15H1.07v2.52C2.72 17.75 6.09 20 10 20c2.7 0 4.96-.89 6.62-2.42l-3.16-2.45z" />
+                                <path fill="#FBBC05" d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07A9.973 9.973 0 000 10c0 1.61.39 3.14 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z" />
+                                <path fill="#EA4335" d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z" />
+                            </svg>
+                            Continue with Google
+                        </button>
+                        <button className="btn-social btn-facebook">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="#1877F2">
+                                <path d="M20 10c0-5.523-4.477-10-10-10S0 4.477 0 10c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V10h2.54V7.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V10h2.773l-.443 2.89h-2.33v6.988C16.343 19.128 20 14.991 20 10z" />
+                            </svg>
+                            Continue with Facebook
+                        </button>
+                    </div>
+
+                    <div className="auth-footer">
+                        <p>
+                            Don't have an account?{' '}
+                            <Link to="/register" className="auth-link">
+                                Sign up now
+                            </Link>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     )
 }
+
+export default Login
