@@ -1,3 +1,41 @@
+<<<<<<< Updated upstream
 spring:
   application:
     name: car_management
+=======
+
+#spring.application.name=car_management
+
+
+
+server:
+  port: 8080
+  servlet:
+    context-path: /car_management
+
+spring:
+  datasource:
+    url: "jdbc:mysql://localhost:3306/car_manager"
+    driverClassName: "com.mysql.cj.jdbc.Driver"
+    username: root
+    password: 170103
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+cloudinary:
+  cloud-name: dntzdrmc8
+  api-key: 392795975793191
+  api-secret: 427zykyU45YUoK_Kose6_3RGknk
+#outbound:
+#  identity:
+#    client-id: "<clientId>"
+#    client-secret: "<clientSecret>"
+#    redirect-uri: "http://localhost:3000/authenticate"
+
+jwt:
+  signerKey: "1TjXchw5FloESb63Kc+DFhTARvpWL4jUGCwfGWxuG5SIf/1y/LgJxHnMqaF6A/ij"
+  valid-duration: 3600 # in second
+  refreshable-duration: 36000 # in seconds
+>>>>>>> Stashed changes

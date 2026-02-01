@@ -5,6 +5,7 @@ import CarDetails from '../pages/CarDetails';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword';
+import CarOwnerFleet from '../pages/CarOwnerFleet';
 
 export const routes = [
   {
@@ -41,6 +42,11 @@ export const routes = [
     path: '/forgot-password',
     element: <ForgotPassword />,
     name: 'Forgot Password'
+  },
+  {
+    path: '/owner/fleet',
+    element: <CarOwnerFleet />,
+    name: 'Owner Fleet'
   }
 ];
 

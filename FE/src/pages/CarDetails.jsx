@@ -16,7 +16,7 @@ export default function CarDetails() {
     const fetchCarDetails = async () => {
         try {
             setLoading(true);
-            const response = await fetch(`http://localhost:8081/api/v1/vehicles/${id || 2}`);
+            const response = await fetch(`http://localhost:8080/api/v1/vehicles/${id || 2}`);
             const data = await response.json();
 
             if (data.code === 1000) {
