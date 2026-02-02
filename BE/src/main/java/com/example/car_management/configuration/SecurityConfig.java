@@ -1,4 +1,5 @@
 package com.example.car_management.configuration;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,13 +18,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 import java.util.List;
 
@@ -78,3 +73,35 @@ public class SecurityConfig {
                 config.setAllowCredentials(true);
 
                 UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", config);
+                return source;
+        }
+
+        @Bean
+        public CorsFilter corsFilter() {
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                CorsConfiguration config = new CorsConfiguration();
+                config.addAllowedOrigin("*");
+                config.addAllowedHeader("*");
+                config.addAllowedMethod("*");
+                source.registerCorsConfiguration("/**", config);
+                return new CorsFilter(source);
+        }
+
+        @Bean
+        JwtAuthenticationConverter jwtAuthenticationConverter() {
+                JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+                jwtGrantedAuthoritiesConverter.setAuthorityPrefix("");
+
+                JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+                jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
+
+                return jwtAuthenticationConverter;
+        }
+
+        @Bean
+        PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder(10);
+        }
+
+}

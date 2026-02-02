@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth'
+import { register } from '../api/auth'
 import '../styles/Auth.css'
 
 function Register() {
@@ -28,7 +30,13 @@ function Register() {
         }
     }
 
+    const { login } = useAuth()
+    const [loading, setLoading] = useState(false)
+
+    // ... handleChange ...
+
     const validateForm = () => {
+        // ... (existing validation)
         const newErrors = {}
 
         if (formData.fullName.trim().length < 2) {
@@ -47,8 +55,11 @@ function Register() {
             newErrors.confirmPassword = 'Passwords do not match'
         }
 
-        if (formData.phone && !/^\+?[\d\s-()]+$/.test(formData.phone)) {
-            newErrors.phone = 'Please enter a valid phone number'
+        // Validate VN Phone number: 10 digits, start with 0
+        if (formData.phone && !/(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/.test(formData.phone)) {
+            newErrors.phone = 'Please enter a valid Vietnamese phone number (10 digits)'
+        } else if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
+            newErrors.phone = 'Phone number must be exactly 10 digits'
         }
 
         if (!formData.agreeToTerms) {
@@ -59,14 +70,37 @@ function Register() {
         return Object.keys(newErrors).length === 0
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
+        setErrors({})
 
         if (validateForm()) {
-            // Xử lý đăng ký ở đây
-            console.log('Register data:', formData)
-            // Sau khi đăng ký thành công, chuyển hướng đến trang đăng nhập
-            navigate('/login')
+            setLoading(true)
+            try {
+                // 1. Gọi API đăng ký
+                await register({
+                    fullName: formData.fullName,
+                    email: formData.email,
+                    password: formData.password,
+                    phone: formData.phone,
+                    licenseNumber: '' // Optional
+                })
+
+                // 2. Đăng ký thành công -> Gọi hàm login từ AuthContext (file chung)
+                // Sử dụng hàm login có sẵn để set token vào state/localStorage
+                const loginResult = await login(formData.email, formData.password)
+
+                if (loginResult.success) {
+                    navigate('/')
+                } else {
+                    setErrors({ submit: loginResult.error })
+                }
+
+            } catch (error) {
+                setErrors({ submit: error.message || 'Registration failed' })
+            } finally {
+                setLoading(false)
+            }
         }
     }
 
@@ -211,9 +245,10 @@ function Register() {
                             {errors.agreeToTerms && <span className="error-message">{errors.agreeToTerms}</span>}
                         </div>
 
-                        <button type="submit" className="btn-submit">
-                            Create Account
+                        <button type="submit" className="btn-submit" disabled={loading}>
+                            {loading ? 'Creating Account...' : 'Create Account'}
                         </button>
+                        {errors.submit && <div className="error-message" style={{ textAlign: 'center', marginTop: '10px' }}>{errors.submit}</div>}
                     </form>
 
                     <div className="auth-divider">

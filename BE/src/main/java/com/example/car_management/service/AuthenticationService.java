@@ -216,7 +216,7 @@ public class AuthenticationService {
 
         if (!CollectionUtils.isEmpty(user.getRoles()))
             user.getRoles().forEach(role -> {
-                stringJoiner.add("Role_" + role.getName());
+                stringJoiner.add("ROLE_" + role.getName());
                 if (!CollectionUtils.isEmpty(role.getPermissions()))
                     role.getPermissions().forEach(permissionEntity -> stringJoiner.add(permissionEntity.getName()));
             });

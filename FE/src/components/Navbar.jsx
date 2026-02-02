@@ -3,11 +3,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
+import { useAuth } from '../hooks/useAuth'
 import '../styles/Navbar.css'
 
 function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
+  const { isAuthenticated, user, logout } = useAuth()
+
 
   return (
     <nav className="navbar">
@@ -55,12 +58,24 @@ function Navbar() {
           >
             {theme === 'light' ? '🌙' : '☀️'}
           </button>
-          <Link to="/login" className="btn-login">
-            Login
-          </Link>
-          <Link to="/register" className="btn-register">
-            Sign Up
-          </Link>
+
+          {isAuthenticated ? (
+            <div className="nav-user-menu">
+              <span className="user-name">Hi, {user?.fullName || user?.sub || 'User'}</span>
+              <button onClick={logout} className="btn-logout">
+                Logout
+              </button>
+            </div>
+          ) : (
+            <>
+              <Link to="/login" className="btn-login">
+                Login
+              </Link>
+              <Link to="/register" className="btn-register">
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>

@@ -1,5 +1,5 @@
 // Base URL của backend API
-const API_URL = 'http://localhost:8080/car_management'
+const API_URL = 'http://localhost:8080'
 
 /**
  * Hàm đăng nhập
@@ -29,6 +29,8 @@ export const login = async (email, password) => {
         throw error
     }
 }
+
+
 
 /**
  * Hàm đăng ký user mới
