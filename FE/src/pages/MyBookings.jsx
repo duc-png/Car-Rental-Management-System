@@ -1,80 +1,162 @@
 'use client';
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { getMyBookings, cancelBooking } from '../api/bookings'
 import '../styles/MyBookings.css'
 
 function MyBookings() {
-  const [bookings, setBookings] = useState([
-    {
-      id: 1,
-      carName: 'Toyota Corolla',
-      pickupDate: '2024-02-01',
-      returnDate: '2024-02-05',
-      location: 'New York',
-      status: 'Confirmed',
-      totalPrice: '$750',
-      image: 'https://images.unsplash.com/photo-1606611013016-969ce3defd0f?w=300&h=200&fit=crop'
-    },
-    {
-      id: 2,
-      carName: 'BMW X5',
-      pickupDate: '2024-02-10',
-      returnDate: '2024-02-15',
-      location: 'Los Angeles',
-      status: 'Pending',
-      totalPrice: '$1500',
-      image: 'https://images.unsplash.com/photo-1605559424843-9e4c3ca4628c?w=300&h=200&fit=crop'
-    }
-  ])
+  const navigate = useNavigate()
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [cancellingId, setCancellingId] = useState(null)
 
-  const handleCancelBooking = (id) => {
-    setBookings(bookings.filter(b => b.id !== id))
+  useEffect(() => {
+    fetchBookings()
+  }, [])
+
+  const fetchBookings = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await getMyBookings()
+      setBookings(data)
+    } catch (err) {
+      if (err.message === 'Chưa đăng nhập!') {
+        toast.error('Vui lòng đăng nhập để xem đặt xe!')
+        navigate('/login')
+        return
+      }
+      setError(err.message || 'Không thể tải danh sách đặt xe')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCancelBooking = async (id) => {
+    if (!confirm('Bạn có chắc muốn hủy đặt xe này?')) return
+
+    try {
+      setCancellingId(id)
+      await cancelBooking(id)
+      toast.success('Đã hủy đặt xe thành công!')
+      // Refresh list
+      fetchBookings()
+    } catch (err) {
+      toast.error(err.message || 'Không thể hủy đặt xe')
+    } finally {
+      setCancellingId(null)
+    }
+  }
+
+  const formatDate = (dateString) => {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    return date.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const getStatusLabel = (status) => {
+    const statusMap = {
+      'PENDING': 'Chờ duyệt',
+      'CONFIRMED': 'Đã duyệt',
+      'ONGOING': 'Đang thuê',
+      'COMPLETED': 'Hoàn thành',
+      'CANCELLED': 'Đã hủy'
+    }
+    return statusMap[status] || status
+  }
+
+  const canCancel = (status) => {
+    return status === 'PENDING' || status === 'CONFIRMED'
+  }
+
+  if (loading) {
+    return (
+      <div className="bookings-page">
+        <div className="bookings-loading">
+          <div className="loading-spinner"></div>
+          <p>Đang tải danh sách đặt xe...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="bookings-page">
+        <div className="bookings-error">
+          <p>{error}</p>
+          <button onClick={fetchBookings} className="btn-retry">Thử lại</button>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="bookings-page">
       <div className="bookings-header">
-        <h1>My Bookings</h1>
-        <p>Manage your car rental reservations</p>
+        <h1>Đặt xe của tôi</h1>
+        <p>Quản lý các chuyến đi của bạn</p>
       </div>
 
       {bookings.length > 0 ? (
         <div className="bookings-list">
           {bookings.map(booking => (
-            <div key={booking.id} className="booking-card">
+            <div key={booking.id} className={`booking-card ${booking.status?.toLowerCase()}`}>
               <div className="booking-image">
-                <img src={booking.image || "/placeholder.svg"} alt={booking.carName} />
+                <img
+                  src={booking.vehicleImage || '/placeholder.svg'}
+                  alt={booking.vehicleName || 'Xe'}
+                />
               </div>
               <div className="booking-details">
-                <h3>{booking.carName}</h3>
+                <h3>{booking.vehicleName || `Xe #${booking.vehicleId}`}</h3>
                 <div className="booking-info">
-                  <p><strong>Pickup:</strong> {booking.pickupDate}</p>
-                  <p><strong>Return:</strong> {booking.returnDate}</p>
-                  <p><strong>Location:</strong> {booking.location}</p>
-                  <p><strong>Total Price:</strong> {booking.totalPrice}</p>
+                  <p><strong>Nhận xe:</strong> {formatDate(booking.startDate)}</p>
+                  <p><strong>Trả xe:</strong> {formatDate(booking.endDate)}</p>
+                  <p><strong>Tổng tiền:</strong> {booking.totalPrice?.toLocaleString('vi-VN')} ₫</p>
                 </div>
                 <div className="booking-status">
-                  <span className={`status-badge ${booking.status.toLowerCase()}`}>
-                    {booking.status}
+                  <span className={`status-badge ${booking.status?.toLowerCase()}`}>
+                    {getStatusLabel(booking.status)}
                   </span>
                 </div>
               </div>
               <div className="booking-actions">
-                <button className="btn-view">View Details</button>
-                <button 
-                  className="btn-cancel"
-                  onClick={() => handleCancelBooking(booking.id)}
+                <button
+                  className="btn-view"
+                  onClick={() => navigate(`/cars/${booking.vehicleId}`)}
                 >
-                  Cancel Booking
+                  Xem xe
                 </button>
+                {canCancel(booking.status) && (
+                  <button
+                    className="btn-cancel"
+                    onClick={() => handleCancelBooking(booking.id)}
+                    disabled={cancellingId === booking.id}
+                  >
+                    {cancellingId === booking.id ? 'Đang hủy...' : 'Hủy đặt xe'}
+                  </button>
+                )}
               </div>
             </div>
           ))}
         </div>
       ) : (
         <div className="empty-state">
-          <p>No bookings yet. Start by browsing our vehicles!</p>
-          <a href="/cars" className="btn-browse">Browse Cars</a>
+          <div className="empty-icon">🚗</div>
+          <p>Bạn chưa có chuyến đi nào.</p>
+          <button onClick={() => navigate('/cars')} className="btn-browse">
+            Khám phá xe ngay
+          </button>
         </div>
       )}
     </div>

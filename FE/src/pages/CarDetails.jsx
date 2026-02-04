@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import BookingModal from '../components/BookingModal';
 import '../styles/CarDetails.css';
 
 export default function CarDetails() {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [car, setCar] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [showBookingModal, setShowBookingModal] = useState(false);
 
     useEffect(() => {
         fetchCarDetails();
@@ -42,6 +46,21 @@ export default function CarDetails() {
         if (car?.images?.length > 0) {
             setCurrentImageIndex((prev) => (prev + 1) % car.images.length);
         }
+    };
+
+    const handleBookNow = () => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            toast.error('Vui lòng đăng nhập để đặt xe!');
+            navigate('/login');
+            return;
+        }
+        setShowBookingModal(true);
+    };
+
+    const handleBookingSuccess = () => {
+        toast.success('Đặt xe thành công! Chờ chủ xe xác nhận.');
+        navigate('/my-bookings');
     };
 
     if (loading) {
@@ -90,7 +109,13 @@ export default function CarDetails() {
                         </div>
 
                         <div className="hero-actions">
-                            <button className="btn-primary">Đặt xe ngay</button>
+                            <button
+                                className="btn-primary"
+                                onClick={handleBookNow}
+                                disabled={car.status !== 'AVAILABLE'}
+                            >
+                                Đặt xe ngay
+                            </button>
                             <button className="btn-secondary">Liên hệ chủ xe</button>
                         </div>
 
@@ -177,11 +202,26 @@ export default function CarDetails() {
                             <span>Chỉ từ</span>
                             <strong>{car.pricePerDay?.toLocaleString('vi-VN')} ₫ / ngày</strong>
                         </div>
-                        <button className="btn-primary full">Đặt xe ngay</button>
+                        <button
+                            className="btn-primary full"
+                            onClick={handleBookNow}
+                            disabled={car.status !== 'AVAILABLE'}
+                        >
+                            Đặt xe ngay
+                        </button>
                         <button className="btn-secondary ghost">Gọi cho chủ xe</button>
                     </div>
                 </div>
             </div>
+
+            {/* Booking Modal */}
+            <BookingModal
+                car={car}
+                isOpen={showBookingModal}
+                onClose={() => setShowBookingModal(false)}
+                onSuccess={handleBookingSuccess}
+            />
         </div>
     );
 }
+

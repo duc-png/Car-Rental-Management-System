@@ -1,32 +1,48 @@
 import { createContext, useState, useEffect } from 'react'
+import { jwtDecode } from 'jwt-decode'
 import { login as apiLogin, logout as apiLogout } from '../api/auth'
 
 // Tạo Context để lưu thông tin authentication
 export const AuthContext = createContext()
-
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null) // Thông tin user đang đăng nhập
     const [token, setToken] = useState(null) // JWT token
     const [loading, setLoading] = useState(true) // Loading state khi check auth
 
-
+    // Helper to decode token safely
+    const decodeToken = (token) => {
+        try {
+            const decoded = jwtDecode(token)
+            return {
+                email: decoded.sub,
+                userId: decoded.userId,
+                role: decoded.scope, // "ROLE_USER ROLE_EXPERT" string
+                ...decoded
+            }
+        } catch (e) {
+            console.error("Invalid token", e)
+            return null
+        }
+    }
 
     // Khi app khởi động, kiểm tra xem có token đã lưu không
     useEffect(() => {
         try {
             const savedToken = localStorage.getItem('token')
-            const savedUser = localStorage.getItem('user')
 
-            if (savedToken && savedUser) {
-                setToken(savedToken)
-                setUser(JSON.parse(savedUser))
+            if (savedToken) {
+                const decodedUser = decodeToken(savedToken)
+                if (decodedUser) {
+                    setToken(savedToken)
+                    setUser(decodedUser)
+                } else {
+                    localStorage.removeItem('token')
+                }
             }
         } catch (error) {
             console.error('Error loading saved auth:', error)
-            // Clear invalid data
             localStorage.removeItem('token')
-            localStorage.removeItem('user')
         } finally {
             setLoading(false)
         }
@@ -43,17 +59,15 @@ export function AuthProvider({ children }) {
             // Gọi API login
             const data = await apiLogin(email, password)
 
-            // Lưu token (backend trả về { code, result: { token, authenticated } })
-            setToken(data.result.token)
-            localStorage.setItem('token', data.result.token)
+            const accessToken = data.result.token
 
-            // Lưu thông tin user (decode JWT để lấy thêm info nếu cần)
-            const userInfo = {
-                email,
-                // Có thể thêm fields khác từ response hoặc decode JWT
-            }
+            // Lưu token
+            setToken(accessToken)
+            localStorage.setItem('token', accessToken)
+
+            // Decode token để lấy info
+            const userInfo = decodeToken(accessToken)
             setUser(userInfo)
-            localStorage.setItem('user', JSON.stringify(userInfo))
 
             return { success: true }
         } catch (error) {

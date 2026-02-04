@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { AuthProvider } from './contexts/AuthContext'
 import Navbar from './components/Navbar'
@@ -6,6 +7,7 @@ import Footer from './components/Footer'
 import Home from './pages/Home'
 import Cars from './pages/Cars'
 import MyBookings from './pages/MyBookings'
+import ManageRentals from './pages/ManageRentals'
 import CarDetails from './pages/CarDetails'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -28,6 +30,7 @@ function AppLayout() {
           <Route path="/car/:id" element={<CarDetails />} />
           <Route path="/cars/:id" element={<CarDetails />} />
           <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/manage-rentals" element={<ManageRentals />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -45,6 +48,7 @@ function App() {
       <AuthProvider>
         <Router>
           <AppLayout />
+          <Toaster richColors position="top-right" />
         </Router>
       </AuthProvider>
     </ThemeProvider>
