@@ -130,14 +130,14 @@ public class VehicleServiceImpl implements VehicleService {
 
         VehicleEntity saved = vehicleRepository.save(v);
 
-        //chỉ load images để map response, KHÔNG set vào entity
+        // chỉ load images để map response, KHÔNG set vào entity
         List<VehicleImageEntity> imgs = vehicleImageRepository.findByVehicle_Id(saved.getId());
         return VehicleMapper.toResponse(saved, imgs);
     }
 
-
     private String normalizePlate(String plate) {
-        if (plate == null) return null;
+        if (plate == null)
+            return null;
         return plate.trim().toUpperCase(); // tùy rule, nhưng trim là bắt buộc
     }
 
@@ -167,27 +167,6 @@ public class VehicleServiceImpl implements VehicleService {
         return VehicleMapper.toResponseWithImages(v, imgs);
     }
 
-
-    @Override
-    @Transactional(readOnly = true)
-    public AvailabilityResponse checkAvailability(Integer vehicleId, LocalDateTime from, LocalDateTime to) {
-
-        vehicleRepository.findById(vehicleId)
-                .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_NOT_FOUND));
-
-        List<BookingStatus> activeStatuses = Arrays.asList(BookingStatus.CONFIRMED, BookingStatus.ONGOING);
-
-        boolean overlap = !bookingRepository
-                .findOverlappingBookings(vehicleId, from, to, activeStatuses)
-                .isEmpty();
-
-        return AvailabilityResponse.builder()
-                .vehicleId(vehicleId)
-                .available(!overlap)
-                .reason(overlap ? "OVERLAP_BOOKING" : "OK")
-                .build();
-    }
-
     @Override
     @Transactional
     public List<VehicleImageResponse> addImages(Integer vehicleId, Integer ownerId, AddVehicleImagesRequest req) {
@@ -205,9 +184,11 @@ public class VehicleServiceImpl implements VehicleService {
         // 1) Chuẩn hoá danh sách URL (trim + bỏ rỗng)
         List<String> urls = new java.util.ArrayList<>();
         for (String u : req.getImageUrls()) {
-            if (u == null) continue;
+            if (u == null)
+                continue;
             String s = u.trim();
-            if (!s.isEmpty()) urls.add(s);
+            if (!s.isEmpty())
+                urls.add(s);
         }
         if (urls.isEmpty()) {
             throw new AppException(ErrorCode.INVALID_KEY);
@@ -243,7 +224,6 @@ public class VehicleServiceImpl implements VehicleService {
         // 4) Trả response
         return VehicleMapper.toImageResponses(vehicleImageRepository.findByVehicle_Id(vehicleId));
     }
-
 
     @Override
     @Transactional
@@ -291,8 +271,7 @@ public class VehicleServiceImpl implements VehicleService {
             Integer vehicleId,
             Integer ownerId,
             List<org.springframework.web.multipart.MultipartFile> files,
-            Boolean setFirstAsMainFlag
-    ) {
+            Boolean setFirstAsMainFlag) {
         VehicleEntity v = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_NOT_FOUND));
         assertOwner(v, ownerId);
@@ -313,7 +292,8 @@ public class VehicleServiceImpl implements VehicleService {
                     changed = true;
                 }
             }
-            if (changed) vehicleImageRepository.saveAll(current);
+            if (changed)
+                vehicleImageRepository.saveAll(current);
         }
 
         // upload cloudinary -> lấy URL -> lưu DB
@@ -334,6 +314,64 @@ public class VehicleServiceImpl implements VehicleService {
         vehicleImageRepository.saveAll(toSave);
 
         return VehicleMapper.toImageResponses(vehicleImageRepository.findByVehicle_Id(vehicleId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AvailabilityResponse checkAvailability(Integer vehicleId, LocalDateTime from, LocalDateTime to) {
+        // Check vehicle exists
+        if (!vehicleRepository.existsById(vehicleId)) {
+            throw new AppException(ErrorCode.VEHICLE_NOT_FOUND);
+        }
+
+        // Check for conflicts with CONFIRMED or ONGOING bookings
+        List<BookingStatus> activeStatuses = Arrays.asList(
+                BookingStatus.CONFIRMED,
+                BookingStatus.ONGOING);
+
+        List<BookingEntity> conflicts = bookingRepository.findOverlappingBookings(
+                vehicleId, from, to, activeStatuses);
+
+        boolean available = conflicts.isEmpty();
+        String reason = available ? "Available" : "Vehicle is already booked for this period";
+
+        return AvailabilityResponse.builder()
+                .vehicleId(vehicleId)
+                .available(available)
+                .reason(reason)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public VehicleCalendarResponse getVehicleCalendar(Integer vehicleId, LocalDateTime from, LocalDateTime to) {
+        // Check vehicle exists
+        if (!vehicleRepository.existsById(vehicleId)) {
+            throw new AppException(ErrorCode.VEHICLE_NOT_FOUND);
+        }
+
+        // Get all bookings (not just CONFIRMED/ONGOING, include PENDING too)
+        List<BookingStatus> visibleStatuses = Arrays.asList(
+                BookingStatus.PENDING,
+                BookingStatus.CONFIRMED,
+                BookingStatus.ONGOING);
+
+        List<BookingEntity> bookings = bookingRepository.findOverlappingBookings(
+                vehicleId, from, to, visibleStatuses);
+
+        List<BookedPeriodResponse> bookedPeriods = bookings.stream()
+                .map(booking -> BookedPeriodResponse.builder()
+                        .bookingId(booking.getId())
+                        .startDate(booking.getStartDate())
+                        .endDate(booking.getEndDate())
+                        .status(booking.getStatus())
+                        .build())
+                .collect(Collectors.toList());
+
+        return VehicleCalendarResponse.builder()
+                .vehicleId(vehicleId)
+                .bookedPeriods(bookedPeriods)
+                .build();
     }
 
     private void assertOwner(VehicleEntity v, Integer ownerId) {

@@ -8,18 +8,28 @@ import java.util.List;
 
 public interface VehicleService {
     VehicleResponse createVehicle(CreateVehicleRequest req);
+
     VehicleResponse getVehicleDetail(Integer id);
+
     List<VehicleResponse> listVehicles(Integer ownerId);
+
     VehicleResponse updateVehicle(Integer id, Integer ownerId, UpdateVehicleRequest req);
+
     void deleteVehicle(Integer id, Integer ownerId);
+
     VehicleResponse updateStatus(Integer id, Integer ownerId, UpdateVehicleStatusRequest req);
 
     AvailabilityResponse checkAvailability(Integer vehicleId, LocalDateTime from, LocalDateTime to);
 
+    VehicleCalendarResponse getVehicleCalendar(Integer vehicleId, LocalDateTime from, LocalDateTime to);
+
     List<VehicleImageResponse> addImages(Integer vehicleId, Integer ownerId, AddVehicleImagesRequest req);
+
     List<VehicleImageResponse> setMainImage(Integer vehicleId, Integer ownerId, Integer imageId);
+
     void deleteImage(Integer vehicleId, Integer ownerId, Integer imageId);
 
-    List<VehicleImageResponse> uploadImages(Integer vehicleId, Integer ownerId, List<org.springframework.web.multipart.MultipartFile> files, Boolean setFirstAsMain);
+    List<VehicleImageResponse> uploadImages(Integer vehicleId, Integer ownerId,
+            List<org.springframework.web.multipart.MultipartFile> files, Boolean setFirstAsMain);
 
 }
