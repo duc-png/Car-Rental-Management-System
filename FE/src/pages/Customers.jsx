@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '../hooks/useAuth'
 import { createCustomer, getCustomers, updateCustomer, updateCustomerStatus } from '../api/customers'
@@ -28,7 +29,8 @@ const formatDate = (value) => {
 }
 
 export default function Customers() {
-    const { token } = useAuth()
+    const navigate = useNavigate()
+    const { token, user, logout } = useAuth()
     const [customers, setCustomers] = useState([])
     const [loading, setLoading] = useState(true)
     const [query, setQuery] = useState('')
@@ -58,16 +60,33 @@ export default function Customers() {
     }
 
     useEffect(() => {
+        if (!token) {
+            navigate('/login')
+            return
+        }
+        if (!user?.role?.includes('ROLE_ADMIN')) {
+            navigate('/')
+            return
+        }
         loadCustomers()
-    }, [])
+    }, [token, user, navigate])
+
+    const handleLogout = async () => {
+        await logout()
+        navigate('/login')
+    }
 
     useEffect(() => {
+        if (!token || !user?.role?.includes('ROLE_ADMIN')) {
+            return
+        }
+
         const handler = setTimeout(() => {
             loadCustomers(query.trim())
         }, 400)
 
         return () => clearTimeout(handler)
-    }, [query])
+    }, [query, token, user])
 
     const openCreateModal = () => {
         setEditingCustomer(null)
@@ -165,6 +184,9 @@ export default function Customers() {
                             <p className="profile-name">Admin User</p>
                             <p className="profile-email">admin@carrental.com</p>
                         </div>
+                        <button className="btn-outline" onClick={handleLogout}>
+                            Log out
+                        </button>
                     </div>
                 </aside>
 

@@ -92,6 +92,10 @@
     background: #f8fafc;
 }
 
+.admin-profile .btn-outline {
+    margin-left: auto;
+}
+
 .profile-avatar {
     width: 40px;
     height: 40px;
