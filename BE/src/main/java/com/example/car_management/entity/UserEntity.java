@@ -34,8 +34,14 @@ public class UserEntity {
     @Column(name = "license_number", length = 50)
     private String licenseNumber;
 
+    @Column(length = 255)
+    private String address;
+
     @Column(name = "is_verified")
     private Boolean isVerified;
+
+    @Column(name = "is_active")
+    private Boolean isActive;
 
     @Column(name = "created_at")
     private Instant createdAt;
