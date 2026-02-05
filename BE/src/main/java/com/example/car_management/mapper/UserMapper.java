@@ -12,7 +12,9 @@ public interface UserMapper {
     @Mapping(target = "roleId", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "password", ignore = true)
+    @Mapping(target = "address", ignore = true)
     @Mapping(target = "isVerified", constant = "false")
+    @Mapping(target = "isActive", constant = "true")
     @Mapping(target = "createdAt", ignore = true)
     UserEntity toEntity(RegisterRequest request);
 

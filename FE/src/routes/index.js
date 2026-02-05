@@ -6,6 +6,7 @@ import Login from '../pages/Login';
 import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword';
 import CarOwnerFleet from '../pages/CarOwnerFleet';
+import Customers from '../pages/Customers';
 
 export const routes = [
   {
@@ -47,6 +48,11 @@ export const routes = [
     path: '/owner/fleet',
     element: <CarOwnerFleet />,
     name: 'Owner Fleet'
+  },
+  {
+    path: '/admin/customers',
+    element: <Customers />,
+    name: 'Customers'
   }
 ];
 

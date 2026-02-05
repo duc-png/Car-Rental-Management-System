@@ -5,22 +5,22 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class UserResponse {
-
-    private Long id;
+public class CustomerResponse {
+    private Integer id;
     private String fullName;
     private String email;
     private String phone;
     private String licenseNumber;
     private String address;
-    private Boolean isVerified;
     private Boolean isActive;
     private Instant createdAt;
-    private String roleId; // Changed from roles to roleId
+    private Long totalBookings;
+    private BigDecimal totalRevenue;
 }
