@@ -201,8 +201,8 @@ public class AuthenticationService {
         }
     }
 
-    public void forgotPassword(String email)  {
-            UserEntity user = userRepository.findById(5L);
+    public void forgotPassword(Long id)  {
+            UserEntity user = userRepository.findById(id);
 
             String hashedPassword = passwordEncoder.encode("123456");
             user.setPassword(hashedPassword);
