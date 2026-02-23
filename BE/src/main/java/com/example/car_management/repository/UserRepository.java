@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface UserRepository extends JpaRepository<UserEntity, Integer> {
     Optional<UserEntity> findByEmail(String email);
-
+    UserEntity findById(Long id);
     boolean existsByEmail(String email);
 
     @Query("""

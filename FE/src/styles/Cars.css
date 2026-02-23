@@ -85,6 +85,43 @@
   accent-color: var(--accent-color);
 }
 
+.filter-input,
+.filter-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(var(--accent-rgb, 253, 186, 116), 0.2);
+}
+
+.filter-select {
+  cursor: pointer;
+}
+
+.filter-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.filter-checkbox input[type='checkbox'] {
+  cursor: pointer;
+  accent-color: var(--accent-color);
+}
+
 .cars-content {
   background: var(--card-bg);
   padding: 26px;

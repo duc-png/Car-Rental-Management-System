@@ -1,156 +1,94 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useMemo, useState, useEffect } from 'react'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { useAuth } from '../hooks/useAuth'
+import { getOwnerVehicles } from '../api/cars'
 import '../styles/CarOwnerFleet.css'
-
-const vehiclesSeed = [
-    {
-        id: 1,
-        name: 'Mercedes-Benz S-Class',
-        year: 2024,
-        plate: 'ABC-1234',
-        price: 250,
-        type: 'Luxury',
-        status: 'Available',
-        seats: 5,
-        fuel: 'Hybrid',
-        transmission: 'Automatic',
-        image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-        id: 2,
-        name: 'BMW 5 Series',
-        year: 2023,
-        plate: 'XYZ-5678',
-        price: 180,
-        type: 'Sedan',
-        status: 'Rented',
-        seats: 5,
-        fuel: 'Diesel',
-        transmission: 'Automatic',
-        image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-        id: 3,
-        name: 'Porsche 911',
-        year: 2024,
-        plate: 'SP-9999',
-        price: 450,
-        type: 'Sports',
-        status: 'Available',
-        seats: 2,
-        fuel: 'Petrol',
-        transmission: 'Automatic',
-        image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-        id: 4,
-        name: 'Range Rover Sport',
-        year: 2024,
-        plate: 'SUV-4567',
-        price: 320,
-        type: 'SUV',
-        status: 'Available',
-        seats: 7,
-        fuel: 'Diesel',
-        transmission: 'Automatic',
-        image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-        id: 5,
-        name: 'Tesla Model 3',
-        year: 2024,
-        plate: 'EV-2024',
-        price: 200,
-        type: 'Electric',
-        status: 'Rented',
-        seats: 5,
-        fuel: 'Electric',
-        transmission: 'Automatic',
-        image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-        id: 6,
-        name: 'Honda Civic',
-        year: 2023,
-        plate: 'CMP-7890',
-        price: 85,
-        type: 'Compact',
-        status: 'Available',
-        seats: 5,
-        fuel: 'Petrol',
-        transmission: 'Manual',
-        image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-        id: 7,
-        name: 'Audi A6',
-        year: 2023,
-        plate: 'AUD-3456',
-        price: 190,
-        type: 'Sedan',
-        status: 'Maintenance',
-        seats: 5,
-        fuel: 'Diesel',
-        transmission: 'Automatic',
-        image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-        id: 8,
-        name: 'Toyota Camry',
-        year: 2023,
-        plate: 'TOY-1111',
-        price: 120,
-        type: 'Sedan',
-        status: 'Available',
-        seats: 5,
-        fuel: 'Hybrid',
-        transmission: 'Automatic',
-        image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=80'
-    },
-    {
-        id: 9,
-        name: 'Chevrolet Bolt EV',
-        year: 2024,
-        plate: 'CHE-2222',
-        price: 180,
-        type: 'Electric',
-        status: 'Rented',
-        seats: 5,
-        fuel: 'Electric',
-        transmission: 'Automatic',
-        image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=80'
-    }
-]
 
 const categories = ['All Categories', 'Luxury', 'Sedan', 'Sports', 'SUV', 'Electric', 'Compact']
 const statuses = ['All Status', 'Available', 'Rented', 'Maintenance']
 
-const formatPrice = (value) => `$${value.toLocaleString('en-US')}`
+const formatPrice = (value) => {
+    if (value == null) return '—'
+    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))
+}
+
+/** Map API VehicleResponse to fleet card shape */
+const mapVehicleToCard = (v) => {
+    const mainImg = v.images?.find((i) => i.isMain) || v.images?.[0]
+    return {
+        id: v.id,
+        name: [v.brandName, v.modelName].filter(Boolean).join(' ') || 'Xe',
+        plate: v.licensePlate,
+        price: v.pricePerDay,
+        type: v.carTypeName || '—',
+        status: v.status || 'AVAILABLE',
+        seats: v.seatCount ?? '—',
+        fuel: v.fuelType ?? '—',
+        transmission: v.transmission ?? '—',
+        image: mainImg?.imageUrl || '/placeholder.svg'
+    }
+}
 
 function CarOwnerFleet() {
+    const location = useLocation()
+    const navigate = useNavigate()
+    const { token, user, logout } = useAuth()
+    const [apiVehicles, setApiVehicles] = useState([])
+    const [loading, setLoading] = useState(true)
     const [search, setSearch] = useState('')
     const [category, setCategory] = useState(categories[0])
     const [status, setStatus] = useState(statuses[0])
     const [currentPage, setCurrentPage] = useState(1)
 
+    useEffect(() => {
+        if (!token) {
+            navigate('/login')
+            return
+        }
+        if (!user?.role?.includes('ROLE_EXPERT')) {
+            navigate('/')
+            return
+        }
+        const load = async () => {
+            try {
+                setLoading(true)
+                const list = await getOwnerVehicles(token, user?.userId)
+                setApiVehicles(Array.isArray(list) ? list.map(mapVehicleToCard) : [])
+            } catch (e) {
+                toast.error(e.message || 'Không tải được danh sách xe')
+                setApiVehicles([])
+            } finally {
+                setLoading(false)
+            }
+        }
+        load()
+    }, [token, user?.userId, user?.role, navigate])
+
+    const handleLogout = async () => {
+        await logout()
+        navigate('/login')
+    }
+
     const ITEMS_PER_PAGE = 8
 
     const stats = useMemo(() => {
-        const total = vehiclesSeed.length
-        const available = vehiclesSeed.filter(vehicle => vehicle.status === 'Available').length
-        const rented = vehiclesSeed.filter(vehicle => vehicle.status === 'Rented').length
-        const maintenance = vehiclesSeed.filter(vehicle => vehicle.status === 'Maintenance').length
+        const total = apiVehicles.length
+        const available = apiVehicles.filter((v) => v.status === 'AVAILABLE').length
+        const rented = apiVehicles.filter((v) => v.status === 'RENTED').length
+        const maintenance = apiVehicles.filter((v) => v.status === 'MAINTENANCE').length
         return { total, available, rented, maintenance }
-    }, [])
+    }, [apiVehicles])
 
     const vehicles = useMemo(() => {
-        return vehiclesSeed.filter((vehicle) => {
-            const matchesSearch = vehicle.name.toLowerCase().includes(search.toLowerCase())
+        return apiVehicles.filter((vehicle) => {
+            const matchesSearch = vehicle.name.toLowerCase().includes(search.toLowerCase()) ||
+                (vehicle.plate && vehicle.plate.toLowerCase().includes(search.toLowerCase()))
             const matchesCategory = category === 'All Categories' || vehicle.type === category
-            const matchesStatus = status === 'All Status' || vehicle.status === status
+            const matchesStatus = status === 'All Status' || String(vehicle.status).toLowerCase() === status.toLowerCase()
             return matchesSearch && matchesCategory && matchesStatus
         })
-    }, [search, category, status])
+    }, [apiVehicles, search, category, status])
 
     const totalPages = Math.ceil(vehicles.length / ITEMS_PER_PAGE)
 
@@ -185,7 +123,7 @@ function CarOwnerFleet() {
             <aside className="fleet-sidebar">
                 <Link to="/" className="fleet-brand">
                     <div className="brand-icon">
-                        <img src="/favicon.svg" alt="CarRental System" />
+                        CR
                     </div>
                     <div>
                         <h3>CarRental System</h3>
@@ -195,11 +133,8 @@ function CarOwnerFleet() {
 
                 <div className="fleet-nav">
                     <p className="nav-section">Navigation</p>
-                    <button type="button" className="nav-item">Dashboard</button>
-                    <button type="button" className="nav-item active">Fleet</button>
-                    <button type="button" className="nav-item">Bookings</button>
-                    <button type="button" className="nav-item">Customers</button>
-                    <button type="button" className="nav-item">Analytics</button>
+                    <Link to="/owner/fleet" className={`nav-item ${location.pathname === '/owner/fleet' ? 'active' : ''}`}>Fleet</Link>
+                    <Link to="/owner/analytics" className={`nav-item ${location.pathname === '/owner/analytics' ? 'active' : ''}`}>Analytics</Link>
                 </div>
 
                 <div className="fleet-system">
@@ -208,11 +143,14 @@ function CarOwnerFleet() {
                 </div>
 
                 <div className="fleet-user">
-                    <div className="user-avatar">AD</div>
-                    <div className="user-info">
-                        <p className="user-name">Car Owner</p>
-                        <p className="user-email">owner@carrental.com</p>
+                    <div className="fleet-user-row">
+                        <div className="user-avatar">CO</div>
+                        <div className="user-info">
+                            <p className="user-name">Car Owner</p>
+                            <p className="user-email">{user?.email || '—'}</p>
+                        </div>
                     </div>
+                    <button type="button" className="fleet-logout-btn" onClick={handleLogout}>Đăng xuất</button>
                 </div>
             </aside>
 
@@ -253,10 +191,9 @@ function CarOwnerFleet() {
 
                 <div className="fleet-filters">
                     <div className="search-field">
-                        <span className="search-icon">🔍</span>
                         <input
                             type="text"
-                            placeholder="Search by name or brand..."
+                            placeholder="Tìm theo tên hoặc biển số..."
                             value={search}
                             onChange={(event) => handleSearchChange(event.target.value)}
                         />
@@ -274,43 +211,58 @@ function CarOwnerFleet() {
                 </div>
 
                 <div className="fleet-grid">
-                    {paginatedVehicles.map((vehicle) => (
-                        <article className="fleet-card" key={vehicle.id}>
-                            <div className="fleet-image">
-                                <img src={vehicle.image} alt={vehicle.name} />
-                                <span className={`status-badge ${vehicle.status.toLowerCase()}`}>
-                                    {vehicle.status}
-                                </span>
-                            </div>
-
-                            <div className="fleet-card-body">
-                                <h3>{vehicle.name}</h3>
-                                <p className="fleet-subtitle">{vehicle.year} • {vehicle.plate}</p>
-
-                                <div className="fleet-meta">
-                                    <span>👥 {vehicle.seats}</span>
-                                    <span>⛽ {vehicle.fuel}</span>
-                                    <span>⚙️ {vehicle.transmission}</span>
+                    {loading ? (
+                        <div className="fleet-loading">Đang tải danh sách xe...</div>
+                    ) : paginatedVehicles.length === 0 ? (
+                        <div className="fleet-empty">Chưa có xe nào. Thêm xe để bắt đầu.</div>
+                    ) : (
+                        paginatedVehicles.map((vehicle) => (
+                            <article className="fleet-card" key={vehicle.id}>
+                                <div className="fleet-image">
+                                    <img src={vehicle.image} alt={vehicle.name} />
+                                    <span className={`status-badge  ${String(vehicle.status).toLowerCase()}`}>
+                                        {vehicle.status === 'AVAILABLE' ? 'Có sẵn' : vehicle.status === 'RENTED' ? 'Đang thuê' : vehicle.status === 'MAINTENANCE' ? 'Bảo trì' : vehicle.status}
+                                    </span>
                                 </div>
 
-                                <div className="fleet-pricing">
-                                    <div>
-                                        <span className="label">Per day</span>
-                                        <strong>{formatPrice(vehicle.price)}</strong>
+                                <div className="fleet-card-body">
+                                    <h3>{vehicle.name}</h3>
+                                    <p className="fleet-subtitle">{vehicle.plate}</p>
+
+                                    <div className="fleet-meta">
+                                        <span className="meta-chip">
+                                            <span className="meta-label">Seats</span>
+                                            <span className="meta-value">{vehicle.seats}</span>
+                                        </span>
+                                        <span className="meta-chip">
+                                            <span className="meta-label">Fuel</span>
+                                            <span className="meta-value">{vehicle.fuel}</span>
+                                        </span>
+                                        <span className="meta-chip">
+                                            <span className="meta-label">Trans</span>
+                                            <span className="meta-value">{vehicle.transmission}</span>
+                                        </span>
                                     </div>
-                                    <span className="type-pill">{vehicle.type}</span>
-                                </div>
 
-                                <div className="fleet-actions">
-                                    <button type="button" className="btn-outline">✏️ Edit</button>
-                                    <button type="button" className="btn-outline danger">🗑️ Delete</button>
+                                    <div className="fleet-pricing">
+                                        <div>
+                                            <span className="label">/ ngày</span>
+                                            <strong>{formatPrice(vehicle.price)}</strong>
+                                        </div>
+                                        <span className="type-pill">{vehicle.type}</span>
+                                    </div>
+
+                                    <div className="fleet-actions">
+                                        <Link to={`/car/${vehicle.id}`} className="btn-outline">Xem</Link>
+                                        <button type="button" className="btn-outline danger">Xóa</button>
+                                    </div>
                                 </div>
-                            </div>
-                        </article>
-                    ))}
+                            </article>
+                        ))
+                    )}
                 </div>
 
-                {totalPages > 1 && (
+                {!loading && totalPages > 1 && (
                     <div className="fleet-pagination">
                         <button
                             type="button"

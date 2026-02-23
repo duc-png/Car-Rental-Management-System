@@ -46,11 +46,23 @@ function Navbar() {
                 </Link>
               </li>
               {user?.role?.includes('ROLE_EXPERT') && (
-                <li>
-                  <Link to="/manage-rentals" onClick={() => setIsMobileMenuOpen(false)}>
-                    Manage Rentals
-                  </Link>
-                </li>
+                <>
+                  <li>
+                    <Link to="/owner/fleet" onClick={() => setIsMobileMenuOpen(false)}>
+                      Owner Dashboard
+                    </Link>
+                  </li>
+                  {/* <li>
+                    <Link to="/owner/analytics" onClick={() => setIsMobileMenuOpen(false)}>
+                      Owner Analytics
+                    </Link>
+                  </li> */}
+                  <li>
+                    <Link to="/manage-rentals" onClick={() => setIsMobileMenuOpen(false)}>
+                      Manage Rentals
+                    </Link>
+                  </li>
+                </>
               )}
             </>
           )}

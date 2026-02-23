@@ -5,19 +5,25 @@ import VehicleCard from '../components/VehicleCard'
 import { getCarsList } from '../api/cars'
 import '../styles/Cars.css'
 
+const DEFAULT_FILTERS = {
+  search: '',
+  brand: 'all',
+  model: 'all',
+  type: 'all',
+  transmission: 'all',
+  fuel: 'all',
+  seats: 'all',
+  city: 'all',
+  priceMin: '',
+  priceMax: '',
+  onlyAvailable: true
+}
+
 function Cars() {
   const [cars, setCars] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  const [filters, setFilters] = useState({
-    search: '',
-    type: 'all',
-    transmission: 'all',
-    fuel: 'all',
-    seats: 'all',
-    city: 'all'
-  })
+  const [filters, setFilters] = useState(DEFAULT_FILTERS)
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -36,44 +42,82 @@ function Cars() {
     fetchCars()
   }, [])
 
-  const availableCars = useMemo(
-    () => (cars || []).filter(car => car.status === 'AVAILABLE'),
-    [cars]
-  )
+  const carsByAvailability = useMemo(() => {
+    const list = cars || []
+    if (filters.onlyAvailable) return list.filter(car => car.status === 'AVAILABLE')
+    return list
+  }, [cars, filters.onlyAvailable])
 
-  const optionFromField = (field) => {
-    const values = Array.from(new Set(availableCars.map(car => car[field]).filter(Boolean)))
-    return values
+  const optionFromField = (field, sourceList) => {
+    const list = sourceList || carsByAvailability
+    const values = Array.from(new Set(list.map(car => car[field]).filter(Boolean)))
+    return values.sort((a, b) => String(a).localeCompare(String(b)))
   }
 
+  const brandOptions = ['all', ...optionFromField('brandName')]
   const typeOptions = ['all', ...optionFromField('carTypeName')]
   const transmissionOptions = ['all', ...optionFromField('transmission')]
   const fuelOptions = ['all', ...optionFromField('fuelType')]
   const seatOptions = ['all', ...optionFromField('seatCount')]
   const cityOptions = ['all', ...optionFromField('city')]
 
+  const modelOptions = useMemo(() => {
+    const list = filters.brand === 'all'
+      ? carsByAvailability
+      : carsByAvailability.filter(car => car.brandName === filters.brand)
+    return ['all', ...optionFromField('modelName', list)]
+  }, [carsByAvailability, filters.brand])
+
   const filteredCars = useMemo(() => {
     const text = filters.search.trim().toLowerCase()
-    return availableCars.filter(car => {
-      const matchesText = !text || `${car.brandName} ${car.modelName}`.toLowerCase().includes(text)
+    const priceMin = filters.priceMin === '' ? null : Number(filters.priceMin)
+    const priceMax = filters.priceMax === '' ? null : Number(filters.priceMax)
+
+    return carsByAvailability.filter(car => {
+      const matchesText = !text || `${car.brandName || ''} ${car.modelName || ''}`.toLowerCase().includes(text)
+      const matchesBrand = filters.brand === 'all' || car.brandName === filters.brand
+      const matchesModel = filters.model === 'all' || car.modelName === filters.model
       const matchesType = filters.type === 'all' || car.carTypeName === filters.type
       const matchesTransmission = filters.transmission === 'all' || car.transmission === filters.transmission
       const matchesFuel = filters.fuel === 'all' || car.fuelType === filters.fuel
       const matchesSeats = filters.seats === 'all' || String(car.seatCount) === String(filters.seats)
       const matchesCity = filters.city === 'all' || car.city === filters.city
 
-      return matchesText && matchesType && matchesTransmission && matchesFuel && matchesSeats && matchesCity
-    })
-  }, [availableCars, filters])
+      const price = car.pricePerDay != null ? Number(car.pricePerDay) : null
+      const matchesPriceMin = priceMin == null || (price != null && price >= priceMin)
+      const matchesPriceMax = priceMax == null || (price != null && price <= priceMax)
 
-  const totalAvailable = availableCars.length
+      return matchesText && matchesBrand && matchesModel && matchesType &&
+        matchesTransmission && matchesFuel && matchesSeats && matchesCity &&
+        matchesPriceMin && matchesPriceMax
+    })
+  }, [carsByAvailability, filters])
+
+  const totalCount = cars?.length ?? 0
+  const availableCount = (cars || []).filter(c => c.status === 'AVAILABLE').length
 
   const handleChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }))
+    setFilters(prev => {
+      const next = { ...prev, [key]: value }
+      if (key === 'brand') next.model = 'all'
+      return next
+    })
+  }
+
+  const handlePriceChange = (key, value) => {
+    const rawValue = value.replace(/\D/g, '')
+    setFilters(prev => ({ ...prev, [key]: rawValue }))
+  }
+
+  const formatPriceDisplay = (value) => {
+    if (value === '' || value == null) return ''
+    const digits = String(value).replace(/\D/g, '')
+    if (!digits) return ''
+    return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
   }
 
   const clearFilters = () => {
-    setFilters({ search: '', type: 'all', transmission: 'all', fuel: 'all', seats: 'all', city: 'all' })
+    setFilters({ ...DEFAULT_FILTERS })
   }
 
   return (
@@ -89,15 +133,43 @@ function Cars() {
             <h3>Tìm kiếm</h3>
             <input
               type="text"
-              placeholder="Tìm theo hãng hoặc mẫu..."
+              placeholder="Hãng, mẫu xe..."
               value={filters.search}
               onChange={(e) => handleChange('search', e.target.value)}
-              style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+              className="filter-input"
             />
           </div>
 
           <div className="filter-group">
-            <h3>Loại xe</h3>
+            <h3>Hãng xe</h3>
+            <select
+              value={filters.brand}
+              onChange={(e) => handleChange('brand', e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">Tất cả</option>
+              {brandOptions.filter(b => b !== 'all').map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <h3>Mẫu xe</h3>
+            <select
+              value={filters.model}
+              onChange={(e) => handleChange('model', e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">Tất cả</option>
+              {modelOptions.filter(m => m !== 'all').map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <h3>Loại xe (danh mục)</h3>
             {typeOptions.map(opt => (
               <label key={opt}>
                 <input
@@ -171,6 +243,39 @@ function Cars() {
             ))}
           </div>
 
+          <div className="filter-group">
+            <h3>Giá thuê / ngày (VNĐ)</h3>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="Từ (VD: 200.000)"
+              value={formatPriceDisplay(filters.priceMin)}
+              onChange={(e) => handlePriceChange('priceMin', e.target.value)}
+              className="filter-input"
+            />
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="Đến (VD: 1.000.000)"
+              value={formatPriceDisplay(filters.priceMax)}
+              onChange={(e) => handlePriceChange('priceMax', e.target.value)}
+              className="filter-input"
+              style={{ marginTop: '8px' }}
+            />
+          </div>
+
+          <div className="filter-group">
+            <h3>Trạng thái</h3>
+            <label className="filter-checkbox">
+              <input
+                type="checkbox"
+                checked={filters.onlyAvailable}
+                onChange={(e) => handleChange('onlyAvailable', e.target.checked)}
+              />
+              Chỉ xe còn trống (sẵn có)
+            </label>
+          </div>
+
           <button
             onClick={clearFilters}
             className="clear-btn full-width"
@@ -187,9 +292,12 @@ function Cars() {
             <>
               <div className="cars-toolbar">
                 <div>
-                  {/* <p className="toolbar-kicker">Chỉ hiển thị xe còn trống</p> */}
-                  {/* <h3 className="toolbar-title">{filteredCars.length} xe phù hợp</h3> */}
-                  {/* <p className="toolbar-sub">Tổng {totalAvailable} xe khả dụng trên hệ thống</p> */}
+                  <h3 className="toolbar-title">{filteredCars.length} xe phù hợp</h3>
+                  <p className="toolbar-sub">
+                    {filters.onlyAvailable
+                      ? `${availableCount} xe khả dụng trên hệ thống`
+                      : `Tổng ${totalCount} xe (${availableCount} khả dụng)`}
+                  </p>
                 </div>
                 <button className="clear-btn" onClick={clearFilters}>Xóa bộ lọc</button>
               </div>

@@ -6,8 +6,8 @@ spring:
   datasource:
     url: "jdbc:mysql://localhost:3306/car_manager"
     driverClassName: "com.mysql.cj.jdbc.Driver"
-    username: root
-    password: 12345678
+    username: sa
+    password: 123
   jpa:
     hibernate:
       ddl-auto: update

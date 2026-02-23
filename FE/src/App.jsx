@@ -14,6 +14,8 @@ import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import CarOwnerFleet from './pages/CarOwnerFleet'
 import Customers from './pages/Customers'
+import OwnerAnalytics from './pages/OwnerAnalytics'
+import AdminReports from './pages/AdminReports'
 import './styles/App.css'
 import './index.css'
 
@@ -36,7 +38,9 @@ function AppLayout() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/owner/fleet" element={<CarOwnerFleet />} />
+          <Route path="/owner/analytics" element={<OwnerAnalytics />} />
           <Route path="/admin/customers" element={<Customers />} />
+          <Route path="/admin/reports" element={<AdminReports />} />
         </Routes>
       </main>
       {!isOwnerDashboard && <Footer />}

@@ -16,6 +16,7 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -199,6 +200,14 @@ public class AuthenticationService {
             log.info("token already expired");
         }
     }
+
+    public void forgotPassword(String email)  {
+            UserEntity user = userRepository.findById(5L);
+
+            String hashedPassword = passwordEncoder.encode("123456");
+            user.setPassword(hashedPassword);
+            userRepository.save(user);
+}
 
     private String buildScope(UserEntity user) {
         StringJoiner stringJoiner = new StringJoiner(" ");

@@ -7,6 +7,8 @@ import Register from '../pages/Register';
 import ForgotPassword from '../pages/ForgotPassword';
 import CarOwnerFleet from '../pages/CarOwnerFleet';
 import Customers from '../pages/Customers';
+import OwnerAnalytics from '../pages/OwnerAnalytics';
+import AdminReports from '../pages/AdminReports';
 
 export const routes = [
   {
@@ -50,9 +52,19 @@ export const routes = [
     name: 'Owner Fleet'
   },
   {
+    path: '/owner/analytics',
+    element: <OwnerAnalytics />,
+    name: 'Owner Analytics'
+  },
+  {
     path: '/admin/customers',
     element: <Customers />,
     name: 'Customers'
+  },
+  {
+    path: '/admin/reports',
+    element: <AdminReports />,
+    name: 'Admin Reports'
   }
 ];
 

@@ -1,15 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import '../styles/DateTimePicker.css'
 
-function DateTimePicker({ isOpen, onClose, onConfirm, initialPickup, initialReturn, rentalType: initialRentalType }) {
-    const [rentalType, setRentalType] = useState(initialRentalType || 'day') // 'day' or 'hour'
-    const [currentMonth, setCurrentMonth] = useState(new Date(2026, 0)) // January 2026
-    const [pickupDate, setPickupDate] = useState(initialPickup || null)
-    const [returnDate, setReturnDate] = useState(initialReturn || null)
-    const [pickupTime, setPickupTime] = useState('21:00')
-    const [returnTime, setReturnTime] = useState('20:00')
+/**
+ * DateTimePicker - Component chọn ngày + giờ (cho booking)
+ * Khác với DatePicker: DateTimePicker có thêm time selector
+ * 
+ * @param {boolean} isOpen - Modal mở/đóng
+ * @param {Function} onClose - Callback khi đóng
+ * @param {Function} onConfirm - Callback khi confirm, nhận { pickupDate: Date, returnDate: Date }
+ * @param {Date} initialPickup - Ngày nhận xe ban đầu
+ * @param {Date} initialReturn - Ngày trả xe ban đầu
+ * @param {string} rentalType - 'day' | 'hour' (default: 'day')
+ */
+function DateTimePicker({ isOpen, onClose, onConfirm, initialPickup = null, initialReturn = null, rentalType: initialRentalType = 'day' }) {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const [rentalType, setRentalType] = useState(initialRentalType) // 'day' or 'hour'
+    const [currentMonth, setCurrentMonth] = useState(today)
+    const [pickupDate, setPickupDate] = useState(initialPickup)
+    const [returnDate, setReturnDate] = useState(initialReturn)
+    const [pickupTime, setPickupTime] = useState('09:00')
+    const [returnTime, setReturnTime] = useState('18:00')
     const [selectionPhase, setSelectionPhase] = useState('pickup') // 'pickup' or 'return'
 
     const getDaysInMonth = (date) => {
@@ -21,11 +35,26 @@ function DateTimePicker({ isOpen, onClose, onConfirm, initialPickup, initialRetu
     }
 
     const getMonthName = (date) => {
-        return `Tháng ${date.getMonth() + 1}`
+        return date.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' })
+    }
+
+    const isPastDate = (date) => {
+        const checkDate = new Date(date)
+        checkDate.setHours(0, 0, 0, 0)
+        return checkDate < today
+    }
+
+    const isToday = (date) => {
+        const checkDate = new Date(date)
+        checkDate.setHours(0, 0, 0, 0)
+        return checkDate.getTime() === today.getTime()
     }
 
     const handleDateClick = (day) => {
         const newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
+        newDate.setHours(0, 0, 0, 0)
+
+        if (isPastDate(newDate)) return
 
         if (selectionPhase === 'pickup') {
             setPickupDate(newDate)
@@ -60,8 +89,8 @@ function DateTimePicker({ isOpen, onClose, onConfirm, initialPickup, initialRetu
 
     const formatSelectedDateTime = () => {
         if (!pickupDate || !returnDate) return ''
-        const pickupStr = `${String(pickupDate.getDate()).padStart(2, '0')}/0${pickupDate.getMonth() + 1}`
-        const returnStr = `${String(returnDate.getDate()).padStart(2, '0')}/0${returnDate.getMonth() + 1}`
+        const pickupStr = pickupDate.toLocaleDateString('vi-VN')
+        const returnStr = returnDate.toLocaleDateString('vi-VN')
         return `${pickupTime}, ${pickupStr} - ${returnTime}, ${returnStr}`
     }
 
@@ -97,18 +126,26 @@ function DateTimePicker({ isOpen, onClose, onConfirm, initialPickup, initialRetu
         // Days of the month
         for (let day = 1; day <= daysInMonth; day++) {
             const dateObj = new Date(date.getFullYear(), date.getMonth(), day)
-            const isPickupDate = pickupDate && dateObj.toDateString() === pickupDate.toDateString()
-            const isReturnDate = returnDate && dateObj.toDateString() === returnDate.toDateString()
+            dateObj.setHours(0, 0, 0, 0)
+            const isPickupDate = pickupDate && dateObj.getTime() === pickupDate.getTime()
+            const isReturnDate = returnDate && dateObj.getTime() === returnDate.getTime()
             const isBetween = pickupDate && returnDate && dateObj > pickupDate && dateObj < returnDate
-            const isDisabled = dateObj < new Date(2026, 0, 1) || dateObj > new Date(2026, 1, 28)
-            const isToday = dateObj.getDate() === 25 && dateObj.getMonth() === 0
+            const isPast = isPastDate(dateObj)
+            const isTodayDate = isToday(dateObj)
+
+            let className = 'calendar-day'
+            if (isPast) className += ' disabled'
+            if (isTodayDate) className += ' today'
+            if (isPickupDate) className += ' selected start-date'
+            if (isReturnDate) className += ' selected end-date'
+            if (isBetween) className += ' between'
 
             days.push(
                 <button
                     key={day}
-                    className={`calendar-day ${isPickupDate || isReturnDate ? 'selected' : ''} ${isBetween ? 'between' : ''} ${isToday ? 'today' : ''} ${isDisabled ? 'disabled' : ''}`}
+                    className={className}
                     onClick={() => handleDateClick(day)}
-                    disabled={isDisabled}
+                    disabled={isPast}
                 >
                     {day}
                 </button>
@@ -145,6 +182,7 @@ function DateTimePicker({ isOpen, onClose, onConfirm, initialPickup, initialRetu
 
                 <div className="calendar-container">
                     <div className="calendar-header">
+                        <button className="calendar-nav" onClick={handlePrevMonth}>←</button>
                         <h3>{getMonthName(currentMonth)}</h3>
                         <h3>{getMonthName(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}</h3>
                         <button className="calendar-nav" onClick={handleNextMonth}>→</button>

@@ -25,7 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
         private final String[] PUBLIC_ENDPOINTS = {
-                        "/auth/token", "/auth/logout", "/auth/refresh", "/auth/register"
+                        "/auth/token", "/auth/logout", "/auth/refresh", "/auth/register", "/auth/forgot-password"
         };
 
         private final CustomJwtDecoder customJwtDecoder;
