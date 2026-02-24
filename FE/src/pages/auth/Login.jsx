@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { jwtDecode } from 'jwt-decode'
+import { useAuth } from '../../hooks/useAuth'
 import '../../styles/Auth.css'
 
 function Login() {
@@ -10,6 +12,9 @@ function Login() {
     })
     const [showPassword, setShowPassword] = useState(false)
     const navigate = useNavigate()
+    const { login } = useAuth()
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target
@@ -19,12 +24,40 @@ function Login() {
         }))
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault()
-        // Xử lý đăng nhập ở đây
-        console.log('Login data:', formData)
-        // Sau khi đăng nhập thành công, chuyển hướng về trang chủ
-        navigate('/')
+        setLoading(true)
+        setError('')
+
+        try {
+            const result = await login(formData.email, formData.password)
+            if (result.success) {
+                const token = localStorage.getItem('token')
+                if (token) {
+                    try {
+                        const decoded = jwtDecode(token)
+                        const scope = decoded?.scope || ''
+                        if (scope.includes('ROLE_ADMIN')) {
+                            navigate('/admin/customers')
+                            return
+                        }
+                        if (scope.includes('ROLE_EXPERT')) {
+                            navigate('/manage-rentals')
+                            return
+                        }
+                    } catch (decodeError) {
+                        console.error('Failed to decode token:', decodeError)
+                    }
+                }
+                navigate('/')
+            } else {
+                setError(result.error)
+            }
+        } catch (err) {
+            setError(err.message || 'Login failed')
+        } finally {
+            setLoading(false)
+        }
     }
 
     return (
@@ -100,9 +133,10 @@ function Login() {
                             </Link>
                         </div>
 
-                        <button type="submit" className="btn-submit">
-                            Sign In
+                        <button type="submit" className="btn-submit" disabled={loading}>
+                            {loading ? 'Signing In...' : 'Sign In'}
                         </button>
+                        {error && <div className="error-message" style={{ textAlign: 'center', marginTop: '10px' }}>{error}</div>}
                     </form>
 
                     <div className="auth-divider">

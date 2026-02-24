@@ -6,6 +6,9 @@ import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import ForgotPassword from '../pages/auth/ForgotPassword';
 import CarOwnerFleet from '../pages/owner/CarOwnerFleet';
+import OwnerPublicProfile from '../pages/public/OwnerPublicProfile';
+import ManageRentals from '../pages/ManageRentals';
+import Customers from '../pages/Customers';
 
 export const routes = [
   {
@@ -24,9 +27,24 @@ export const routes = [
     name: 'Car Details'
   },
   {
+    path: '/cars/:id',
+    element: <CarDetails />,
+    name: 'Car Details'
+  },
+  {
+    path: '/owners/:ownerId',
+    element: <OwnerPublicProfile />,
+    name: 'Owner Profile'
+  },
+  {
     path: '/my-bookings',
     element: <MyBookings />,
     name: 'My Bookings'
+  },
+  {
+    path: '/manage-rentals',
+    element: <ManageRentals />,
+    name: 'Manage Rentals'
   },
   {
     path: '/login',
@@ -47,6 +65,11 @@ export const routes = [
     path: '/owner/fleet',
     element: <CarOwnerFleet />,
     name: 'Owner Fleet'
+  },
+  {
+    path: '/admin/customers',
+    element: <Customers />,
+    name: 'Customers'
   }
 ];
 

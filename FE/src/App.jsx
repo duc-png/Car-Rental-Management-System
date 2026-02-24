@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { Toaster } from 'sonner'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { AuthProvider } from './contexts/AuthContext'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/public/Home'
@@ -11,12 +13,14 @@ import Register from './pages/auth/Register'
 import ForgotPassword from './pages/auth/ForgotPassword'
 import CarOwnerFleet from './pages/owner/CarOwnerFleet'
 import OwnerPublicProfile from './pages/public/OwnerPublicProfile'
+import ManageRentals from './pages/ManageRentals'
+import Customers from './pages/Customers'
 import './styles/App.css'
 import './index.css'
 
 function AppLayout() {
   const location = useLocation()
-  const isOwnerDashboard = location.pathname === '/owner' || location.pathname.startsWith('/owner/')
+  const isOwnerDashboard = location.pathname.startsWith('/owner') || location.pathname.startsWith('/admin')
   const isCarDetailsPage = location.pathname.startsWith('/car/') || (location.pathname.startsWith('/cars/') && location.pathname !== '/cars')
 
   return (
@@ -30,10 +34,12 @@ function AppLayout() {
           <Route path="/cars/:id" element={<CarDetails />} />
           <Route path="/owners/:ownerId" element={<OwnerPublicProfile />} />
           <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/manage-rentals" element={<ManageRentals />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/owner/fleet" element={<CarOwnerFleet />} />
+          <Route path="/admin/customers" element={<Customers />} />
         </Routes>
       </main>
       {!isOwnerDashboard && <Footer />}
@@ -44,9 +50,12 @@ function AppLayout() {
 function App() {
   return (
     <ThemeProvider>
-      <Router>
-        <AppLayout />
-      </Router>
+      <AuthProvider>
+        <Router>
+          <AppLayout />
+          <Toaster richColors position="top-right" />
+        </Router>
+      </AuthProvider>
     </ThemeProvider>
   )
 }

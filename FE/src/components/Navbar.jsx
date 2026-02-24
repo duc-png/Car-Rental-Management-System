@@ -3,11 +3,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
+import { useAuth } from '../hooks/useAuth'
 import '../styles/Navbar.css'
 
 function Navbar({ sticky = true }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
+  const { isAuthenticated, user, logout } = useAuth()
+
 
   return (
     <nav className={`navbar ${sticky ? '' : 'non-sticky'}`.trim()}>
@@ -35,11 +38,22 @@ function Navbar({ sticky = true }) {
               Cars
             </Link>
           </li>
-          {/* <li>
-            <Link to="/my-bookings" onClick={() => setIsMobileMenuOpen(false)}>
-              My Bookings
-            </Link>
-          </li> */}
+          {isAuthenticated && (
+            <>
+              <li>
+                <Link to="/my-bookings" onClick={() => setIsMobileMenuOpen(false)}>
+                  My Bookings
+                </Link>
+              </li>
+              {user?.role?.includes('ROLE_EXPERT') && (
+                <li>
+                  <Link to="/manage-rentals" onClick={() => setIsMobileMenuOpen(false)}>
+                    Manage Rentals
+                  </Link>
+                </li>
+              )}
+            </>
+          )}
           <li>
             <a href="#search" onClick={() => setIsMobileMenuOpen(false)}>
               About us
@@ -55,12 +69,24 @@ function Navbar({ sticky = true }) {
           >
             {theme === 'light' ? '🌙' : '☀️'}
           </button>
-          <Link to="/login" className="btn-login">
-            Login
-          </Link>
-          <Link to="/register" className="btn-register">
-            Sign Up
-          </Link>
+
+          {isAuthenticated ? (
+            <div className="nav-user-menu">
+              <span className="user-name">Hi, {user?.fullName || user?.sub || 'User'}</span>
+              <button onClick={logout} className="btn-logout">
+                Logout
+              </button>
+            </div>
+          ) : (
+            <>
+              <Link to="/login" className="btn-login">
+                Login
+              </Link>
+              <Link to="/register" className="btn-register">
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
