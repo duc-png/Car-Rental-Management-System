@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom';
 import { getCarById, getCarsList } from '../../api/cars';
 import { getOwnerById } from '../../api/owners';
 import MapModal from '../../components/MapModal';
+import DeliveryLocationModal from '../../components/DeliveryLocationModal';
+import CustomAddressModal from '../../components/CustomAddressModal';
 import '../../styles/CarDetails.css';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -84,6 +86,59 @@ const getMonthGrid = (baseMonthDate) => {
     };
 };
 
+const formatVndNumber = (value) => {
+    const numeric = Number(value || 0);
+    return Math.round(numeric).toLocaleString('vi-VN');
+};
+
+const formatVndK = (value) => {
+    const numeric = Number(value || 0);
+    if (!Number.isFinite(numeric) || numeric <= 0) return '0K';
+    const inThousands = Math.round(numeric / 1_000);
+    return `${inThousands.toLocaleString('vi-VN')}K`;
+};
+
+const geocodeAddress = async (query, signal) => {
+    const q = (query || '').trim();
+    if (!q) return null;
+
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&addressdetails=1&limit=1&countrycodes=vn`;
+    const response = await fetch(url, {
+        signal,
+        headers: {
+            'Accept-Language': 'vi'
+        }
+    });
+
+    if (!response.ok) return null;
+    const data = await response.json();
+    const first = Array.isArray(data) ? data[0] : null;
+    if (!first?.lat || !first?.lon) return null;
+
+    return {
+        lat: Number(first.lat),
+        lon: Number(first.lon),
+        label: first.display_name || q
+    };
+};
+
+const haversineDistanceKm = (a, b) => {
+    if (!a?.lat || !a?.lon || !b?.lat || !b?.lon) return 0;
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const R = 6371;
+
+    const dLat = toRad(b.lat - a.lat);
+    const dLon = toRad(b.lon - a.lon);
+    const lat1 = toRad(a.lat);
+    const lat2 = toRad(b.lat);
+
+    const sinDLat = Math.sin(dLat / 2);
+    const sinDLon = Math.sin(dLon / 2);
+    const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
+    const c = 2 * Math.asin(Math.min(1, Math.sqrt(h)));
+    return R * c;
+};
+
 export default function CarDetails() {
     const { id } = useParams();
     const [car, setCar] = useState(null);
@@ -93,13 +148,21 @@ export default function CarDetails() {
     const [error, setError] = useState(null);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
-    const [pickupMode, setPickupMode] = useState('delivery');
+    const [pickupMode, setPickupMode] = useState('self');
     const [enableExtraInsurance, setEnableExtraInsurance] = useState(false);
     const [pickupTime, setPickupTime] = useState('21:00');
     const [returnTime, setReturnTime] = useState('20:00');
     const [showSectionNav, setShowSectionNav] = useState(false);
     const [activeSection, setActiveSection] = useState('specs');
     const [isMapModalOpen, setIsMapModalOpen] = useState(false);
+    const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
+    const [isCustomAddressModalOpen, setIsCustomAddressModalOpen] = useState(false);
+    const [deliveryAddress, setDeliveryAddress] = useState('');
+    const [deliveryAddressLabel, setDeliveryAddressLabel] = useState('');
+    const [carCoords, setCarCoords] = useState(null);
+    const [deliveryCoords, setDeliveryCoords] = useState(null);
+    const [deliveryDistanceKm, setDeliveryDistanceKm] = useState(0);
+    const [deliveryFeeVnd, setDeliveryFeeVnd] = useState(0);
 
     const specsRef = useRef(null);
     const docsRef = useRef(null);
@@ -114,8 +177,53 @@ export default function CarDetails() {
     const currentMonthStart = useMemo(() => new Date(today.getFullYear(), today.getMonth(), 1), [today]);
 
     useEffect(() => {
+        setPickupMode('self');
+        setIsDeliveryModalOpen(false);
+        setIsCustomAddressModalOpen(false);
         fetchCarDetails();
     }, [id]);
+
+    useEffect(() => {
+        if (!car?.id) return;
+        const controller = new AbortController();
+
+        const run = async () => {
+            try {
+                const result = await geocodeAddress([car.addressDetail, car.district, car.city].filter(Boolean).join(', '), controller.signal);
+                if (result) {
+                    setCarCoords({ lat: result.lat, lon: result.lon });
+                    return;
+                }
+
+                const fallback = await geocodeAddress([car.district, car.city].filter(Boolean).join(', '), controller.signal);
+                if (fallback) {
+                    setCarCoords({ lat: fallback.lat, lon: fallback.lon });
+                    return;
+                }
+
+                setCarCoords(null);
+            } catch (error) {
+                if (error?.name === 'AbortError') return;
+                setCarCoords(null);
+            }
+        };
+
+        run();
+        return () => controller.abort();
+    }, [car?.id, car?.addressDetail, car?.district, car?.city]);
+
+    useEffect(() => {
+        if (!carCoords || !deliveryCoords) {
+            setDeliveryDistanceKm(0);
+            setDeliveryFeeVnd(0);
+            return;
+        }
+
+        const rawKm = haversineDistanceKm(carCoords, deliveryCoords);
+        const roundedKm = Math.max(0, Math.round(rawKm));
+        setDeliveryDistanceKm(roundedKm);
+        setDeliveryFeeVnd(roundedKm * 20000);
+    }, [carCoords, deliveryCoords]);
 
     const fetchCarDetails = async () => {
         try {
@@ -592,13 +700,16 @@ export default function CarDetails() {
                     </div>
 
                     <aside className="booking-sidebar">
-                        <div className="booking-card">
+                        <div className="detail-booking-card">
                             <div className="price-head-row">
-                                <span className="old-price">{oldPrice.toLocaleString('vi-VN')} ₫</span>
+                                <span className="old-price">{formatVndK(oldPrice)}</span>
                                 <span className="discount-pill">-{discountPercent}%</span>
                             </div>
 
-                            <div className="price-number">{pricePerDay.toLocaleString('vi-VN')} ₫<small>/ngày</small></div>
+                            <div className="price-number">
+                                <span className="price-value">{formatVndK(pricePerDay)}</span>
+                                <small>/ngày</small>
+                            </div>
 
                             <button type="button" className="booking-time-box" onClick={() => setIsTimeModalOpen(true)}>
                                 <div>
@@ -629,7 +740,13 @@ export default function CarDetails() {
                                     <strong>Miễn phí</strong>
                                 </label>
 
-                                <label className={`pickup-option ${pickupMode === 'delivery' ? 'active' : ''}`}>
+                                <label
+                                    className={`pickup-option ${pickupMode === 'delivery' ? 'active' : ''}`}
+                                    onClick={() => {
+                                        setPickupMode('delivery');
+                                        setIsDeliveryModalOpen(true);
+                                    }}
+                                >
                                     <input
                                         type="radio"
                                         name="pickupMode"
@@ -638,7 +755,7 @@ export default function CarDetails() {
                                     />
                                     <div>
                                         <span>Tôi muốn được giao xe tận nơi</span>
-                                        <b>{car.city || 'Nội thành'}</b>
+                                        <b>{deliveryAddressLabel || car.city || 'Nội thành'}</b>
                                     </div>
                                     <strong>Miễn phí</strong>
                                 </label>
@@ -648,9 +765,9 @@ export default function CarDetails() {
 
                             <div className="fee-breakdown">
                                 <h4>Chi tiết giá</h4>
-                                <div><span>Đơn giá thuê xe</span><b>{rentalCost.toLocaleString('vi-VN')} ₫</b></div>
-                                <div><span>Bảo hiểm thuê xe</span><b>{insuranceFee.toLocaleString('vi-VN')} ₫</b></div>
-                                <div><span>Phí dịch vụ</span><b>{bookingFee.toLocaleString('vi-VN')} ₫</b></div>
+                                <div><span>Đơn giá thuê</span><b>{formatVndNumber(pricePerDay)} /ngày</b></div>
+                                <div><span>Bảo hiểm thuê xe</span><b>{formatVndNumber(insuranceFeePerDay)} /ngày</b></div>
+                                <div><span>Phí dịch vụ</span><b>{formatVndNumber(bookingFeePerDay)} /ngày</b></div>
                                 <label className="extra-insurance">
                                     <input
                                         type="checkbox"
@@ -658,11 +775,12 @@ export default function CarDetails() {
                                         onChange={(e) => setEnableExtraInsurance(e.target.checked)}
                                     />
                                     <span>Bảo hiểm bổ sung</span>
-                                    <b>{extraInsuranceFee.toLocaleString('vi-VN')} ₫</b>
+                                    <b>{formatVndNumber(enableExtraInsurance ? extraInsurancePerDay : 0)} /ngày</b>
                                 </label>
-                                <div><span>Tổng cộng</span><b>{subtotalPrice.toLocaleString('vi-VN')} ₫ x {selectedDays} ngày</b></div>
-                                <div><span>Chương trình giảm giá</span><b>-{promoDiscount.toLocaleString('vi-VN')} ₫</b></div>
-                                <div className="total"><span>Thành tiền</span><b>{totalPrice.toLocaleString('vi-VN')} ₫</b></div>
+                                <div><span>Tổng cộng</span><b>{formatVndNumber(subtotalPrice)} x {selectedDays} ngày</b></div>
+                                <div><span>Chương trình giảm giá</span><b>-{formatVndNumber(promoDiscount)}</b></div>
+                                <div className="promo-code"><span>Mã khuyến mãi</span><b>›</b></div>
+                                <div className="total"><span>Thành tiền</span><b>{formatVndNumber(totalPrice)}đ</b></div>
                             </div>
                         </div>
                     </aside>
@@ -782,6 +900,32 @@ export default function CarDetails() {
                 isOpen={isMapModalOpen}
                 onClose={() => setIsMapModalOpen(false)}
                 addressText={addressText}
+            />
+
+            <DeliveryLocationModal
+                isOpen={isDeliveryModalOpen}
+                onClose={() => {
+                    setIsDeliveryModalOpen(false);
+                    setIsCustomAddressModalOpen(false);
+                }}
+                carCoords={carCoords}
+                destinationCoords={deliveryCoords}
+                destinationLabel={deliveryAddressLabel}
+                totalFee={deliveryFeeVnd}
+                distanceKm={deliveryDistanceKm}
+                onOpenCustomAddress={() => setIsCustomAddressModalOpen(true)}
+            />
+
+            <CustomAddressModal
+                isOpen={isCustomAddressModalOpen}
+                onClose={() => setIsCustomAddressModalOpen(false)}
+                initialValue={deliveryAddress}
+                onApply={({ address, coords, label }) => {
+                    setDeliveryAddress(address);
+                    setDeliveryAddressLabel(label || address);
+                    setDeliveryCoords(coords);
+                    setIsCustomAddressModalOpen(false);
+                }}
             />
         </div>
     );
