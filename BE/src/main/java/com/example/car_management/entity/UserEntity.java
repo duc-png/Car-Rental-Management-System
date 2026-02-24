@@ -1,10 +1,13 @@
 package com.example.car_management.entity;
 
-import com.example.car_management.entity.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+
+import java.util.HashSet;
+import java.util.Set;
+
 
 @Getter
 @Setter
@@ -40,7 +43,10 @@ public class UserEntity {
     @Column(name = "created_at")
     private Instant createdAt;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role_id", length = 20)
-    private UserRole roleId;
+
+    // Many-to-Many with Role
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
+    @Builder.Default
+    private Set<RoleEntity> roles = new HashSet<>();
 }
