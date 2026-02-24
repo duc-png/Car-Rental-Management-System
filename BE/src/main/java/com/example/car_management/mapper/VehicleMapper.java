@@ -23,6 +23,14 @@ public class VehicleMapper {
 
         Integer locationId = (e.getLocation() != null ? e.getLocation().getId() : null);
 
+        // ===== ADD: owner info for renter =====
+        String ownerName  = (e.getOwner() != null ? e.getOwner().getFullName() : null);
+        String ownerPhone = (e.getOwner() != null ? e.getOwner().getPhone() : null);
+        String ownerEmail = (e.getOwner() != null ? e.getOwner().getEmail() : null);
+
+        // ===== ADD: mainImageUrl =====
+        String mainImageUrl = resolveMainImageUrl(e.getImages());
+
         return VehicleResponse.builder()
                 .id(e.getId())
                 .ownerId(e.getOwner() != null ? e.getOwner().getId() : null)
@@ -42,6 +50,13 @@ public class VehicleMapper {
                 .city(e.getLocation() != null ? e.getLocation().getCity() : null)
                 .district(e.getLocation() != null ? e.getLocation().getDistrict() : null)
                 .addressDetail(e.getLocation() != null ? e.getLocation().getAddressDetail() : null)
+
+                // ===== NEW FIELDS =====
+                .ownerName(ownerName)
+                .ownerPhone(ownerPhone)
+                .ownerEmail(ownerEmail)
+                .mainImageUrl(mainImageUrl)
+
                 .images(toImageResponses(e.getImages()))
                 .build();
     }
@@ -56,6 +71,14 @@ public class VehicleMapper {
 
         Integer locationId = (e.getLocation() != null ? e.getLocation().getId() : null);
 
+        // ===== ADD: owner info for renter =====
+        String ownerName  = (e.getOwner() != null ? e.getOwner().getFullName() : null);
+        String ownerPhone = (e.getOwner() != null ? e.getOwner().getPhone() : null);
+        String ownerEmail = (e.getOwner() != null ? e.getOwner().getEmail() : null);
+
+        // ===== ADD: mainImageUrl =====
+        String mainImageUrl = resolveMainImageUrl(imgs);
+
         return VehicleResponse.builder()
                 .id(e.getId())
                 .ownerId(e.getOwner() != null ? e.getOwner().getId() : null)
@@ -75,6 +98,13 @@ public class VehicleMapper {
                 .city(e.getLocation() != null ? e.getLocation().getCity() : null)
                 .district(e.getLocation() != null ? e.getLocation().getDistrict() : null)
                 .addressDetail(e.getLocation() != null ? e.getLocation().getAddressDetail() : null)
+
+                // ===== NEW FIELDS =====
+                .ownerName(ownerName)
+                .ownerPhone(ownerPhone)
+                .ownerEmail(ownerEmail)
+                .mainImageUrl(mainImageUrl)
+
                 .images(toImageResponses(imgs)) // dùng list query, không động collection managed
                 .build();
     }
@@ -92,9 +122,27 @@ public class VehicleMapper {
                 .isMain(img.getIsMain())
                 .build();
     }
+
     public static VehicleResponse toResponseWithImages(VehicleEntity e, List<VehicleImageEntity> imgs) {
         VehicleResponse res = toResponse(e);
         res.setImages(toImageResponses(imgs));
+        // đảm bảo mainImageUrl đúng theo imgs (nếu res build bằng e.getImages() rỗng)
+        res.setMainImageUrl(resolveMainImageUrl(imgs));
         return res;
+    }
+
+    // ===== helper: main image url =====
+    private static String resolveMainImageUrl(List<VehicleImageEntity> imgs) {
+        if (imgs == null || imgs.isEmpty()) return null;
+
+        for (VehicleImageEntity img : imgs) {
+            if (img != null && Boolean.TRUE.equals(img.getIsMain()) && img.getImageUrl() != null) {
+                return img.getImageUrl();
+            }
+        }
+        for (VehicleImageEntity img : imgs) {
+            if (img != null && img.getImageUrl() != null) return img.getImageUrl();
+        }
+        return null;
     }
 }

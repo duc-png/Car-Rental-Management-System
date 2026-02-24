@@ -1,11 +1,11 @@
-import Home from '../pages/Home';
-import Cars from '../pages/Cars';
-import MyBookings from '../pages/MyBookings';
-import CarDetails from '../pages/CarDetails';
-import Login from '../pages/Login';
-import Register from '../pages/Register';
-import ForgotPassword from '../pages/ForgotPassword';
-import CarOwnerFleet from '../pages/CarOwnerFleet';
+import Home from '../pages/public/Home';
+import Cars from '../pages/public/Cars';
+import MyBookings from '../pages/user/MyBookings';
+import CarDetails from '../pages/public/CarDetails';
+import Login from '../pages/auth/Login';
+import Register from '../pages/auth/Register';
+import ForgotPassword from '../pages/auth/ForgotPassword';
+import CarOwnerFleet from '../pages/owner/CarOwnerFleet';
 
 export const routes = [
   {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react'
-import '../styles/MyBookings.css'
+import '../../styles/MyBookings.css'
 
 function MyBookings() {
   const [bookings, setBookings] = useState([
@@ -61,7 +61,7 @@ function MyBookings() {
               </div>
               <div className="booking-actions">
                 <button className="btn-view">View Details</button>
-                <button 
+                <button
                   className="btn-cancel"
                   onClick={() => handleCancelBooking(booking.id)}
                 >

@@ -34,5 +34,12 @@ public class VehicleResponse {
     private String district;
     private String addressDetail;
 
+    // ===== ADD FOR RENTER VIEW =====
+    private String ownerName;
+    private String ownerPhone;
+    private String ownerEmail;
+
+    private String mainImageUrl;
+
     private List<VehicleImageResponse> images;
 }

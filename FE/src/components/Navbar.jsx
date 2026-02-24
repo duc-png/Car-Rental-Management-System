@@ -5,12 +5,12 @@ import { Link } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
 import '../styles/Navbar.css'
 
-function Navbar() {
+function Navbar({ sticky = true }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar ${sticky ? '' : 'non-sticky'}`.trim()}>
       <div className="navbar-container">
         <div className="navbar-brand">
           <img src="/favicon.svg" alt="CarRental Logo" className="logo-icon" />

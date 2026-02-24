@@ -1,14 +1,17 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import VehicleCard from '../components/VehicleCard'
-import { getCarsList } from '../api/cars'
-import '../styles/Cars.css'
+import { useLocation } from 'react-router-dom'
+import VehicleCard from '../../components/VehicleCard'
+import { getCarsList, searchCars } from '../../api/cars'
+import '../../styles/Cars.css'
 
 function Cars() {
+  const location = useLocation()
   const [cars, setCars] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [searchApplied, setSearchApplied] = useState(false)
 
   const [filters, setFilters] = useState({
     search: '',
@@ -19,12 +22,32 @@ function Cars() {
     city: 'all'
   })
 
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search])
+
+  const addressParam = searchParams.get('address') || ''
+  const pickupDateParam = searchParams.get('pickupDate') || ''
+  const returnDateParam = searchParams.get('returnDate') || ''
+  const pickupTimeParam = searchParams.get('pickupTime') || '09:00'
+  const returnTimeParam = searchParams.get('returnTime') || '09:00'
+
   useEffect(() => {
     const fetchCars = async () => {
       try {
         setLoading(true)
-        const data = await getCarsList()
+        const hasSearchQuery = Boolean(pickupDateParam && returnDateParam)
+
+        const data = hasSearchQuery
+          ? await searchCars({
+            address: addressParam,
+            pickupDate: pickupDateParam,
+            returnDate: returnDateParam,
+            pickupTime: pickupTimeParam,
+            returnTime: returnTimeParam
+          })
+          : await getCarsList()
+
         setCars(data || [])
+        setSearchApplied(hasSearchQuery)
         setError(null)
       } catch (err) {
         setError('Không thể tải danh sách xe')
@@ -34,7 +57,7 @@ function Cars() {
     }
 
     fetchCars()
-  }, [])
+  }, [addressParam, pickupDateParam, returnDateParam, pickupTimeParam, returnTimeParam])
 
   const availableCars = useMemo(
     () => (cars || []).filter(car => car.status === 'AVAILABLE'),
@@ -78,11 +101,6 @@ function Cars() {
 
   return (
     <div className="cars-page">
-      <div className="cars-header">
-        <h1>Danh sách xe</h1>
-        <p>Chọn chiếc xe phù hợp từ bộ sưu tập có sẵn</p>
-      </div>
-
       <div className="cars-container">
         <aside className="cars-sidebar">
           <div className="filter-group">
@@ -92,7 +110,7 @@ function Cars() {
               placeholder="Tìm theo hãng hoặc mẫu..."
               value={filters.search}
               onChange={(e) => handleChange('search', e.target.value)}
-              style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1px solid #e5e7eb' }}
+              className="filter-search-input"
             />
           </div>
 
@@ -187,6 +205,11 @@ function Cars() {
             <>
               <div className="cars-toolbar">
                 <div>
+                  {searchApplied && (
+                    <p className="toolbar-sub">
+                      Kết quả tìm kiếm cho {addressParam || 'tất cả khu vực'} • {pickupDateParam} - {returnDateParam}
+                    </p>
+                  )}
                   {/* <p className="toolbar-kicker">Chỉ hiển thị xe còn trống</p> */}
                   {/* <h3 className="toolbar-title">{filteredCars.length} xe phù hợp</h3> */}
                   {/* <p className="toolbar-sub">Tổng {totalAvailable} xe khả dụng trên hệ thống</p> */}

@@ -10,6 +10,8 @@ function SearchBar({ onSearch }) {
   const [location, setLocation] = useState('TP. Hồ Chí Minh')
   const [pickupDate, setPickupDate] = useState('21/01/2026')
   const [returnDate, setReturnDate] = useState('22/01/2026')
+  const [pickupTime, setPickupTime] = useState('21:00')
+  const [returnTime, setReturnTime] = useState('20:00')
   const [showLocationModal, setShowLocationModal] = useState(false)
   const [showTimeModal, setShowTimeModal] = useState(false)
 
@@ -19,7 +21,9 @@ function SearchBar({ onSearch }) {
       onSearch({
         location,
         pickupDate,
-        returnDate
+        returnDate,
+        pickupTime,
+        returnTime
       })
     }
   }
@@ -33,10 +37,14 @@ function SearchBar({ onSearch }) {
       // timeData.startDate và endDate đã là định dạng 'dd/mm/yyyy' từ TimeModal
       setPickupDate(timeData.startDate)
       setReturnDate(timeData.endDate)
+      setPickupTime(timeData.startTime || '21:00')
+      setReturnTime(timeData.endTime || '20:00')
     } else {
       // Hour rental - chỉ hiển thị ngày, không thêm /01/2026
       setPickupDate(timeData.startDate)
       setReturnDate(timeData.startDate)
+      setPickupTime(timeData.startTime || '09:00')
+      setReturnTime(timeData.startTime || '09:00')
     }
   }
 
@@ -130,6 +138,7 @@ function SearchBar({ onSearch }) {
         isOpen={showLocationModal}
         onClose={() => setShowLocationModal(false)}
         onSelect={handleLocationSelect}
+        value={location}
       />
 
       <TimeModal

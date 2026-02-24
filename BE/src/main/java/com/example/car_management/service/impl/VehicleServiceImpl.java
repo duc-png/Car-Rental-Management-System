@@ -46,11 +46,7 @@ public class VehicleServiceImpl implements VehicleService {
         VehicleModelEntity model = vehicleModelRepository.findById(req.getModelId())
                 .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
 
-        LocationEntity location = null;
-        if (req.getLocationId() != null) {
-            location = locationRepository.findById(req.getLocationId())
-                    .orElseThrow(() -> new AppException(ErrorCode.LOCATION_NOT_FOUND));
-        }
+        LocationEntity location = resolveLocation(req.getLocationId(), req.getLocation());
 
         VehicleEntity v = VehicleEntity.builder()
                 .owner(owner)
@@ -61,7 +57,7 @@ public class VehicleServiceImpl implements VehicleService {
                 .transmission(req.getTransmission())
                 .fuelType(req.getFuelType())
                 .pricePerDay(req.getPricePerDay())
-                .status(com.example.car_management.entity.enums.VehicleStatus.AVAILABLE)
+                .status(com.example.car_management.entity.enums.VehicleStatus.PENDING_APPROVAL) // <-- đổi dòng này
                 .currentKm(req.getCurrentKm() == null ? 0 : req.getCurrentKm())
                 .location(location)
                 .build();
@@ -112,11 +108,7 @@ public class VehicleServiceImpl implements VehicleService {
         VehicleModelEntity model = vehicleModelRepository.findById(req.getModelId())
                 .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
 
-        LocationEntity location = null;
-        if (req.getLocationId() != null) {
-            location = locationRepository.findById(req.getLocationId())
-                    .orElseThrow(() -> new AppException(ErrorCode.LOCATION_NOT_FOUND));
-        }
+        LocationEntity location = resolveLocation(req.getLocationId(), req.getLocation());
 
         v.setModel(model);
         v.setLicensePlate(req.getLicensePlate());
@@ -130,14 +122,33 @@ public class VehicleServiceImpl implements VehicleService {
 
         VehicleEntity saved = vehicleRepository.save(v);
 
-        //chỉ load images để map response, KHÔNG set vào entity
+        // chỉ load images để map response, KHÔNG set vào entity
         List<VehicleImageEntity> imgs = vehicleImageRepository.findByVehicle_Id(saved.getId());
         return VehicleMapper.toResponse(saved, imgs);
     }
 
+    private LocationEntity resolveLocation(Integer locationId, LocationInputRequest locationInput) {
+        if (locationId != null) {
+            return locationRepository.findById(locationId)
+                    .orElseThrow(() -> new AppException(ErrorCode.LOCATION_NOT_FOUND));
+        }
+
+        if (locationInput == null) {
+            return null;
+        }
+
+        LocationEntity location = LocationEntity.builder()
+                .city(locationInput.getProvince().trim())
+                .district(locationInput.getWard().trim())
+                .addressDetail(locationInput.getAddressDetail().trim())
+                .build();
+
+        return locationRepository.save(location);
+    }
 
     private String normalizePlate(String plate) {
-        if (plate == null) return null;
+        if (plate == null)
+            return null;
         return plate.trim().toUpperCase(); // tùy rule, nhưng trim là bắt buộc
     }
 
@@ -167,27 +178,6 @@ public class VehicleServiceImpl implements VehicleService {
         return VehicleMapper.toResponseWithImages(v, imgs);
     }
 
-
-    @Override
-    @Transactional(readOnly = true)
-    public AvailabilityResponse checkAvailability(Integer vehicleId, LocalDateTime from, LocalDateTime to) {
-
-        vehicleRepository.findById(vehicleId)
-                .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_NOT_FOUND));
-
-        List<BookingStatus> activeStatuses = Arrays.asList(BookingStatus.CONFIRMED, BookingStatus.ONGOING);
-
-        boolean overlap = !bookingRepository
-                .findOverlappingBookings(vehicleId, from, to, activeStatuses)
-                .isEmpty();
-
-        return AvailabilityResponse.builder()
-                .vehicleId(vehicleId)
-                .available(!overlap)
-                .reason(overlap ? "OVERLAP_BOOKING" : "OK")
-                .build();
-    }
-
     @Override
     @Transactional
     public List<VehicleImageResponse> addImages(Integer vehicleId, Integer ownerId, AddVehicleImagesRequest req) {
@@ -205,9 +195,11 @@ public class VehicleServiceImpl implements VehicleService {
         // 1) Chuẩn hoá danh sách URL (trim + bỏ rỗng)
         List<String> urls = new java.util.ArrayList<>();
         for (String u : req.getImageUrls()) {
-            if (u == null) continue;
+            if (u == null)
+                continue;
             String s = u.trim();
-            if (!s.isEmpty()) urls.add(s);
+            if (!s.isEmpty())
+                urls.add(s);
         }
         if (urls.isEmpty()) {
             throw new AppException(ErrorCode.INVALID_KEY);
@@ -243,7 +235,6 @@ public class VehicleServiceImpl implements VehicleService {
         // 4) Trả response
         return VehicleMapper.toImageResponses(vehicleImageRepository.findByVehicle_Id(vehicleId));
     }
-
 
     @Override
     @Transactional
@@ -291,8 +282,7 @@ public class VehicleServiceImpl implements VehicleService {
             Integer vehicleId,
             Integer ownerId,
             List<org.springframework.web.multipart.MultipartFile> files,
-            Boolean setFirstAsMainFlag
-    ) {
+            Boolean setFirstAsMainFlag) {
         VehicleEntity v = vehicleRepository.findById(vehicleId)
                 .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_NOT_FOUND));
         assertOwner(v, ownerId);
@@ -313,7 +303,8 @@ public class VehicleServiceImpl implements VehicleService {
                     changed = true;
                 }
             }
-            if (changed) vehicleImageRepository.saveAll(current);
+            if (changed)
+                vehicleImageRepository.saveAll(current);
         }
 
         // upload cloudinary -> lấy URL -> lưu DB
@@ -336,10 +327,134 @@ public class VehicleServiceImpl implements VehicleService {
         return VehicleMapper.toImageResponses(vehicleImageRepository.findByVehicle_Id(vehicleId));
     }
 
+    @Override
+    @Transactional
+    public VehicleResponse approveVehicle(Integer vehicleId) {
+        VehicleEntity v = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_NOT_FOUND));
+
+        if (v.getStatus() != com.example.car_management.entity.enums.VehicleStatus.PENDING_APPROVAL) {
+            throw new AppException(ErrorCode.INVALID_KEY); // bạn có thể tạo ErrorCode riêng
+        }
+
+        v.setStatus(com.example.car_management.entity.enums.VehicleStatus.AVAILABLE);
+
+        // load images để trả response
+        v.setImages(vehicleImageRepository.findByVehicle_Id(v.getId()));
+        return VehicleMapper.toResponse(v);
+    }
+
+    @Override
+    @Transactional
+    public VehicleResponse rejectVehicle(Integer vehicleId, String reason) {
+        VehicleEntity v = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_NOT_FOUND));
+
+        if (v.getStatus() != com.example.car_management.entity.enums.VehicleStatus.PENDING_APPROVAL) {
+            throw new AppException(ErrorCode.INVALID_KEY);
+        }
+
+        // tuỳ bạn: set MAINTENANCE / hoặc tạo status REJECTED (khuyến nghị thêm enum REJECTED)
+        v.setStatus(com.example.car_management.entity.enums.VehicleStatus.MAINTENANCE);
+
+        // nếu muốn lưu reason thì cần thêm field vào VehicleEntity (vd: adminNote)
+        // v.setAdminNote(reason);
+
+        v.setImages(vehicleImageRepository.findByVehicle_Id(v.getId()));
+        return VehicleMapper.toResponse(v);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AvailabilityResponse checkAvailability(Integer vehicleId, LocalDateTime from, LocalDateTime to) {
+        // Check vehicle exists
+        if (!vehicleRepository.existsById(vehicleId)) {
+            throw new AppException(ErrorCode.VEHICLE_NOT_FOUND);
+        }
+
+        // Check for conflicts with CONFIRMED or ONGOING bookings
+        List<BookingStatus> activeStatuses = Arrays.asList(
+                BookingStatus.CONFIRMED,
+                BookingStatus.ONGOING);
+
+        List<BookingEntity> conflicts = bookingRepository.findOverlappingBookings(
+                vehicleId, from, to, activeStatuses);
+
+        boolean available = conflicts.isEmpty();
+        String reason = available ? "Available" : "Vehicle is already booked for this period";
+
+        return AvailabilityResponse.builder()
+                .vehicleId(vehicleId)
+                .available(available)
+                .reason(reason)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public VehicleCalendarResponse getVehicleCalendar(Integer vehicleId, LocalDateTime from, LocalDateTime to) {
+        // Check vehicle exists
+        if (!vehicleRepository.existsById(vehicleId)) {
+            throw new AppException(ErrorCode.VEHICLE_NOT_FOUND);
+        }
+
+        // Get all bookings (not just CONFIRMED/ONGOING, include PENDING too)
+        List<BookingStatus> visibleStatuses = Arrays.asList(
+                BookingStatus.PENDING,
+                BookingStatus.CONFIRMED,
+                BookingStatus.ONGOING);
+
+        List<BookingEntity> bookings = bookingRepository.findOverlappingBookings(
+                vehicleId, from, to, visibleStatuses);
+
+        List<BookedPeriodResponse> bookedPeriods = bookings.stream()
+                .map(booking -> BookedPeriodResponse.builder()
+                        .bookingId(booking.getId())
+                        .startDate(booking.getStartDate())
+                        .endDate(booking.getEndDate())
+                        .status(booking.getStatus())
+                        .build())
+                .collect(Collectors.toList());
+
+        return VehicleCalendarResponse.builder()
+                .vehicleId(vehicleId)
+                .bookedPeriods(bookedPeriods)
+                .build();
+    }
+
     private void assertOwner(VehicleEntity v, Integer ownerId) {
         Integer realOwnerId = (v.getOwner() != null ? v.getOwner().getId() : null);
         if (realOwnerId == null || !realOwnerId.equals(ownerId)) {
             throw new AppException(ErrorCode.FORBIDDEN_RESOURCE);
         }
+    }
+    @Override
+    @Transactional(readOnly = true)
+    public List<VehicleResponse> searchVehicles(VehicleSearchRequest req) {
+
+        if (req.getFrom() == null || req.getTo() == null || !req.getTo().isAfter(req.getFrom())) {
+            throw new AppException(ErrorCode.INVALID_KEY);
+        }
+
+        String keyword = (req.getAddress() == null) ? null : req.getAddress().trim();
+
+        List<BookingStatus> active = Arrays.asList(
+                BookingStatus.PENDING,
+                BookingStatus.CONFIRMED,
+                BookingStatus.ONGOING
+        );
+
+        List<VehicleEntity> list = vehicleRepository.searchAvailableVehiclesSimple(
+                com.example.car_management.entity.enums.VehicleStatus.AVAILABLE,
+                keyword,
+                req.getFrom(),
+                req.getTo(),
+                active
+        );
+
+        return list.stream().map(v -> {
+            v.setImages(vehicleImageRepository.findByVehicle_Id(v.getId()));
+            return VehicleMapper.toResponse(v);
+        }).collect(Collectors.toList());
     }
 }

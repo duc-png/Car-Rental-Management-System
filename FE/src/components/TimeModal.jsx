@@ -26,6 +26,7 @@ function TimeModal({ isOpen, onClose, onSelect }) {
     );
 
     const hourOptions = [4, 5, 6, 7, 8];
+    const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
 
     const calculateEndTime = (start, duration) => {
         const [hour] = start.split(':').map(Number);
@@ -129,6 +130,10 @@ function TimeModal({ isOpen, onClose, onSelect }) {
     };
 
     const prevMonth = () => {
+        if (currentMonth.getFullYear() === currentMonthStart.getFullYear()
+            && currentMonth.getMonth() === currentMonthStart.getMonth()) {
+            return;
+        }
         setCurrentMonth(
             new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1)
         );
@@ -150,6 +155,8 @@ function TimeModal({ isOpen, onClose, onSelect }) {
     const { days: calendarDays2, monthName: month2 } = renderCalendar(
         nextMonthDate
     );
+    const isAtCurrentMonth = currentMonth.getFullYear() === currentMonthStart.getFullYear()
+        && currentMonth.getMonth() === currentMonthStart.getMonth();
 
     const handleConfirm = () => {
         if (activeTab === 'day' && startDate && endDate) {
@@ -226,7 +233,7 @@ function TimeModal({ isOpen, onClose, onSelect }) {
                         <>
                             <div className="calendar-container">
                                 <div className="calendar-header">
-                                    <button className="calendar-nav" onClick={prevMonth}>
+                                    <button className="calendar-nav" onClick={prevMonth} disabled={isAtCurrentMonth}>
                                         {'<'}
                                     </button>
                                     <h3>{month1}</h3>

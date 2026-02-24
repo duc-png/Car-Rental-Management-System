@@ -5,6 +5,7 @@ import com.example.car_management.service.AuthenticationService;
 import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -22,31 +23,33 @@ public class CustomJwtDecoder implements JwtDecoder {
     @Value("${jwt.signerKey}")
     private String signerKey;
 
-    AuthenticationService authenticationService;
+    @Lazy
+    private final AuthenticationService authenticationService;
 
     private NimbusJwtDecoder nimbusJwtDecoder = null;
 
-
     // Input: Token String ("eyJhbGci..."
-    //Output: Jwt Object (chứa claims)
-    //Làm: Parse(extract data header là các thông tin thuộc kiểu object) và validate token
+    // Output: Jwt Object (chứa claims)
+    // Làm: Parse(extract data header là các thông tin thuộc kiểu object) và
+    // validate token
     @Override
     public Jwt decode(String token) throws JwtException {
-        try{
+        try {
             var response = authenticationService.introspect(
                     IntrospectRequest.builder()
                             .token(token)
                             .build());
-            if (!response.isValid()) throw new JwtException("Token invalid");
-        }catch (JOSEException | ParseException e){
+            if (!response.isValid())
+                throw new JwtException("Token invalid");
+        } catch (JOSEException | ParseException e) {
             throw new JwtException(e.getMessage());
         }
-        //        Lazy initialization: Chỉ tạo decoder lần đầu tiên
-        //        Cache: Các lần sau dùng lại decoder đã tạo (tối ưu performance)
-        //        SecretKeySpec: Tạo key spec từ signerKey với thuật toán HS512
-        //        NimbusJwtDecoder: Decoder của thư viện Nimbus JWT
-        //        macAlgorithm(HS512): Dùng thuật toán HMAC SHA-512
-        if(Objects.isNull(nimbusJwtDecoder)){
+        // Lazy initialization: Chỉ tạo decoder lần đầu tiên
+        // Cache: Các lần sau dùng lại decoder đã tạo (tối ưu performance)
+        // SecretKeySpec: Tạo key spec từ signerKey với thuật toán HS512
+        // NimbusJwtDecoder: Decoder của thư viện Nimbus JWT
+        // macAlgorithm(HS512): Dùng thuật toán HMAC SHA-512
+        if (Objects.isNull(nimbusJwtDecoder)) {
             SecretKeySpec secretKeySpec = new SecretKeySpec(signerKey.getBytes(), "HS512");
             nimbusJwtDecoder = NimbusJwtDecoder.withSecretKey(secretKeySpec)
                     .macAlgorithm(MacAlgorithm.HS512)

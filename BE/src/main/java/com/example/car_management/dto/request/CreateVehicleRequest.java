@@ -2,6 +2,7 @@ package com.example.car_management.dto.request;
 
 import com.example.car_management.entity.enums.FuelType;
 import com.example.car_management.entity.enums.Transmission;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -38,4 +39,7 @@ public class CreateVehicleRequest {
     private Integer currentKm;
 
     private Integer locationId;
+
+    @Valid
+    private LocationInputRequest location;
 }

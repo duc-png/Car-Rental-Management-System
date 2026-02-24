@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -21,5 +20,5 @@ public class UserResponse {
     private String licenseNumber;
     private Boolean isVerified;
     private Instant createdAt;
-    private Set<String> roles; 
+    private String roleId; // Changed from roles to roleId
 }
