@@ -8,6 +8,7 @@ import ForgotPassword from '../pages/ForgotPassword';
 import CarOwnerFleet from '../pages/CarOwnerFleet';
 import Customers from '../pages/Customers';
 import OwnerAnalytics from '../pages/OwnerAnalytics';
+import MaintenanceDashboard from '../pages/MaintenanceDashboard';
 import AdminReports from '../pages/AdminReports';
 
 export const routes = [
@@ -50,6 +51,11 @@ export const routes = [
     path: '/owner/fleet',
     element: <CarOwnerFleet />,
     name: 'Owner Fleet'
+  },
+  {
+    path: '/owner/maintenance',
+    element: <MaintenanceDashboard />,
+    name: 'Owner Maintenance'
   },
   {
     path: '/owner/analytics',

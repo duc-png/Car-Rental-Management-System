@@ -13,6 +13,7 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import CarOwnerFleet from './pages/CarOwnerFleet'
+import MaintenanceDashboard from './pages/MaintenanceDashboard'
 import Customers from './pages/Customers'
 import OwnerAnalytics from './pages/OwnerAnalytics'
 import AdminReports from './pages/AdminReports'
@@ -38,6 +39,7 @@ function AppLayout() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/owner/fleet" element={<CarOwnerFleet />} />
+          <Route path="/owner/maintenance" element={<MaintenanceDashboard />} />
           <Route path="/owner/analytics" element={<OwnerAnalytics />} />
           <Route path="/admin/customers" element={<Customers />} />
           <Route path="/admin/reports" element={<AdminReports />} />

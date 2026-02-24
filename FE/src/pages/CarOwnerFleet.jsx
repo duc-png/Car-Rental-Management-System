@@ -254,6 +254,12 @@ function CarOwnerFleet() {
 
                                     <div className="fleet-actions">
                                         <Link to={`/car/${vehicle.id}`} className="btn-outline">Xem</Link>
+                                        <Link
+                                            to={`/owner/maintenance?vehicleId=${vehicle.id}`}
+                                            className="btn-outline"
+                                        >
+                                            Bảo dưỡng
+                                        </Link>
                                         <button type="button" className="btn-outline danger">Xóa</button>
                                     </div>
                                 </div>

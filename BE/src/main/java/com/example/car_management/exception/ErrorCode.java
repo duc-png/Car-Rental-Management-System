@@ -25,7 +25,14 @@ public enum ErrorCode {
     LOCATION_NOT_FOUND(2003, "Location not found", HttpStatus.NOT_FOUND),
     LICENSE_PLATE_EXISTED(2004, "License plate existed", HttpStatus.BAD_REQUEST),
     IMAGE_NOT_FOUND(2005, "Vehicle image not found", HttpStatus.NOT_FOUND),
-    FORBIDDEN_RESOURCE(2006, "You do not have permission", HttpStatus.FORBIDDEN);
+    FORBIDDEN_RESOURCE(2006, "You do not have permission", HttpStatus.FORBIDDEN),
+    
+    MAINTENANCE_NOT_FOUND(3001, "Maintenance record not found", HttpStatus.NOT_FOUND),
+    MAINTENANCE_ALREADY_EXISTS(3002, "Vehicle already has active maintenance", HttpStatus.BAD_REQUEST),
+    MAINTENANCE_INVALID_STATUS_TRANSITION(3003, "Invalid maintenance status transition", HttpStatus.BAD_REQUEST),
+    MAINTENANCE_CANNOT_MODIFY_COMPLETED(3004, "Cannot modify completed or cancelled maintenance", HttpStatus.BAD_REQUEST),
+    VEHICLE_NOT_AVAILABLE_FOR_MAINTENANCE(3005, "Vehicle is not available for maintenance", HttpStatus.BAD_REQUEST),
+    VEHICLE_OWNERSHIP_REQUIRED(3006, "You do not own this vehicle", HttpStatus.FORBIDDEN);
     // ===== Cloudinary / Image =====
 //    IMAGE_UPLOAD_FAILED(2007, "Upload image failed", HttpStatus.BAD_REQUEST);
 //

@@ -34,6 +34,8 @@ public class SecurityConfig {
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
                 http.authorizeHttpRequests(request -> request
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+                                // Allow public GET for forgot-password (user chưa đăng nhập)
+                                .requestMatchers(HttpMethod.GET, "/auth/forgot-password/**").permitAll()
                                 // Allow public GET access to vehicles (for browsing)
                                 .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/**").permitAll()
                                 .anyRequest()
