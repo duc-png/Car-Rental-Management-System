@@ -41,7 +41,7 @@ function Login() {
                             navigate('/admin/customers')
                             return
                         }
-                        if (scope.includes('ROLE_EXPERT')) {
+                        if (scope.includes('ROLE_CAR_OWNER')) {
                             navigate('/manage-rentals')
                             return
                         }

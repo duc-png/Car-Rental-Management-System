@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
             return {
                 email: decoded.sub,
                 userId: decoded.userId,
-                role: decoded.scope, // "ROLE_USER ROLE_EXPERT" string
+                role: decoded.scope, // "ROLE_USER ROLE_CAR_OWNER" string
                 ...decoded
             }
         } catch (e) {
