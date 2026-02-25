@@ -4,33 +4,12 @@
   transition: var(--transition);
 }
 
-.cars-header {
-  background: linear-gradient(135deg, var(--hero-gradient-1) 0%, var(--hero-gradient-2) 50%, var(--hero-gradient-3) 100%);
-  color: var(--text-primary);
-  padding: 72px 20px 64px;
-  margin-bottom: 32px;
-  text-align: center;
-  box-shadow: 0 16px 40px var(--shadow-color);
-  transition: var(--transition);
-}
-
-.cars-header h1 {
-  font-size: 2.6rem;
-  margin-bottom: 10px;
-  letter-spacing: -0.01em;
-}
-
-.cars-header p {
-  font-size: 1.05rem;
-  opacity: 0.9;
-}
-
 .cars-container {
-  max-width: 1280px;
-  margin: 0 auto 72px;
+  max-width: 1560px;
+  margin: 32px auto 72px;
   padding: 0 24px;
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: 280px 1fr;
   gap: 28px;
   align-items: start;
 }
@@ -83,6 +62,19 @@
 .filter-group input[type='radio'] {
   cursor: pointer;
   accent-color: var(--accent-color);
+}
+
+.filter-search-input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.filter-search-input::placeholder {
+  color: var(--text-tertiary);
 }
 
 .cars-content {
@@ -153,8 +145,64 @@
 
 .vehicles-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+/* Compact card styling for 4-up grid on Cars page only */
+.cars-page .vehicle-image-container {
+  height: 180px;
+}
+
+.cars-page .vehicle-content {
+  padding: 18px;
+}
+
+.cars-page .vehicle-name {
+  font-size: 1.15rem;
+  margin-bottom: 4px;
+}
+
+.cars-page .vehicle-year {
+  margin-bottom: 14px;
+}
+
+.cars-page .vehicle-features {
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.cars-page .price-badge {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
+.cars-page .status-badge {
+  font-size: 0.72rem;
+  padding: 5px 10px;
+}
+
+.cars-page .btn-book {
+  padding: 12px 16px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 1280px) {
+  .vehicles-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .vehicles-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .vehicles-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 980px) {
@@ -168,11 +216,7 @@
 }
 
 @media (max-width: 768px) {
-  .cars-header h1 {
-    font-size: 2rem;
-  }
-
-  .vehicles-grid {
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  .cars-container {
+    margin-top: 20px;
   }
 }

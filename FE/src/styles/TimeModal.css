@@ -169,6 +169,11 @@
     color: #1f2937;
 }
 
+.calendar-nav:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 /* Calendars */
 .calendars {
     display: grid;

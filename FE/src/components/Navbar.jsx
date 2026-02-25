@@ -6,14 +6,14 @@ import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../hooks/useAuth'
 import '../styles/Navbar.css'
 
-function Navbar() {
+function Navbar({ sticky = true }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
   const { isAuthenticated, user, logout } = useAuth()
 
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar ${sticky ? '' : 'non-sticky'}`.trim()}>
       <div className="navbar-container">
         <div className="navbar-brand">
           <img src="/favicon.svg" alt="CarRental Logo" className="logo-icon" />

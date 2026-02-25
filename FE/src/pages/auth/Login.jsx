@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import '../styles/Auth.css'
+import { jwtDecode } from 'jwt-decode'
+import { useAuth } from '../../hooks/useAuth'
+import '../../styles/Auth.css'
 
 function Login() {
     const [formData, setFormData] = useState({
@@ -31,6 +32,23 @@ function Login() {
         try {
             const result = await login(formData.email, formData.password)
             if (result.success) {
+                const token = localStorage.getItem('token')
+                if (token) {
+                    try {
+                        const decoded = jwtDecode(token)
+                        const scope = decoded?.scope || ''
+                        if (scope.includes('ROLE_ADMIN')) {
+                            navigate('/admin/customers')
+                            return
+                        }
+                        if (scope.includes('ROLE_EXPERT')) {
+                            navigate('/manage-rentals')
+                            return
+                        }
+                    } catch (decodeError) {
+                        console.error('Failed to decode token:', decodeError)
+                    }
+                }
                 navigate('/')
             } else {
                 setError(result.error)

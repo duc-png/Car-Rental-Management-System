@@ -1,18 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react'
-import SearchBar from '../components/SearchBar'
-import FeaturedVehicles from '../components/FeaturedVehicles'
-import CallToAction from '../components/CallToAction'
-import Testimonials from '../components/Testimonials'
-import Newsletter from '../components/Newsletter'
-import '../styles/Home.css'
+import { useNavigate } from 'react-router-dom'
+import SearchBar from '../../components/SearchBar'
+import FeaturedVehicles from '../../components/FeaturedVehicles'
+import CallToAction from '../../components/CallToAction'
+import Testimonials from '../../components/Testimonials'
+import Newsletter from '../../components/Newsletter'
+import '../../styles/Home.css'
 
 function Home() {
+  const navigate = useNavigate()
   const [searchData, setSearchData] = useState({
     location: '',
     pickupDate: '',
-    returnDate: ''
+    returnDate: '',
+    pickupTime: '',
+    returnTime: ''
   })
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
@@ -47,7 +51,15 @@ function Home() {
 
   const handleSearch = (data) => {
     setSearchData(data)
-    console.log('Search:', data)
+
+    const params = new URLSearchParams()
+    if (data.location) params.set('address', data.location)
+    if (data.pickupDate) params.set('pickupDate', data.pickupDate)
+    if (data.returnDate) params.set('returnDate', data.returnDate)
+    if (data.pickupTime) params.set('pickupTime', data.pickupTime)
+    if (data.returnTime) params.set('returnTime', data.returnTime)
+
+    navigate(`/cars?${params.toString()}`)
   }
 
   return (

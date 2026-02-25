@@ -1,10 +1,9 @@
 'use client';
-
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { getMyBookings, cancelBooking } from '../api/bookings'
-import '../styles/MyBookings.css'
+import { getMyBookings, cancelBooking } from '../../api/bookings'
+import '../../styles/MyBookings.css'
 
 function MyBookings() {
   const navigate = useNavigate()

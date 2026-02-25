@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../hooks/useAuth'
-import { register } from '../api/auth'
-import '../styles/Auth.css'
+import { useAuth } from '../../hooks/useAuth'
+import { register } from '../../api/auth'
+import '../../styles/Auth.css'
 
 function Register() {
     const [formData, setFormData] = useState({

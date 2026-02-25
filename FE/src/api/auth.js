@@ -1,5 +1,7 @@
 // Base URL của backend API
-const API_URL = 'http://localhost:8080'
+// BE hiện không cấu hình context-path (server.servlet.context-path trống) => auth ở /auth/*
+const API_URL = import.meta.env.VITE_API_ORIGIN || 'http://localhost:8080'
+
 
 /**
  * Hàm đăng nhập

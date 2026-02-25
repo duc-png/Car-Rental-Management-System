@@ -106,6 +106,7 @@
     border-radius: 8px;
     background: white;
     transition: all 0.3s ease;
+    position: relative;
 }
 
 .location-search:focus-within {
@@ -129,6 +130,101 @@
 
 .location-search input::placeholder {
     color: #d1d5db;
+}
+
+.location-search-clear {
+    border: none;
+    background: #f97316;
+    color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.location-search-clear:hover {
+    filter: brightness(0.95);
+}
+
+.location-suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.location-suggestion-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    color: #111827;
+}
+
+.location-suggestion-item:hover {
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, 0.05);
+}
+
+.location-suggestion-item.active {
+    border-color: #6366f1;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.location-suggestion-icon {
+    width: 20px;
+    display: inline-flex;
+    justify-content: center;
+    color: #111827;
+    flex-shrink: 0;
+}
+
+.location-suggestion-icon svg {
+    display: block;
+}
+
+.location-suggestion-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: #111827;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.location-manual-btn {
+    width: 100%;
+    border: 1px dashed #6366f1;
+    background: rgba(99, 102, 241, 0.06);
+    color: #4338ca;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+.location-manual-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.location-empty {
+    margin: 0;
+    font-size: 13px;
+    color: #9ca3af;
 }
 
 /* Sections */

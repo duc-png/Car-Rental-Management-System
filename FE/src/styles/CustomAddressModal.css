@@ -1,0 +1,123 @@
+.custom-address-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 160;
+    display: grid;
+    place-items: center;
+    padding: 14px;
+}
+
+.custom-address-modal {
+    width: min(560px, 96vw);
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    padding: 22px 18px 18px;
+    position: relative;
+}
+
+.custom-address-modal h2 {
+    margin: 0 0 14px;
+    text-align: center;
+    font-size: 26px;
+    color: #111827;
+}
+
+.custom-address-close {
+    position: absolute;
+    right: 14px;
+    top: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 800;
+}
+
+.custom-address-input-row {
+    position: relative;
+}
+
+.custom-address-input-row input {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    padding: 12px 42px 12px 14px;
+    font-size: 15px;
+    outline: none;
+}
+
+.custom-address-clear {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    border: none;
+    background: #f97316;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 800;
+}
+
+.custom-address-map {
+    margin-top: 12px;
+    height: 320px;
+    border-radius: 14px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+}
+
+.custom-address-state {
+    margin-top: 12px;
+    color: #6b7280;
+    font-weight: 600;
+    text-align: center;
+}
+
+.custom-address-state.error {
+    color: #b91c1c;
+}
+
+.custom-address-apply {
+    width: 100%;
+    margin-top: 14px;
+    border: none;
+    border-radius: 14px;
+    padding: 14px 16px;
+    background: #22c55e;
+    color: #fff;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.custom-address-apply:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.custom-address-cancel {
+    width: 100%;
+    margin-top: 10px;
+    border: none;
+    background: transparent;
+    color: #111827;
+    font-weight: 700;
+    padding: 10px 0;
+    cursor: pointer;
+}
+
+@media (max-width: 560px) {
+    .custom-address-modal h2 {
+        font-size: 22px;
+    }
+
+    .custom-address-map {
+        height: 260px;
+    }
+}
