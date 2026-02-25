@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,11 +47,7 @@ public class VehicleServiceImpl implements VehicleService {
         VehicleModelEntity model = vehicleModelRepository.findById(req.getModelId())
                 .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
 
-        LocationEntity location = null;
-        if (req.getLocationId() != null) {
-            location = locationRepository.findById(req.getLocationId())
-                    .orElseThrow(() -> new AppException(ErrorCode.LOCATION_NOT_FOUND));
-        }
+        LocationEntity location = resolveLocation(req.getLocationId(), req.getLocation());
 
         VehicleEntity v = VehicleEntity.builder()
                 .owner(owner)
@@ -61,7 +58,10 @@ public class VehicleServiceImpl implements VehicleService {
                 .transmission(req.getTransmission())
                 .fuelType(req.getFuelType())
                 .pricePerDay(req.getPricePerDay())
-                .status(com.example.car_management.entity.enums.VehicleStatus.AVAILABLE)
+                .status(com.example.car_management.entity.enums.VehicleStatus.PENDING_APPROVAL)
+            .description(req.getDescription() != null ? req.getDescription().trim() : null)
+            .year(req.getYear())
+            .fuelConsumption(req.getFuelConsumption())
                 .currentKm(req.getCurrentKm() == null ? 0 : req.getCurrentKm())
                 .location(location)
                 .build();
@@ -112,11 +112,7 @@ public class VehicleServiceImpl implements VehicleService {
         VehicleModelEntity model = vehicleModelRepository.findById(req.getModelId())
                 .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
 
-        LocationEntity location = null;
-        if (req.getLocationId() != null) {
-            location = locationRepository.findById(req.getLocationId())
-                    .orElseThrow(() -> new AppException(ErrorCode.LOCATION_NOT_FOUND));
-        }
+        LocationEntity location = resolveLocation(req.getLocationId(), req.getLocation());
 
         v.setModel(model);
         v.setLicensePlate(req.getLicensePlate());
@@ -125,6 +121,9 @@ public class VehicleServiceImpl implements VehicleService {
         v.setTransmission(req.getTransmission());
         v.setFuelType(req.getFuelType());
         v.setPricePerDay(req.getPricePerDay());
+        v.setDescription(req.getDescription() != null ? req.getDescription().trim() : null);
+        v.setYear(req.getYear());
+        v.setFuelConsumption(req.getFuelConsumption());
         v.setCurrentKm(req.getCurrentKm());
         v.setLocation(location);
 
@@ -133,6 +132,25 @@ public class VehicleServiceImpl implements VehicleService {
         // chỉ load images để map response, KHÔNG set vào entity
         List<VehicleImageEntity> imgs = vehicleImageRepository.findByVehicle_Id(saved.getId());
         return VehicleMapper.toResponse(saved, imgs);
+    }
+
+    private LocationEntity resolveLocation(Integer locationId, LocationInputRequest locationInput) {
+        if (locationId != null) {
+            return locationRepository.findById(locationId)
+                    .orElseThrow(() -> new AppException(ErrorCode.LOCATION_NOT_FOUND));
+        }
+
+        if (locationInput == null) {
+            return null;
+        }
+
+        LocationEntity location = LocationEntity.builder()
+                .city(locationInput.getProvince() != null ? locationInput.getProvince().trim() : null)
+                .district(locationInput.getWard() != null ? locationInput.getWard().trim() : null)
+                .addressDetail(locationInput.getAddressDetail() != null ? locationInput.getAddressDetail().trim() : null)
+                .build();
+
+        return locationRepository.save(location);
     }
 
     private String normalizePlate(String plate) {
@@ -380,4 +398,76 @@ public class VehicleServiceImpl implements VehicleService {
             throw new AppException(ErrorCode.FORBIDDEN_RESOURCE);
         }
     }
+
+    @Override
+    @Transactional
+    public VehicleResponse approveVehicle(Integer vehicleId) {
+        VehicleEntity v = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_NOT_FOUND));
+
+        // Load ảnh riêng để tránh thay thế collection managed (orphanRemoval)
+        List<VehicleImageEntity> imgs = vehicleImageRepository.findByVehicle_Id(v.getId());
+
+        if (v.getStatus() == com.example.car_management.entity.enums.VehicleStatus.AVAILABLE) {
+            return VehicleMapper.toResponse(v, imgs);
+        }
+
+        if (v.getStatus() != com.example.car_management.entity.enums.VehicleStatus.PENDING_APPROVAL) {
+            throw new AppException(ErrorCode.INVALID_KEY);
+        }
+
+        v.setStatus(com.example.car_management.entity.enums.VehicleStatus.AVAILABLE);
+        v.setReviewedAt(Instant.now());
+        return VehicleMapper.toResponse(v, imgs);
+    }
+
+    @Override
+    @Transactional
+    public VehicleResponse rejectVehicle(Integer vehicleId, String reason) {
+        VehicleEntity v = vehicleRepository.findById(vehicleId)
+                .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_NOT_FOUND));
+
+        // Load ảnh riêng để tránh thay thế collection managed (orphanRemoval)
+        List<VehicleImageEntity> imgs = vehicleImageRepository.findByVehicle_Id(v.getId());
+
+        if (v.getStatus() != com.example.car_management.entity.enums.VehicleStatus.PENDING_APPROVAL) {
+            throw new AppException(ErrorCode.INVALID_KEY);
+        }
+
+        // BE chưa có field lưu "reason"; chỉ set trạng thái.
+        v.setStatus(com.example.car_management.entity.enums.VehicleStatus.REJECTED);
+        v.setReviewedAt(Instant.now());
+
+        return VehicleMapper.toResponse(v, imgs);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<VehicleResponse> searchVehicles(VehicleSearchRequest req) {
+        if (req.getFrom() == null || req.getTo() == null || !req.getTo().isAfter(req.getFrom())) {
+            throw new AppException(ErrorCode.INVALID_KEY);
+        }
+
+        String keyword = (req.getAddress() == null) ? null : req.getAddress().trim();
+
+        List<BookingStatus> active = Arrays.asList(
+                BookingStatus.PENDING,
+                BookingStatus.CONFIRMED,
+                BookingStatus.ONGOING
+        );
+
+        List<VehicleEntity> list = vehicleRepository.searchAvailableVehiclesSimple(
+                com.example.car_management.entity.enums.VehicleStatus.AVAILABLE,
+                keyword,
+                req.getFrom(),
+                req.getTo(),
+                active
+        );
+
+        return list.stream().map(v -> {
+            v.setImages(vehicleImageRepository.findByVehicle_Id(v.getId()));
+            return VehicleMapper.toResponse(v);
+        }).collect(Collectors.toList());
+    }
 }
+

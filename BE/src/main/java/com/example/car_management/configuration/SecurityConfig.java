@@ -25,7 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
         private final String[] PUBLIC_ENDPOINTS = {
-                        "/auth/token", "/auth/logout", "/auth/refresh", "/auth/register"
+                        "/auth/token", "/auth/logout", "/auth/refresh", "/auth/register", "/api/v1/owner-registrations"
         };
 
         private final CustomJwtDecoder customJwtDecoder;
@@ -36,6 +36,20 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
                                 // Allow public GET access to vehicles (for browsing)
                                 .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/**").permitAll()
+                                // Allow public GET access to vehicle models (for dropdowns)
+                                .requestMatchers(HttpMethod.GET, "/api/v1/vehicle-models/**").permitAll()
+                                // Allow public GET access to brands
+                                .requestMatchers(HttpMethod.GET, "/api/v1/brands/**").permitAll()
+                                // Allow public vehicle search
+                                .requestMatchers(HttpMethod.POST, "/api/v1/vehicles/search").permitAll()
+                                // Allow public owner profiles
+                                .requestMatchers(HttpMethod.GET, "/api/v1/owners/**").permitAll()
+                                // Allow public GET access to booked dates for vehicles
+                                .requestMatchers(HttpMethod.GET, "/api/v1/bookings/vehicle/*/booked-dates").permitAll()
+                                // Allow PayOS Webhook
+                                .requestMatchers(HttpMethod.POST, "/api/v1/payments/payos-webhook").permitAll()
+                                // Allow Test PayOS
+                                .requestMatchers(HttpMethod.GET, "/api/v1/test-payos").permitAll()
                                 .anyRequest()
                                 .authenticated());
 

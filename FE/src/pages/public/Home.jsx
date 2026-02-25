@@ -11,14 +11,6 @@ import '../../styles/Home.css'
 
 function Home() {
   const navigate = useNavigate()
-  const [searchData, setSearchData] = useState({
-    location: '',
-    pickupDate: '',
-    returnDate: '',
-    pickupTime: '',
-    returnTime: ''
-  })
-
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   const heroImages = [
@@ -50,8 +42,6 @@ function Home() {
   }, [heroImages.length])
 
   const handleSearch = (data) => {
-    setSearchData(data)
-
     const params = new URLSearchParams()
     if (data.location) params.set('address', data.location)
     if (data.pickupDate) params.set('pickupDate', data.pickupDate)

@@ -2,6 +2,7 @@ package com.example.car_management.dto.request;
 
 import com.example.car_management.entity.enums.FuelType;
 import com.example.car_management.entity.enums.Transmission;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -28,8 +29,21 @@ public class UpdateVehicleRequest {
     @DecimalMin(value = "0.0", inclusive = false)
     private BigDecimal pricePerDay;
 
+    @Size(max = 2000)
+    private String description;
+
+    @Min(1900)
+    private Integer year;
+
+    @Positive
+    private Float fuelConsumption;
+
     @Min(0)
     private Integer currentKm;
 
     private Integer locationId;
+
+    @Valid
+    private LocationInputRequest location;
 }
+

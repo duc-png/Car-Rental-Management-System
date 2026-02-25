@@ -38,26 +38,10 @@ function Navbar({ sticky = true }) {
               Cars
             </Link>
           </li>
-          {isAuthenticated && (
-            <>
-              <li>
-                <Link to="/my-bookings" onClick={() => setIsMobileMenuOpen(false)}>
-                  My Bookings
-                </Link>
-              </li>
-              {user?.role?.includes('ROLE_EXPERT') && (
-                <li>
-                  <Link to="/manage-rentals" onClick={() => setIsMobileMenuOpen(false)}>
-                    Manage Rentals
-                  </Link>
-                </li>
-              )}
-            </>
-          )}
           <li>
-            <a href="#search" onClick={() => setIsMobileMenuOpen(false)}>
-              About us
-            </a>
+            <Link to="/become-owner" onClick={() => setIsMobileMenuOpen(false)}>
+              Trở thành chủ xe
+            </Link>
           </li>
         </ul>
 

@@ -4,6 +4,7 @@ import com.example.car_management.dto.request.CreateBookingRequest;
 import com.example.car_management.dto.request.UpdateBookingStatusRequest;
 import com.example.car_management.dto.ApiResponse;
 import com.example.car_management.dto.response.BookingResponse;
+import com.example.car_management.dto.response.BookedDateResponse;
 import com.example.car_management.service.BookingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +56,15 @@ public class BookingController {
         BookingResponse response = bookingService.updateBookingStatus(id, request);
         return ResponseEntity.ok(ApiResponse.<BookingResponse>builder()
                 .result(response)
+                .build());
+    }
+
+    @GetMapping("/vehicle/{vehicleId}/booked-dates")
+    public ResponseEntity<ApiResponse<List<BookedDateResponse>>> getBookedDatesByVehicle(
+            @PathVariable Integer vehicleId) {
+        List<BookedDateResponse> bookedDates = bookingService.getBookedDatesByVehicle(vehicleId);
+        return ResponseEntity.ok(ApiResponse.<List<BookedDateResponse>>builder()
+                .result(bookedDates)
                 .build());
     }
 }
