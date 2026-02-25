@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { DayPicker } from 'react-day-picker';
+import { isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-fns';
+import 'react-day-picker/dist/style.css';
 import '../styles/BookingModal.css';
 
 export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
@@ -8,8 +11,40 @@ export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
     const [error, setError] = useState('');
     const [totalPrice, setTotalPrice] = useState(0);
 
+    const [bookedDates, setBookedDates] = useState([]);
+    const [isLoadingDates, setIsLoadingDates] = useState(false);
+
     // Calculate minimum date (today)
     const today = new Date().toISOString().slice(0, 16);
+
+    // Fetch booked dates when modal opens
+    useEffect(() => {
+        if (isOpen && car?.id) {
+            const fetchBookedDates = async () => {
+                setIsLoadingDates(true);
+                try {
+                    const { getBookedDates } = await import('../api/bookings.js');
+                    const dates = await getBookedDates(car.id);
+                    setBookedDates(dates.map(d => ({
+                        start: new Date(d.startDate),
+                        end: new Date(d.endDate)
+                    })));
+                } catch (err) {
+                    console.error("Failed to fetch booked dates:", err);
+                    // Don't block booking if this fails, just won't show the calendar blocks
+                } finally {
+                    setIsLoadingDates(false);
+                }
+            };
+            fetchBookedDates();
+        } else {
+            // Reset state when closed
+            setStartDate('');
+            setEndDate('');
+            setError('');
+            setBookedDates([]);
+        }
+    }, [isOpen, car?.id]);
 
     // Calculate total price when dates change
     useEffect(() => {
@@ -32,6 +67,17 @@ export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
         }
     }, [startDate, endDate, car?.pricePerDay]);
 
+    const isDateOverlappingWithBooking = (start, end) => {
+        const startD = new Date(start);
+        const endD = new Date(end);
+
+        return bookedDates.some(booking => {
+            // Check if selected range overlaps with existing booking
+            // (StartA <= EndB) and (EndA >= StartB)
+            return startD <= booking.end && endD >= booking.start;
+        });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -45,16 +91,22 @@ export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
             return;
         }
 
+        if (isDateOverlappingWithBooking(startDate, endDate)) {
+            setError('Khoảng thời gian này đã có người đặt, vui lòng chọn ngày khác!');
+            return;
+        }
+
         setLoading(true);
         setError('');
 
         try {
             // Import API function
             const { createBooking } = await import('../api/bookings.js');
+            const { format } = await import('date-fns');
 
-            // Format dates to ISO string
-            const formattedStartDate = new Date(startDate).toISOString();
-            const formattedEndDate = new Date(endDate).toISOString();
+            // Format dates precisely to yyyy-MM-dd'T'HH:mm:ss for Spring Boot LocalDateTime
+            const formattedStartDate = format(new Date(startDate), "yyyy-MM-dd'T'HH:mm:ss");
+            const formattedEndDate = format(new Date(endDate), "yyyy-MM-dd'T'HH:mm:ss");
 
             await createBooking(car.id, formattedStartDate, formattedEndDate);
 
@@ -102,6 +154,34 @@ export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
                         <div className="modal-header">
                             <h2>xác nhận đặt xe</h2>
                             <p>Vui lòng chọn thời gian nhận và trả xe</p>
+                        </div>
+
+                        <div className="calendar-section">
+                            <h4 className="calendar-title">Lịch trình bận của xe</h4>
+                            <div className="calendar-wrapper">
+                                {isLoadingDates ? (
+                                    <div className="calendar-loading">Đang tải lịch...</div>
+                                ) : (
+                                    <DayPicker
+                                        mode="range"
+                                        disabled={bookedDates.map(dateRange => ({
+                                            from: dateRange.start,
+                                            to: dateRange.end
+                                        }))}
+                                        modifiers={{ booked: bookedDates.map(d => ({ from: d.start, to: d.end })) }}
+                                        modifiersStyles={{
+                                            booked: { backgroundColor: '#ffebees', textDecoration: 'line-through', color: '#f44336' }
+                                        }}
+                                        fromMonth={new Date()}
+                                        numberOfMonths={1}
+                                        pagedNavigation
+                                        className="booking-calendar"
+                                    />
+                                )}
+                            </div>
+                            <div className="calendar-legend">
+                                <span className="legend-item booked">Đã có người đặt</span>
+                            </div>
                         </div>
 
                         <form onSubmit={handleSubmit} className="booking-form">
@@ -161,7 +241,7 @@ export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
                                         <span className="sc-loading">Processing...</span>
                                     ) : (
                                         <>
-                                            <span>Thanh toán ngay</span>
+                                            <span>Xác nhận đặt xe</span>
                                             <span className="total-badge">{totalPrice > 0 ? totalPrice.toLocaleString('vi-VN') + ' ₫' : ''}</span>
                                         </>
                                     )}

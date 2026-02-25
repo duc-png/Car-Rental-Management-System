@@ -10,8 +10,11 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "vehicles")
 public class VehicleEntity {
@@ -54,6 +57,9 @@ public class VehicleEntity {
 
     @Column(name = "current_km", nullable = false)
     private Integer currentKm;
+
+    @Column(name = "fuel_level")
+    private Integer fuelLevel; // 0-100 (%)
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id")

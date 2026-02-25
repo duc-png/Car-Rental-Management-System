@@ -45,7 +45,7 @@ function Navbar({ sticky = true }) {
                   My Bookings
                 </Link>
               </li>
-              {user?.role?.includes('ROLE_EXPERT') && (
+              {(user?.role?.includes('ROLE_EXPERT') || user?.role?.includes('ROLE_ADMIN')) && (
                 <li>
                   <Link to="/manage-rentals" onClick={() => setIsMobileMenuOpen(false)}>
                     Manage Rentals

@@ -29,4 +29,17 @@ public class BookingResponse {
     private BookingStatus status;
     private Instant createdAt;
     private Instant updatedAt;
+
+    // Payment specific fields
+    private BigDecimal depositAmount;
+    private com.example.car_management.entity.enums.PaymentStatus paymentStatus;
+    private String checkoutUrl;
+
+    // Car handover & return tracking
+    private Integer startKm;
+    private Integer endKm;
+    private Integer startFuelLevel;
+    private Integer endFuelLevel;
+    private BigDecimal surchargeAmount;
+    private String returnNotes;
 }

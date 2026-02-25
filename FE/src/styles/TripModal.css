@@ -1,0 +1,363 @@
+/* TripModal.css - Premium Dark Theme Modals for Start/Complete Trip */
+
+/* Overlay */
+.trip-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Modal */
+.trip-modal {
+    background: #1e293b;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    animation: slideUp 0.3s ease;
+}
+
+.trip-modal.complete {
+    max-width: 600px;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(40px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Header */
+.trip-modal-header {
+    padding: 28px 28px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.trip-modal-header h2 {
+    font-size: 1.5rem;
+    color: #f1f5f9;
+    margin: 0 0 6px 0;
+    font-weight: 700;
+}
+
+.trip-modal-header.start h2 {
+    background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.trip-modal-header.complete h2 {
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.trip-modal-header p {
+    color: #94a3b8;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+/* Body */
+.trip-modal-body {
+    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Form Groups */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    color: #cbd5e1;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.form-group input[type="number"],
+.form-group textarea {
+    background: #0f172a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px 16px;
+    color: #f1f5f9;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+}
+
+.form-group input[type="number"]:focus,
+.form-group textarea:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Fuel Slider */
+.fuel-input-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.fuel-input-row input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 3px;
+    background: #334155;
+    outline: none;
+}
+
+.fuel-input-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+    transition: transform 0.2s;
+}
+
+.fuel-input-row input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+}
+
+.fuel-value {
+    color: #f1f5f9;
+    font-weight: 700;
+    font-size: 1.1rem;
+    min-width: 48px;
+    text-align: right;
+}
+
+/* Fuel bar */
+.fuel-bar {
+    height: 8px;
+    background: #334155;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.fuel-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ef4444 0%, #f59e0b 30%, #10b981 70%, #10b981 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+/* Trip Info Box */
+.trip-info-box {
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.15);
+    border-radius: 12px;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.info-label {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.info-value {
+    color: #f1f5f9;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+/* Surcharge Box */
+.surcharge-box {
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.surcharge-box.ok {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.surcharge-box.warning {
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.surcharge-box p {
+    margin: 0 0 6px 0;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+}
+
+.surcharge-box p:last-child {
+    margin-bottom: 0;
+}
+
+.surcharge-amount {
+    color: #fbbf24 !important;
+    font-size: 1rem !important;
+}
+
+.surcharge-ok {
+    color: #34d399 !important;
+    font-weight: 600;
+}
+
+/* Total Surcharge Box */
+.total-surcharge-box {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 12px;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.total-surcharge-box span:first-child {
+    color: #94a3b8;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.total-amount {
+    color: #f1f5f9;
+    font-weight: 800;
+    font-size: 1.25rem;
+}
+
+/* Footer */
+.trip-modal-footer {
+    padding: 16px 28px 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.btn-modal-cancel {
+    padding: 12px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: #94a3b8;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+}
+
+.btn-modal-cancel:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #f1f5f9;
+}
+
+.btn-modal-confirm {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+    color: white;
+}
+
+.btn-modal-confirm.start {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.btn-modal-confirm.start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+}
+
+.btn-modal-confirm.complete {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-modal-confirm.complete:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* Scrollbar */
+.trip-modal::-webkit-scrollbar {
+    width: 6px;
+}
+
+.trip-modal::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .trip-modal {
+        width: 95%;
+        max-height: 85vh;
+    }
+
+    .trip-info-box {
+        grid-template-columns: 1fr;
+    }
+
+    .trip-modal-header,
+    .trip-modal-body,
+    .trip-modal-footer {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+}

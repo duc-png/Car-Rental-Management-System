@@ -29,3 +29,11 @@ jwt:
   signerKey: "1TjXchw5FloESb63Kc+DFhTARvpWL4jUGCwfGWxuG5SIf/1y/LgJxHnMqaF6A/ij"
   valid-duration: 3600 # in second
   refreshable-duration: 36000 # in seconds
+
+payos:
+  client-id: 8e367bf0-0fe4-4c87-810b-ff586609341a
+  api-key: 9679efd7-f17e-47f9-b88d-f4bea9ba4cbf
+  checksum-key: c653314319dd2dd850c3ad413d8ccde928bd30d69658457f884aa1a6170edafe
+
+app:
+  frontend-url: http://localhost:3000

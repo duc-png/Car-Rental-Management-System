@@ -14,6 +14,8 @@ import ForgotPassword from './pages/auth/ForgotPassword'
 import CarOwnerFleet from './pages/owner/CarOwnerFleet'
 import OwnerPublicProfile from './pages/public/OwnerPublicProfile'
 import ManageRentals from './pages/ManageRentals'
+import PaymentSuccess from './pages/PaymentSuccess'
+import PaymentCancel from './pages/PaymentCancel'
 import Customers from './pages/Customers'
 import './styles/App.css'
 import './index.css'
@@ -35,6 +37,8 @@ function AppLayout() {
           <Route path="/owners/:ownerId" element={<OwnerPublicProfile />} />
           <Route path="/my-bookings" element={<MyBookings />} />
           <Route path="/manage-rentals" element={<ManageRentals />} />
+          <Route path="/booking/:id/payment-success" element={<PaymentSuccess />} />
+          <Route path="/booking/:id/payment-cancel" element={<PaymentCancel />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
