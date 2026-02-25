@@ -333,3 +333,90 @@
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+/* Calendar Styles */
+.calendar-section {
+    margin-bottom: 24px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.calendar-title {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.calendar-wrapper {
+    display: flex;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.02);
+}
+
+.calendar-loading {
+    padding: 40px 0;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.9rem;
+    font-style: italic;
+    text-align: center;
+    width: 100%;
+}
+
+.booking-calendar {
+    margin: 0;
+    --rdp-cell-size: 32px;
+    --rdp-accent-color: #667eea;
+    --rdp-background-color: rgba(102, 126, 234, 0.1);
+    color: #fff;
+}
+
+.booking-calendar .rdp-day_selected,
+.booking-calendar .rdp-day_selected:focus,
+.booking-calendar .rdp-day_selected:hover {
+    background-color: var(--rdp-accent-color);
+    color: white;
+}
+
+.booking-calendar .rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.booking-calendar .rdp-nav_button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.calendar-legend {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+    font-size: 0.85rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.legend-item::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    margin-right: 6px;
+}
+
+.legend-item.booked::before {
+    background-color: #ffebee;
+    border: 1px solid #ffcdd2;
+}

@@ -51,6 +51,22 @@ export const getMyBookings = async () => {
 };
 
 /**
+ * Lấy danh sách ngày đã đặt của một xe cụ thể
+ * @param {number} vehicleId - ID của xe
+ */
+export const getBookedDates = async (vehicleId) => {
+    // This is public/semi-public info, so we can fetch it even without auth for displaying calendar
+    // But since authFetch requires token in this file, we use standard fetch if we want it public
+    // Assuming backend endpoint is public or user is already logged in when opening modal
+    const response = await fetch(`${API_BASE_URL}/bookings/vehicle/${vehicleId}/booked-dates`);
+    if (!response.ok) {
+        throw new Error('Không thể tải lịch đặt xe');
+    }
+    const data = await response.json();
+    return data.result || [];
+};
+
+/**
  * Lấy chi tiết 1 booking
  * @param {number} id - Booking ID
  */
@@ -63,11 +79,12 @@ export const getBookingById = async (id) => {
  * Cập nhật trạng thái booking (cho Owner)
  * @param {number} id - Booking ID
  * @param {string} status - CONFIRMED, ONGOING, COMPLETED, CANCELLED
+ * @param {object} extraData - Optional extra fields (startKm, startFuelLevel, endKm, endFuelLevel, otherSurcharge, returnNotes)
  */
-export const updateBookingStatus = async (id, status) => {
+export const updateBookingStatus = async (id, status, extraData = {}) => {
     const data = await authFetch(`${API_BASE_URL}/bookings/${id}/status`, {
         method: 'PATCH',
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, ...extraData }),
     });
     return data.result;
 };

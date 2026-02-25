@@ -13,6 +13,8 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import CarOwnerFleet from './pages/CarOwnerFleet'
+import PaymentSuccess from './pages/PaymentSuccess'
+import PaymentCancel from './pages/PaymentCancel'
 import './styles/App.css'
 import './index.css'
 
@@ -31,6 +33,8 @@ function AppLayout() {
           <Route path="/cars/:id" element={<CarDetails />} />
           <Route path="/my-bookings" element={<MyBookings />} />
           <Route path="/manage-rentals" element={<ManageRentals />} />
+          <Route path="/booking/:id/payment-success" element={<PaymentSuccess />} />
+          <Route path="/booking/:id/payment-cancel" element={<PaymentCancel />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />

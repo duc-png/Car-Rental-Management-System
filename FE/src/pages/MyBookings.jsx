@@ -123,6 +123,9 @@ function MyBookings() {
                   <p><strong>Nhận xe:</strong> {formatDate(booking.startDate)}</p>
                   <p><strong>Trả xe:</strong> {formatDate(booking.endDate)}</p>
                   <p><strong>Tổng tiền:</strong> {booking.totalPrice?.toLocaleString('vi-VN')} ₫</p>
+                  {booking.depositAmount && (
+                    <p><strong>Tiền cọc (15%):</strong> {booking.depositAmount?.toLocaleString('vi-VN')} ₫</p>
+                  )}
                 </div>
                 <div className="booking-status">
                   <span className={`status-badge ${booking.status?.toLowerCase()}`}>
@@ -131,6 +134,22 @@ function MyBookings() {
                 </div>
               </div>
               <div className="booking-actions">
+                {booking.paymentStatus === 'PENDING_DEPOSIT' && booking.checkoutUrl && (
+                  <button
+                    className="btn-pay"
+                    onClick={() => window.open(booking.checkoutUrl, '_blank')}
+                  >
+                    Thanh toán cọc 15%
+                  </button>
+                )}
+                {booking.paymentStatus === 'PENDING_FULL_PAYMENT' && booking.checkoutUrl && (
+                  <button
+                    className="btn-pay full-payment"
+                    onClick={() => window.open(booking.checkoutUrl, '_blank')}
+                  >
+                    Thanh toán 85% còn lại
+                  </button>
+                )}
                 <button
                   className="btn-view"
                   onClick={() => navigate(`/cars/${booking.vehicleId}`)}
