@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.Map;
 import java.util.Objects;
+
 @Slf4j
 @ControllerAdvice
 
@@ -57,26 +58,29 @@ public class GlobalExceptionHandler {
         log.error("Request body is missing or invalid: ", exception);
         ApiResponse apiResponse = new ApiResponse();
         apiResponse.setCode(ErrorCode.INVALID_KEY.getCode());
-        apiResponse.setMessage("Request body is required. Please check your Content-Type header and ensure JSON body is provided.");
+        apiResponse.setMessage(
+                "Request body is required. Please check your Content-Type header and ensure JSON body is provided.");
         return ResponseEntity.badRequest().body(apiResponse);
     }
 
     @ExceptionHandler(value = MethodArgumentNotValidException.class)
     ResponseEntity<ApiResponse> handlingValidation(MethodArgumentNotValidException exception) {
-        String enumKey = null;
+        String validationMessage = null;
         if (exception.getFieldError() != null) {
-            enumKey = exception.getFieldError().getDefaultMessage();
+            validationMessage = exception.getFieldError().getDefaultMessage();
+        } else if (exception.getGlobalError() != null) {
+            validationMessage = exception.getGlobalError().getDefaultMessage();
         }
 
         ErrorCode errorCode = ErrorCode.INVALID_KEY;
         Map<String, Object> attributes = null;
 
         // 1) resolve ErrorCode theo enumKey nếu có
-        if (enumKey != null) {
+        if (validationMessage != null) {
             try {
-                errorCode = ErrorCode.valueOf(enumKey);
+                errorCode = ErrorCode.valueOf(validationMessage);
             } catch (IllegalArgumentException ignored) {
-                // enumKey không khớp với ErrorCode
+                // enumKey không khớp với ErrorCode, giữ nguyên custom message
             }
         }
 
@@ -86,19 +90,25 @@ public class GlobalExceptionHandler {
             if (allErrors != null && !allErrors.isEmpty()) {
                 ConstraintViolation<?> violation = allErrors.get(0).unwrap(ConstraintViolation.class);
                 attributes = violation.getConstraintDescriptor().getAttributes();
-                log.info("Constraint attributes: {}", attributes);
             }
         } catch (Exception ignored) {
-            // không unwrap được thì thôi, fallback message
+            // không unwrap được thì thôi
         }
 
         ApiResponse apiResponse = new ApiResponse();
         apiResponse.setCode(errorCode.getCode());
+
+        // Nếu không map được sang ErrorCode, sẽ dùng message trực tiếp từ Validator
+        // Annotation
+        String finalMessage = (errorCode == ErrorCode.INVALID_KEY && validationMessage != null
+                && !validationMessage.equals("INVALID_KEY"))
+                        ? validationMessage
+                        : errorCode.getMessage();
+
         apiResponse.setMessage(
                 (attributes != null)
-                        ? mapAttribute(errorCode.getMessage(), attributes)
-                        : errorCode.getMessage()
-        );
+                        ? mapAttribute(finalMessage, attributes)
+                        : finalMessage);
 
         return ResponseEntity.badRequest().body(apiResponse);
     }

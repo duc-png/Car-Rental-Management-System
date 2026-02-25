@@ -36,6 +36,12 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
                                 // Allow public GET access to vehicles (for browsing)
                                 .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/**").permitAll()
+                                // Allow public GET access to booked dates for vehicles
+                                .requestMatchers(HttpMethod.GET, "/api/v1/bookings/vehicle/*/booked-dates").permitAll()
+                                // Allow PayOS Webhook
+                                .requestMatchers(HttpMethod.POST, "/api/v1/payments/payos-webhook").permitAll()
+                                // Allow Test PayOS
+                                .requestMatchers(HttpMethod.GET, "/api/v1/test-payos").permitAll()
                                 .anyRequest()
                                 .authenticated());
 
