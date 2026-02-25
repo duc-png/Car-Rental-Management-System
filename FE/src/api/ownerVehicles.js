@@ -18,7 +18,18 @@ const unwrapApiResponse = (data) => {
     return data;
 };
 
-const requestJson = async (url, options = {}) => {
+const getAuthToken = () => localStorage.getItem('token');
+
+const withAuthHeaders = (headers = {}) => {
+    const token = getAuthToken();
+    if (!token) return headers;
+    return {
+        ...headers,
+        Authorization: `Bearer ${token}`
+    };
+};
+
+const requestJson = async (url, options = {}, { auth = false } = {}) => {
     const response = await fetch(url, options);
     const data = await parseJson(response);
     if (!response.ok) {
@@ -43,15 +54,28 @@ export const getVehicleDetail = async (vehicleId) => {
     return data || null;
 };
 
+export const createOwnerVehicle = async (payload) => {
+    if (!payload?.ownerId) throw new Error('Missing ownerId');
+    const data = await requestJson(`${API_BASE_URL}/vehicles`, {
+        method: 'POST',
+        headers: withAuthHeaders({
+            'Content-Type': 'application/json'
+        }),
+        body: JSON.stringify(payload)
+    }, { auth: true });
+    return data || null;
+};
+
 export const updateOwnerVehicle = async (vehicleId, ownerId, payload) => {
     if (!vehicleId || !ownerId) throw new Error('Missing vehicleId/ownerId');
     const data = await requestJson(`${API_BASE_URL}/vehicles/${vehicleId}?ownerId=${ownerId}`, {
         method: 'PUT',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...withAuthHeaders()
         },
         body: JSON.stringify(payload)
-    });
+    }, { auth: true });
     return data || null;
 };
 
@@ -60,18 +84,20 @@ export const updateOwnerVehicleStatus = async (vehicleId, ownerId, status) => {
     const data = await requestJson(`${API_BASE_URL}/vehicles/${vehicleId}/status?ownerId=${ownerId}`, {
         method: 'PATCH',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...withAuthHeaders()
         },
         body: JSON.stringify({ status })
-    });
+    }, { auth: true });
     return data || null;
 };
 
 export const deleteOwnerVehicle = async (vehicleId, ownerId) => {
     if (!vehicleId || !ownerId) throw new Error('Missing vehicleId/ownerId');
     await requestJson(`${API_BASE_URL}/vehicles/${vehicleId}?ownerId=${ownerId}`, {
-        method: 'DELETE'
-    });
+        method: 'DELETE',
+        headers: withAuthHeaders()
+    }, { auth: true });
     return true;
 };
 
@@ -80,26 +106,29 @@ export const addVehicleImagesByUrl = async (vehicleId, ownerId, { imageUrls, set
     const data = await requestJson(`${API_BASE_URL}/vehicles/${vehicleId}/images?ownerId=${ownerId}`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            ...withAuthHeaders()
         },
         body: JSON.stringify({ imageUrls, setFirstAsMain })
-    });
+    }, { auth: true });
     return data || [];
 };
 
 export const setMainVehicleImage = async (vehicleId, ownerId, imageId) => {
     if (!vehicleId || !ownerId || !imageId) throw new Error('Missing vehicleId/ownerId/imageId');
     const data = await requestJson(`${API_BASE_URL}/vehicles/${vehicleId}/images/${imageId}/main?ownerId=${ownerId}`, {
-        method: 'PATCH'
-    });
+        method: 'PATCH',
+        headers: withAuthHeaders()
+    }, { auth: true });
     return data || [];
 };
 
 export const deleteVehicleImage = async (vehicleId, ownerId, imageId) => {
     if (!vehicleId || !ownerId || !imageId) throw new Error('Missing vehicleId/ownerId/imageId');
     await requestJson(`${API_BASE_URL}/vehicles/${vehicleId}/images/${imageId}?ownerId=${ownerId}`, {
-        method: 'DELETE'
-    });
+        method: 'DELETE',
+        headers: withAuthHeaders()
+    }, { auth: true });
     return true;
 };
 
@@ -120,6 +149,7 @@ export const uploadVehicleImages = async (vehicleId, ownerId, files, { setFirstA
 
     const response = await fetch(url.toString(), {
         method: 'POST',
+        headers: withAuthHeaders(),
         body: formData
     });
 

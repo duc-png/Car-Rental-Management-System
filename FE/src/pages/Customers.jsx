@@ -167,7 +167,7 @@ export default function Customers() {
                     <nav className="admin-nav">
                         <p className="nav-section">Navigation</p>
                         <button className="nav-item">Dashboard</button>
-                        <button className="nav-item">Fleet</button>
+                        <button className="nav-item">Vehicles</button>
                         <button className="nav-item">Bookings</button>
                         <button className="nav-item active">Customers</button>
                         <button className="nav-item">Analytics</button>

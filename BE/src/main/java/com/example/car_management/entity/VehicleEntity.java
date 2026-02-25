@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,8 +53,24 @@ public class VehicleEntity {
     @Column(name = "price_per_day", nullable = false, precision = 12, scale = 2)
     private BigDecimal pricePerDay;
 
+    @Column(name = "created_at", updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "reviewed_at")
+    private Instant reviewedAt;
+
     @Enumerated(EnumType.STRING)
     private VehicleStatus status;
+
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(name = "year")
+    private Integer year;
+
+    @Column(name = "fuel_consumption")
+    private Float fuelConsumption;
 
     @Column(name = "current_km", nullable = false)
     private Integer currentKm;
@@ -68,4 +85,11 @@ public class VehicleEntity {
     @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<VehicleImageEntity> images = new ArrayList<>();
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = Instant.now();
+        }
+    }
 }

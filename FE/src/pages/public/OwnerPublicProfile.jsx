@@ -71,7 +71,7 @@ function OwnerPublicProfile() {
                 <section className="owner-public-card">
                     <div className="owner-public-header">
                         <h2>Thông tin tài khoản</h2>
-                        <span className="owner-trip-badge">🚗 {owner?.totalTrips || 0} chuyến</span>
+                        <span className="owner-trip-badge">{owner?.totalTrips || 0} chuyến</span>
                     </div>
 
                     <div className="owner-public-main">
@@ -79,7 +79,7 @@ function OwnerPublicProfile() {
                             <div className="owner-public-avatar">{(ownerDisplayName || 'A').charAt(0).toUpperCase()}</div>
                             <div>
                                 <h3>{ownerDisplayName}</h3>
-                                <p>{owner?.isVerified ? 'Tài khoản đã xác thực' : 'Tài khoản chưa xác thực'}</p>
+                                {/* <p>{owner?.isVerified ? 'Tài khoản đã xác thực' : 'Tài khoản chưa xác thực'}</p> */}
                             </div>
                         </div>
 

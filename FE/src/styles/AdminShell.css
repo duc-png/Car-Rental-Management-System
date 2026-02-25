@@ -1,0 +1,257 @@
+.admin-page {
+    min-height: 100vh;
+    background: #f5f7fb;
+    color: #1f2933;
+}
+
+.admin-shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 24px;
+    padding: 32px 32px 48px;
+}
+
+.admin-sidebar {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 24px 20px;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    position: sticky;
+    top: 24px;
+    height: fit-content;
+}
+
+.brand-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.brand-icon {
+    width: 44px;
+    height: 44px;
+    background: #0f172a;
+    color: #ffffff;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+}
+
+.brand-title {
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.brand-subtitle {
+    font-size: 0.78rem;
+    color: #6b7280;
+}
+
+.admin-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.nav-section {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9aa3af;
+    margin-bottom: 4px;
+}
+
+.nav-item {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: transparent;
+    border: none;
+    text-align: left;
+    font-weight: 500;
+    color: #374151;
+    transition: all 0.2s ease;
+    display: block;
+    width: 100%;
+    text-decoration: none;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    background: #eef2ff;
+    color: #1e1b4b;
+}
+
+.admin-profile {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 14px;
+    background: #f8fafc;
+    min-width: 0;
+}
+
+.admin-profile .btn-outline {
+    margin-left: auto;
+}
+
+.admin-nav-logout {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #ef4444;
+    white-space: nowrap;
+}
+
+.admin-nav-logout:hover {
+    background: rgba(239, 68, 68, 0.08);
+    color: #ef4444;
+}
+
+.admin-nav-logout-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 12px;
+    border: 1px solid rgba(239, 68, 68, 0.22);
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+}
+
+.profile-avatar {
+    width: 40px;
+    height: 40px;
+    background: #e2e8f0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    color: #475569;
+}
+
+.profile-name {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-email {
+    font-size: 0.75rem;
+    color: #64748b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.profile-meta {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.admin-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    padding: 20px 24px;
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+}
+
+.admin-header h1 {
+    font-size: 1.6rem;
+}
+
+.admin-header p {
+    color: #6b7280;
+    margin-top: 4px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+}
+
+.stat-card {
+    background: #ffffff;
+    padding: 18px 20px;
+    border-radius: 18px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.stat-card p {
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.stat-card h3 {
+    margin-top: 6px;
+    font-size: 1.4rem;
+}
+
+.btn-primary {
+    background: #111827;
+    color: #ffffff;
+    border: none;
+    padding: 12px 18px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid #e5e7eb;
+    padding: 10px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.admin-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 20px 24px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+    text-align: left;
+    padding: 14px 12px;
+    font-size: 0.92rem;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.admin-table th {
+    color: #6b7280;
+    font-weight: 600;
+}
+
+.admin-alert {
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    color: #9a3412;
+    padding: 12px 14px;
+    border-radius: 14px;
+}
