@@ -8,6 +8,8 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -83,4 +85,9 @@ public class OwnerRegistration {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approved_owner_id")
     private UserEntity approvedOwner;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "owner_registration_features", joinColumns = @JoinColumn(name = "request_id"), inverseJoinColumns = @JoinColumn(name = "feature_id"))
+    @Builder.Default
+    private Set<VehicleFeatureEntity> features = new LinkedHashSet<>();
 }

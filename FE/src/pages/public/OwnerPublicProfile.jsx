@@ -114,7 +114,7 @@ function OwnerPublicProfile() {
                         {vehicles.length === 0 && <p className="owner-empty">Chủ xe chưa có xe hiển thị.</p>}
                         {vehicles.map((vehicle) => (
                             <Link to={`/car/${vehicle.id}`} key={vehicle.id} className="owner-vehicle-card">
-                                <img src={vehicle.mainImageUrl || '/placeholder.svg'} alt={vehicle.modelName || 'Vehicle'} />
+                                <img src={vehicle.images[0]?.imageUrl || '/placeholder.svg'} alt={vehicle.modelName || 'Vehicle'} />
                                 <div className="owner-vehicle-info">
                                     <strong>{vehicle.brandName} {vehicle.modelName}</strong>
                                     <p>{vehicle.carTypeName || 'Xe tự lái'} • {[vehicle.addressDetail, vehicle.district, vehicle.city].filter(Boolean).join(', ')}</p>

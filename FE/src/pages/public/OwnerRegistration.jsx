@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { submitOwnerRegistration } from '../../api/ownerRegistrations';
+import { listVehicleFeatures } from '../../api/vehicleFeatures';
 import '../../styles/OwnerRegistration.css';
 
 const MAX_IMAGES = 5;
@@ -22,7 +23,8 @@ const emptyForm = {
         transmission: 'AUTOMATIC',
         fuelType: 'GASOLINE',
         fuelConsumption: '',
-        description: ''
+        description: '',
+        featureIds: []
     }
 };
 
@@ -31,6 +33,7 @@ function OwnerRegistration() {
     const [formData, setFormData] = useState(emptyForm);
     const [images, setImages] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [featureCatalog, setFeatureCatalog] = useState([]);
 
     const previews = useMemo(() => images.map((file) => URL.createObjectURL(file)), [images]);
 
@@ -39,6 +42,29 @@ function OwnerRegistration() {
             previews.forEach((url) => URL.revokeObjectURL(url));
         };
     }, [previews]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadFeatureCatalog = async () => {
+            try {
+                const data = await listVehicleFeatures();
+                if (!cancelled) {
+                    setFeatureCatalog(Array.isArray(data) ? data : []);
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    setFeatureCatalog([]);
+                }
+            }
+        };
+
+        loadFeatureCatalog();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     const updateOwner = (field, value) => {
         setFormData((prev) => ({
@@ -58,6 +84,23 @@ function OwnerRegistration() {
                 [field]: value
             }
         }));
+    };
+
+    const toggleFeature = (featureId) => {
+        setFormData((prev) => {
+            const current = Array.isArray(prev.vehicle.featureIds) ? prev.vehicle.featureIds : [];
+            const next = current.includes(featureId)
+                ? current.filter((id) => id !== featureId)
+                : [...current, featureId];
+
+            return {
+                ...prev,
+                vehicle: {
+                    ...prev.vehicle,
+                    featureIds: next
+                }
+            };
+        });
     };
 
     const handleImagesChange = (event) => {
@@ -125,7 +168,8 @@ function OwnerRegistration() {
                 fuelConsumption: formData.vehicle.fuelConsumption
                     ? Number(formData.vehicle.fuelConsumption)
                     : null,
-                description: formData.vehicle.description.trim() || null
+                description: formData.vehicle.description.trim() || null,
+                featureIds: Array.isArray(formData.vehicle.featureIds) ? formData.vehicle.featureIds : []
             }
         };
 
@@ -323,6 +367,18 @@ function OwnerRegistration() {
                                 placeholder="Mô tả tình trạng, nội thất, ngoại thất..."
                             />
                         </label>
+                        <div className="owner-feature-grid">
+                            {featureCatalog.map((feature) => (
+                                <label key={feature.id} className="owner-feature-item">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.vehicle.featureIds.includes(feature.id)}
+                                        onChange={() => toggleFeature(feature.id)}
+                                    />
+                                    <span>{feature.name}</span>
+                                </label>
+                            ))}
+                        </div>
                     </div>
 
                     <div className="form-section">

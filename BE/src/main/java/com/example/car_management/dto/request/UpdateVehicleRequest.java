@@ -2,14 +2,19 @@ package com.example.car_management.dto.request;
 
 import com.example.car_management.entity.enums.FuelType;
 import com.example.car_management.entity.enums.Transmission;
+import com.example.car_management.entity.enums.VehicleStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class UpdateVehicleRequest {
 
     private Integer modelId;
@@ -45,5 +50,8 @@ public class UpdateVehicleRequest {
 
     @Valid
     private LocationInputRequest location;
-}
 
+    private List<Integer> featureIds;
+
+    private VehicleStatus status;
+}

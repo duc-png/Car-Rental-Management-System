@@ -30,6 +30,7 @@ public class VehicleServiceImpl implements VehicleService {
     private final LocationRepository locationRepository;
     private final UserRepository userRepository;
     private final VehicleImageRepository vehicleImageRepository;
+    private final VehicleFeatureRepository vehicleFeatureRepository;
     private final BookingRepository bookingRepository;
     private final CloudinaryService cloudinaryService;
 
@@ -44,7 +45,7 @@ public class VehicleServiceImpl implements VehicleService {
         UserEntity owner = userRepository.findById(req.getOwnerId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        VehicleModelEntity model = vehicleModelRepository.findById(req.getModelId())
+        VehicleModelEntity model = vehicleModelRepository.findByIdWithBrandAndType(req.getModelId())
                 .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
 
         LocationEntity location = resolveLocation(req.getLocationId(), req.getLocation());
@@ -59,11 +60,12 @@ public class VehicleServiceImpl implements VehicleService {
                 .fuelType(req.getFuelType())
                 .pricePerDay(req.getPricePerDay())
                 .status(com.example.car_management.entity.enums.VehicleStatus.PENDING_APPROVAL)
-            .description(req.getDescription() != null ? req.getDescription().trim() : null)
-            .year(req.getYear())
-            .fuelConsumption(req.getFuelConsumption())
+                .description(req.getDescription() != null ? req.getDescription().trim() : null)
+                .year(req.getYear())
+                .fuelConsumption(req.getFuelConsumption())
                 .currentKm(req.getCurrentKm() == null ? 0 : req.getCurrentKm())
                 .location(location)
+                .features(resolveFeatures(req.getFeatureIds()))
                 .build();
 
         VehicleEntity saved = vehicleRepository.save(v);
@@ -104,34 +106,107 @@ public class VehicleServiceImpl implements VehicleService {
 
         assertOwner(v, ownerId);
 
-        if (!v.getLicensePlate().equals(req.getLicensePlate())
+        if (req.getLicensePlate() != null && !v.getLicensePlate().equals(req.getLicensePlate())
                 && vehicleRepository.existsByLicensePlate(req.getLicensePlate())) {
             throw new AppException(ErrorCode.LICENSE_PLATE_EXISTED);
         }
 
-        VehicleModelEntity model = vehicleModelRepository.findById(req.getModelId())
-                .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
+        if (req.getModelId() != null) {
+            VehicleModelEntity model = vehicleModelRepository.findByIdWithBrandAndType(req.getModelId())
+                    .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
+            v.setModel(model);
+        }
 
-        LocationEntity location = resolveLocation(req.getLocationId(), req.getLocation());
+        if (req.getLicensePlate() != null)
+            v.setLicensePlate(req.getLicensePlate());
+        if (req.getColor() != null)
+            v.setColor(req.getColor());
+        if (req.getSeatCount() != null)
+            v.setSeatCount(req.getSeatCount());
+        if (req.getTransmission() != null)
+            v.setTransmission(req.getTransmission());
+        if (req.getFuelType() != null)
+            v.setFuelType(req.getFuelType());
+        if (req.getPricePerDay() != null)
+            v.setPricePerDay(req.getPricePerDay());
+        if (req.getDescription() != null)
+            v.setDescription(req.getDescription().trim());
+        if (req.getYear() != null)
+            v.setYear(req.getYear());
+        if (req.getFuelConsumption() != null)
+            v.setFuelConsumption(req.getFuelConsumption());
+        if (req.getCurrentKm() != null)
+            v.setCurrentKm(req.getCurrentKm());
+        if (req.getStatus() != null)
+            v.setStatus(req.getStatus());
+        if (req.getFeatureIds() != null)
+            v.setFeatures(resolveFeatures(req.getFeatureIds()));
 
-        v.setModel(model);
-        v.setLicensePlate(req.getLicensePlate());
-        v.setColor(req.getColor());
-        v.setSeatCount(req.getSeatCount());
-        v.setTransmission(req.getTransmission());
-        v.setFuelType(req.getFuelType());
-        v.setPricePerDay(req.getPricePerDay());
-        v.setDescription(req.getDescription() != null ? req.getDescription().trim() : null);
-        v.setYear(req.getYear());
-        v.setFuelConsumption(req.getFuelConsumption());
-        v.setCurrentKm(req.getCurrentKm());
-        v.setLocation(location);
+        // Update location chỉ nếu có locationId hoặc location data được gửi
+        boolean hasLocationIdOrData = req.getLocationId() != null
+                || (req.getLocation() != null && hasAnyLocationData(req.getLocation()));
+        if (hasLocationIdOrData) {
+            LocationEntity location = resolveLocationForUpdate(req.getLocationId(), req.getLocation(), v.getLocation());
+            v.setLocation(location);
+        }
 
         VehicleEntity saved = vehicleRepository.save(v);
 
         // chỉ load images để map response, KHÔNG set vào entity
         List<VehicleImageEntity> imgs = vehicleImageRepository.findByVehicle_Id(saved.getId());
         return VehicleMapper.toResponse(saved, imgs);
+    }
+
+    private java.util.Set<VehicleFeatureEntity> resolveFeatures(List<Integer> featureIds) {
+        if (featureIds == null || featureIds.isEmpty()) {
+            return new java.util.LinkedHashSet<>();
+        }
+
+        List<Integer> ids = featureIds.stream()
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+
+        if (ids.isEmpty()) {
+            return new java.util.LinkedHashSet<>();
+        }
+
+        List<VehicleFeatureEntity> found = vehicleFeatureRepository.findAllById(ids);
+        if (found.size() != ids.size()) {
+            throw new AppException(ErrorCode.VEHICLE_FEATURE_NOT_FOUND);
+        }
+
+        return new java.util.LinkedHashSet<>(found);
+    }
+
+    private boolean hasAnyLocationData(LocationInputRequest loc) {
+        if (loc == null)
+            return false;
+        return (loc.getProvince() != null && !loc.getProvince().trim().isEmpty())
+                || (loc.getWard() != null && !loc.getWard().trim().isEmpty())
+                || (loc.getAddressDetail() != null && !loc.getAddressDetail().trim().isEmpty());
+    }
+
+    private LocationEntity resolveLocationForUpdate(Integer locationId, LocationInputRequest locationInput,
+            LocationEntity currentLocation) {
+        if (locationId != null) {
+            return locationRepository.findById(locationId)
+                    .orElseThrow(() -> new AppException(ErrorCode.LOCATION_NOT_FOUND));
+        }
+
+        if (locationInput == null || !hasAnyLocationData(locationInput)) {
+            return null; // Return null để giữ location cũ (sẽ không set nếu null)
+        }
+
+        // Nếu có location input, tạo/update location
+        LocationEntity location = LocationEntity.builder()
+                .city(locationInput.getProvince() != null ? locationInput.getProvince().trim() : null)
+                .district(locationInput.getWard() != null ? locationInput.getWard().trim() : null)
+                .addressDetail(
+                        locationInput.getAddressDetail() != null ? locationInput.getAddressDetail().trim() : null)
+                .build();
+
+        return locationRepository.save(location);
     }
 
     private LocationEntity resolveLocation(Integer locationId, LocationInputRequest locationInput) {
@@ -147,7 +222,8 @@ public class VehicleServiceImpl implements VehicleService {
         LocationEntity location = LocationEntity.builder()
                 .city(locationInput.getProvince() != null ? locationInput.getProvince().trim() : null)
                 .district(locationInput.getWard() != null ? locationInput.getWard().trim() : null)
-                .addressDetail(locationInput.getAddressDetail() != null ? locationInput.getAddressDetail().trim() : null)
+                .addressDetail(
+                        locationInput.getAddressDetail() != null ? locationInput.getAddressDetail().trim() : null)
                 .build();
 
         return locationRepository.save(location);
@@ -453,16 +529,14 @@ public class VehicleServiceImpl implements VehicleService {
         List<BookingStatus> active = Arrays.asList(
                 BookingStatus.PENDING,
                 BookingStatus.CONFIRMED,
-                BookingStatus.ONGOING
-        );
+                BookingStatus.ONGOING);
 
         List<VehicleEntity> list = vehicleRepository.searchAvailableVehiclesSimple(
                 com.example.car_management.entity.enums.VehicleStatus.AVAILABLE,
                 keyword,
                 req.getFrom(),
                 req.getTo(),
-                active
-        );
+                active);
 
         return list.stream().map(v -> {
             v.setImages(vehicleImageRepository.findByVehicle_Id(v.getId()));
@@ -470,4 +544,3 @@ public class VehicleServiceImpl implements VehicleService {
         }).collect(Collectors.toList());
     }
 }
-

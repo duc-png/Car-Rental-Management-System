@@ -9,7 +9,9 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -85,6 +87,11 @@ public class VehicleEntity {
     @OneToMany(mappedBy = "vehicle", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<VehicleImageEntity> images = new ArrayList<>();
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "vehicle_feature_assignments", joinColumns = @JoinColumn(name = "vehicle_id"), inverseJoinColumns = @JoinColumn(name = "feature_id"))
+    @Builder.Default
+    private Set<VehicleFeatureEntity> features = new LinkedHashSet<>();
 
     @PrePersist
     protected void onCreate() {

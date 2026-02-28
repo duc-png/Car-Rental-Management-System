@@ -40,4 +40,5 @@ public class OwnerRegistrationRequestResponse {
     private String reviewedByName;
     private Integer approvedOwnerId;
     private List<String> vehicleImageUrls;
+    private List<VehicleFeatureResponse> features;
 }

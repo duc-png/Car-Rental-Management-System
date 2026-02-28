@@ -126,7 +126,6 @@
 }
 
 .detail-gallery-card,
-.car-title-block,
 .detail-block,
 .detail-booking-card {
     background: #fff;
@@ -201,7 +200,35 @@
 }
 
 .car-title-block {
-    padding: 16px;
+    padding: 16px 4px 2px;
+}
+
+.car-meta-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.car-type-pill {
+    font-size: 12px;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+}
+
+.car-status-pill {
+    font-size: 12px;
+    font-weight: 700;
+    color: #16a34a;
+    text-transform: uppercase;
+}
+
+.car-rating-pill {
+    font-size: 13px;
+    font-weight: 700;
+    color: #b45309;
 }
 
 .car-title-block h1 {
@@ -217,20 +244,49 @@
     font-weight: 500;
 }
 
-.stats-inline {
-    margin-top: 10px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+.quick-spec-grid {
+    margin-top: 14px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
 }
 
-.stats-inline span {
+.quick-spec-item {
     border: 1px solid #e5e7eb;
-    border-radius: 999px;
-    padding: 6px 10px;
-    font-size: 13px;
-    color: #374151;
-    background: #fafafa;
+    border-radius: 14px;
+    background: #f9fafb;
+    padding: 12px 10px;
+    text-align: center;
+}
+
+.quick-spec-icon {
+    display: block;
+    width: 18px;
+    height: 18px;
+    margin-bottom: 6px;
+    margin-left: auto;
+    margin-right: auto;
+    color: #9ca3af;
+}
+
+.quick-spec-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.quick-spec-label {
+    display: block;
+    font-size: 11px;
+    color: #6b7280;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.quick-spec-item b {
+    font-size: 15px;
+    color: #111827;
+    font-weight: 800;
 }
 
 .detail-block {
@@ -241,6 +297,18 @@
     margin: 0 0 12px;
     font-size: 19px;
     color: #111827;
+}
+
+.info-combined-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.info-subsection+.info-subsection {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #e2e8f0;
 }
 
 .spec-grid {
@@ -389,10 +457,26 @@
 
 .owner-detail-card {
     display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
+    align-items: center;
+    justify-content: space-between;
     flex-wrap: wrap;
-    gap: 18px;
+    gap: 16px;
+}
+
+.owner-avatar-wrap {
+    position: relative;
+}
+
+.owner-pro-badge {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    background: #eab308;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    border-radius: 999px;
+    padding: 2px 5px;
 }
 
 .owner-basic {
@@ -438,7 +522,7 @@
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: #16a34a;
+    background: #000;
     color: #fff;
     font-weight: 700;
     display: grid;
@@ -460,10 +544,10 @@
 
 .owner-metrics {
     display: grid;
-    grid-template-columns: repeat(3, minmax(110px, 1fr));
+    grid-template-columns: repeat(3, minmax(90px, 1fr));
     gap: 14px;
-    flex: 1 1 360px;
-    min-width: 320px;
+    flex: 1 1 330px;
+    min-width: 300px;
 }
 
 .owner-metrics div {
@@ -473,14 +557,28 @@
 .owner-metrics span {
     display: block;
     color: #6b7280;
-    font-size: 14px;
+    font-size: 12px;
 }
 
 .owner-metrics b {
     color: #111827;
-    font-size: 30px;
+    font-size: 22px;
     font-weight: 800;
     line-height: 1.1;
+}
+
+.owner-contact-btn {
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #111827;
+    border-radius: 12px;
+    padding: 10px 18px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.owner-contact-btn:hover {
+    background: #f9fafb;
 }
 
 .owner-review-note {
@@ -496,32 +594,116 @@
 .related-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
+    gap: 12px;
+}
+
+.related-block {
+    padding: 0;
+    border: none;
+    background: transparent;
+}
+
+.related-block h3 {
+    margin: 0 0 10px;
+}
+
+.related-block-full {
+    margin-top: 14px;
 }
 
 .related-card {
     text-decoration: none;
     border: 1px solid #e5e7eb;
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
     background: #fff;
 }
 
 .related-card img {
     width: 100%;
-    height: 110px;
+    height: 104px;
     object-fit: cover;
     display: block;
 }
 
-.related-card div {
-    padding: 8px;
+.related-card-content {
+    padding: 8px 10px 10px;
+}
+
+.related-type {
+    display: inline-block;
+    font-size: 9px;
+    color: #6b7280;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.related-meta {
+    margin: 5px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.related-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: #111827;
+}
+
+.related-meta-icon {
+    width: 13px;
+    height: 13px;
+    display: inline-flex;
+    color: #d4a72c;
+}
+
+.related-meta-icon svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.related-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+}
+
+.related-footer p {
+    margin: 0;
+    color: #d4a72c;
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.related-footer p small {
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.related-arrow {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid #d1d5db;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #1f2937;
+    font-weight: 800;
 }
 
 .related-card strong {
     display: block;
     color: #111827;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .related-card p {
@@ -538,127 +720,140 @@
 }
 
 .detail-booking-card {
-    padding: 16px;
-    background: #f2f4f7;
+    padding: 14px;
+    background: #f6f7f9;
     overflow: visible;
     min-width: 0;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.05);
 }
 
 .price-head-row {
     display: flex;
-    align-items: center;
+    align-items: baseline;
+    flex-wrap: nowrap;
     gap: 8px;
-    margin-bottom: 4px;
+    margin-bottom: 14px;
 }
 
 .old-price {
-    color: #9ca3af;
-    text-decoration: line-through;
+    color: #d4a72c;
+    font-weight: 800;
+    font-size: 46px;
+    text-decoration: none;
+    line-height: 1;
+}
+
+.per-day {
+    color: #6b7280;
+    font-size: 13px;
     font-weight: 700;
-    font-size: 14px;
+    margin: 0 0 4px;
+    white-space: nowrap;
 }
 
 .discount-pill {
-    background: #fb923c;
+    background: #111827;
     color: #fff;
     border-radius: 999px;
-    padding: 2px 8px;
-    font-size: 12px;
+    padding: 3px 8px;
+    font-size: 10px;
     font-weight: 700;
-}
-
-.price-number {
-    font-size: clamp(34px, 3.6vw, 52px);
-    font-weight: 800;
-    color: #111827;
-    margin: 0;
+    margin-left: auto;
     line-height: 1;
-    display: flex;
-    align-items: baseline;
-    gap: 0;
-    flex-wrap: wrap;
-    max-width: 100%;
-}
-
-.price-value {
-    white-space: nowrap;
-}
-
-.price-number small {
-    font-size: 16px;
-    color: #374151;
-    font-weight: 700;
-    white-space: nowrap;
+    margin-top: 0;
+    align-self: flex-start;
 }
 
 .booking-time-box {
-    margin-top: 14px;
+    margin-top: 8px;
     width: 100%;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    border: 1px solid #d1d5db;
-    border-radius: 10px;
-    background: #fff;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    border: none;
+    background: transparent;
     padding: 0;
     text-align: left;
     cursor: pointer;
 }
 
 .booking-time-box>div {
-    padding: 10px 12px;
+    padding: 9px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    background: #eef1f5;
 }
 
-.booking-time-box>div+div {
-    border-left: 1px solid #e5e7eb;
+.booking-time-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.booking-time-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
 }
 
 .booking-time-box span {
     display: block;
     color: #6b7280;
-    font-size: 12px;
+    font-size: 10px;
+    font-weight: 700;
 }
 
 .booking-time-box b {
-    display: inline;
-    margin-top: 0;
+    display: block;
+    margin-top: 2px;
     color: #111827;
-    font-size: 15px;
-    line-height: 1.25;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.05;
 }
 
-.booking-time-box em {
-    display: inline;
-    margin-left: 6px;
-    color: #111827;
-    font-size: 15px;
-    line-height: 1.25;
+.booking-time-top em {
+    color: #374151;
+    font-size: 11px;
     font-style: normal;
-    font-weight: 800;
+    font-weight: 700;
+}
+
+.booking-time-box small {
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.05;
+    font-weight: 500;
 }
 
 .pickup-box {
-    margin-top: 12px;
+    margin-top: 16px;
 }
 
 .pickup-box>p {
-    margin: 0 0 8px;
+    margin: 0 0 10px;
     color: #111827;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 800;
     line-height: 1.2;
 }
 
 .pickup-option {
     display: grid;
-    grid-template-columns: 26px 1fr auto;
+    grid-template-columns: 24px minmax(0, 1fr) auto;
     gap: 10px;
-    align-items: start;
-    padding: 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 10px;
-    margin-bottom: 8px;
-    background: #fff;
+    align-items: center;
+    padding: 11px 14px;
+    border: 1px solid #d7dce3;
+    border-radius: 16px;
+    margin-bottom: 10px;
+    min-height: 78px;
+    background: #f1f3f6;
     cursor: pointer;
+    position: relative;
 }
 
 .pickup-option>div {
@@ -666,49 +861,117 @@
 }
 
 .pickup-option.active {
-    border-color: #86efac;
+    border-color: #e6cf8d;
+    background: #fff;
 }
 
 .pickup-option input {
-    margin-top: 3px;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    clip: rect(0 0 0 0);
+    overflow: hidden;
+}
+
+.pickup-radio-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #c7ced8;
+    background: #f8fafc;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.pickup-radio-icon::after {
+    content: '';
+    width: 8px;
+    height: 4px;
+    border-left: 2px solid transparent;
+    border-bottom: 2px solid transparent;
+    transform: rotate(-45deg) translateY(-1px);
+    transition: border-color 0.15s ease;
+}
+
+.pickup-option input:checked+.pickup-radio-icon {
+    border-color: #111827;
+    background: #111827;
+}
+
+.pickup-option input:checked+.pickup-radio-icon::after {
+    border-left-color: #fff;
+    border-bottom-color: #fff;
 }
 
 .pickup-option span {
     display: block;
-    color: #4b5563;
-    font-size: 14px;
+    color: #111827;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.2;
 }
 
 .pickup-option b {
     display: block;
-    color: #111827;
-    margin-top: 2px;
-    font-size: 16px;
-    font-weight: 700;
+    color: #6b7280;
+    margin-top: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .pickup-option strong {
-    color: #22c55e;
+    color: #d4a72c;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 800;
+    align-self: center;
+    white-space: nowrap;
 }
 
 .btn-primary.full-width {
     width: 100%;
-    margin-top: 12px;
+    margin-top: 14px;
     border: none;
     border-radius: 10px;
-    padding: 11px 14px;
-    background: #22c55e;
+    padding: 12px 14px;
+    background: #0f1a3a;
     color: #fff;
-    font-weight: 700;
+    font-weight: 800;
+    font-size: 14px;
     cursor: pointer;
 }
 
 .fee-breakdown {
     margin-top: 14px;
     border-top: 1px solid #d1d5db;
-    padding-top: 12px;
+    padding-top: 10px;
+}
+
+.booking-note {
+    margin-top: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fff;
+    padding: 10px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.booking-note p {
+    margin: 0;
 }
 
 .fee-breakdown h4 {
@@ -717,15 +980,62 @@
     color: #111827;
 }
 
-.fee-breakdown>div,
-.extra-insurance {
+.fee-breakdown>div {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    align-items: center;
     margin-bottom: 8px;
-    color: #374151;
-    font-size: 15px;
+}
+
+.extra-insurance {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.extra-insurance input {
+    margin: 0;
+}
+
+.extra-insurance span {
+    white-space: nowrap;
+}
+
+.extra-insurance b {
+    white-space: nowrap;
+}
+
+.fee-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    margin-bottom: 10px;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.fee-row b {
+    color: #1f2937;
+    font-weight: 700;
+}
+
+.fee-section-title {
+    margin: 12px 0 6px;
+    font-weight: 700;
+}
+
+.fee-checkbox-row {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.fee-checkbox-row input {
+    margin: 0;
 }
 
 .fee-breakdown .promo-code {
@@ -733,15 +1043,57 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    padding: 10px 10px;
-    border-radius: 10px;
-    background: rgba(34, 197, 94, 0.08);
-    font-weight: 700;
+    margin-top: 6px;
+    padding: 9px 12px;
+    border-radius: 12px;
+    background: #eef1f5;
+    border: 1px solid #d1d5db;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.fee-breakdown .promo-code button {
+    border: none;
+    background: transparent;
     color: #111827;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
 }
 
 .extra-insurance span {
     flex: 1;
+}
+
+.total {
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+}
+
+.discount b {
+    color: #d4a72c;
+}
+
+.booking-final-total {
+    margin-top: 10px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.booking-final-total span {
+    color: #111827;
+    font-size: 14px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.booking-final-total b {
+    color: #d4a72c;
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1;
 }
 
 .fee-breakdown .total {
@@ -1004,7 +1356,8 @@
         font-size: 26px;
     }
 
-    .spec-grid {
+    .spec-grid,
+    .quick-spec-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -1012,22 +1365,30 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .price-number {
-        font-size: 38px;
+    .old-price {
+        font-size: 34px;
     }
 
-    .price-number small {
-        font-size: 14px;
+    .booking-time-box b {
+        font-size: 18px;
     }
 
-    .booking-time-box b,
-    .booking-time-box em {
-        font-size: 14px;
+    .booking-time-box small {
+        font-size: 13px;
     }
 
     .pickup-box>p,
     .fee-breakdown h4 {
         font-size: 16px;
+    }
+
+    .btn-primary.full-width {
+        font-size: 16px;
+    }
+
+    .final-total span,
+    .final-total b {
+        font-size: 28px;
     }
 
     .detail-time-modal-header h3 {

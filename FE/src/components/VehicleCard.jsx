@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { Fuel, MapPin, Settings, Users } from 'lucide-react'
 import '../styles/VehicleCard.css'
 
 function VehicleCard({ vehicle }) {
@@ -55,22 +56,22 @@ function VehicleCard({ vehicle }) {
 
         <div className="vehicle-features">
           <div className="feature">
-            <span className="feature-icon">👥</span>
+            <Users className="feature-icon" size={16} aria-hidden="true" />
             <span>{vehicle.seatCount} Seats</span>
           </div>
           <div className="feature">
-            <span className="feature-icon">⚙️</span>
+            <Settings className="feature-icon" size={16} aria-hidden="true" />
             <span>{vehicle.transmission}</span>
           </div>
         </div>
 
         <div className="vehicle-features">
           <div className="feature">
-            <span className="feature-icon">⛽</span>
+            <Fuel className="feature-icon" size={16} aria-hidden="true" />
             <span>{vehicle.fuelType}</span>
           </div>
           <div className="feature">
-            <span className="feature-icon">📍</span>
+            <MapPin className="feature-icon" size={16} aria-hidden="true" />
             <span>{vehicle.city}</span>
           </div>
         </div>

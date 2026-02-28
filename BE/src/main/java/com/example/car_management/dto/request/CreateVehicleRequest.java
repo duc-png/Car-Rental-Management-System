@@ -7,9 +7,13 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CreateVehicleRequest {
 
     @NotNull
@@ -51,5 +55,6 @@ public class CreateVehicleRequest {
 
     @Valid
     private LocationInputRequest location;
-}
 
+    private List<Integer> featureIds;
+}
