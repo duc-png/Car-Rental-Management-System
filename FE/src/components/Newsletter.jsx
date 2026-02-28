@@ -14,7 +14,7 @@ function Newsletter() {
 
   return (
     <section className="newsletter-section">
-      <h2>Không Bao Giờ Bỏ Lỡ Ưu Đãi!</h2>
+      <h2>Nhận Ưu Đãi Đặc Quyền!</h2>
       <p>Đăng ký để nhận các ưu đãi mới nhất, những chiếc xe mới và giảm giá độc quyền.</p>
 
       <form className="newsletter-form" onSubmit={handleSubmit}>

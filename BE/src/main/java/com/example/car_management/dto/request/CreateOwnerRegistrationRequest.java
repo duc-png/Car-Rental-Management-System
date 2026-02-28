@@ -7,6 +7,7 @@ import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -86,5 +87,7 @@ public class CreateOwnerRegistrationRequest {
 
         @Size(max = 2000)
         private String description;
+
+        private List<Integer> featureIds;
     }
 }

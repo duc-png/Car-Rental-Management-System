@@ -3,7 +3,7 @@
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
 }
 
 /* Search Tabs - Now ABOVE the search bar */
@@ -71,8 +71,9 @@
 /* Horizontal Search Inputs Layout */
 .search-inputs {
   display: grid;
-  grid-template-columns: 1fr auto 1.5fr auto;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto;
   align-items: center;
+  gap: 16px;
 }
 
 
@@ -83,10 +84,6 @@
   height: 48px;
   background: linear-gradient(to bottom, transparent, var(--border-color) 20%, var(--border-color) 80%, transparent);
   margin: 0 20px;
-}
-
-.search-inputs.long-term-mode .search-divider {
-  visibility: hidden;
 }
 
 /* Input Groups */
@@ -185,7 +182,7 @@
   gap: 10px;
   min-height: 56px;
   box-shadow: 0 8px 24px var(--shadow-hover);
-  margin-left: 20px;
+  margin-left: 0;
 }
 
 [data-theme='dark'] .search-button {
@@ -211,12 +208,8 @@
 /* Responsive */
 @media (max-width: 1024px) {
   .search-inputs {
-    grid-template-columns: 1fr auto 1fr auto;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
     gap: 0;
-  }
-
-  .search-inputs.long-term-mode {
-    grid-template-columns: 1fr auto;
   }
 
   .search-button {
@@ -226,17 +219,6 @@
 }
 
 @media (max-width: 768px) {
-  .search-tabs {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .search-tab {
-    flex: 1;
-    padding: 10px 16px;
-    font-size: 13px;
-  }
-
   .search-bar {
     padding: 20px;
     border-radius: 14px;
@@ -246,10 +228,6 @@
     grid-template-columns: 1fr;
     gap: 16px;
     min-height: auto;
-  }
-
-  .search-inputs.long-term-mode {
-    grid-template-columns: 1fr;
   }
 
   .search-divider {
@@ -287,22 +265,6 @@
 }
 
 @media (max-width: 480px) {
-  .search-tabs {
-    padding: 4px;
-    gap: 6px;
-  }
-
-  .search-tab {
-    padding: 10px 12px;
-    font-size: 12px;
-    gap: 6px;
-  }
-
-  .search-tab svg {
-    width: 16px;
-    height: 16px;
-  }
-
   .search-bar {
     padding: 16px;
   }

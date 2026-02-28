@@ -1,8 +1,10 @@
 package com.example.car_management.mapper;
 
 import com.example.car_management.dto.response.VehicleImageResponse;
+import com.example.car_management.dto.response.VehicleFeatureResponse;
 import com.example.car_management.dto.response.VehicleResponse;
 import com.example.car_management.entity.VehicleEntity;
+import com.example.car_management.entity.VehicleFeatureEntity;
 import com.example.car_management.entity.VehicleImageEntity;
 
 import java.util.Collections;
@@ -11,15 +13,19 @@ import java.util.stream.Collectors;
 
 public class VehicleMapper {
 
-    private VehicleMapper() {}
+    private VehicleMapper() {
+    }
 
     // Giữ nguyên: dùng khi entity đã fetch images (list/detail nếu bạn join fetch)
     public static VehicleResponse toResponse(VehicleEntity e) {
-        if (e == null) return null;
+        if (e == null)
+            return null;
 
         String modelName = (e.getModel() != null ? e.getModel().getName() : null);
-        String brandName = (e.getModel() != null && e.getModel().getBrand() != null ? e.getModel().getBrand().getName() : null);
-        String typeName  = (e.getModel() != null && e.getModel().getType() != null ? e.getModel().getType().getName() : null);
+        String brandName = (e.getModel() != null && e.getModel().getBrand() != null ? e.getModel().getBrand().getName()
+                : null);
+        String typeName = (e.getModel() != null && e.getModel().getType() != null ? e.getModel().getType().getName()
+                : null);
 
         Integer locationId = (e.getLocation() != null ? e.getLocation().getId() : null);
 
@@ -39,25 +45,29 @@ public class VehicleMapper {
                 .status(e.getStatus())
                 .createdAt(e.getCreatedAt())
                 .reviewedAt(e.getReviewedAt())
-            .description(e.getDescription())
-            .year(e.getYear())
-            .fuelConsumption(e.getFuelConsumption())
+                .description(e.getDescription())
+                .year(e.getYear())
+                .fuelConsumption(e.getFuelConsumption())
                 .currentKm(e.getCurrentKm())
                 .locationId(locationId)
                 .city(e.getLocation() != null ? e.getLocation().getCity() : null)
                 .district(e.getLocation() != null ? e.getLocation().getDistrict() : null)
                 .addressDetail(e.getLocation() != null ? e.getLocation().getAddressDetail() : null)
                 .images(toImageResponses(e.getImages()))
+                .features(toFeatureResponses(e.getFeatures() == null ? List.of() : e.getFeatures().stream().toList()))
                 .build();
     }
 
     // NEW: overload an toàn cho case orphanRemoval (update flow)
     public static VehicleResponse toResponse(VehicleEntity e, List<VehicleImageEntity> imgs) {
-        if (e == null) return null;
+        if (e == null)
+            return null;
 
         String modelName = (e.getModel() != null ? e.getModel().getName() : null);
-        String brandName = (e.getModel() != null && e.getModel().getBrand() != null ? e.getModel().getBrand().getName() : null);
-        String typeName  = (e.getModel() != null && e.getModel().getType() != null ? e.getModel().getType().getName() : null);
+        String brandName = (e.getModel() != null && e.getModel().getBrand() != null ? e.getModel().getBrand().getName()
+                : null);
+        String typeName = (e.getModel() != null && e.getModel().getType() != null ? e.getModel().getType().getName()
+                : null);
 
         Integer locationId = (e.getLocation() != null ? e.getLocation().getId() : null);
 
@@ -77,34 +87,54 @@ public class VehicleMapper {
                 .status(e.getStatus())
                 .createdAt(e.getCreatedAt())
                 .reviewedAt(e.getReviewedAt())
-            .description(e.getDescription())
-            .year(e.getYear())
-            .fuelConsumption(e.getFuelConsumption())
+                .description(e.getDescription())
+                .year(e.getYear())
+                .fuelConsumption(e.getFuelConsumption())
                 .currentKm(e.getCurrentKm())
                 .locationId(locationId)
                 .city(e.getLocation() != null ? e.getLocation().getCity() : null)
                 .district(e.getLocation() != null ? e.getLocation().getDistrict() : null)
                 .addressDetail(e.getLocation() != null ? e.getLocation().getAddressDetail() : null)
                 .images(toImageResponses(imgs)) // dùng list query, không động collection managed
+                .features(toFeatureResponses(e.getFeatures() == null ? List.of() : e.getFeatures().stream().toList()))
                 .build();
     }
 
     public static List<VehicleImageResponse> toImageResponses(List<VehicleImageEntity> imgs) {
-        if (imgs == null || imgs.isEmpty()) return Collections.emptyList();
+        if (imgs == null || imgs.isEmpty())
+            return Collections.emptyList();
         return imgs.stream().map(VehicleMapper::toImageResponse).collect(Collectors.toList());
     }
 
     public static VehicleImageResponse toImageResponse(VehicleImageEntity img) {
-        if (img == null) return null;
+        if (img == null)
+            return null;
         return VehicleImageResponse.builder()
                 .id(img.getId())
                 .imageUrl(img.getImageUrl())
                 .isMain(img.getIsMain())
                 .build();
     }
+
     public static VehicleResponse toResponseWithImages(VehicleEntity e, List<VehicleImageEntity> imgs) {
         VehicleResponse res = toResponse(e);
         res.setImages(toImageResponses(imgs));
         return res;
+    }
+
+    public static List<VehicleFeatureResponse> toFeatureResponses(List<VehicleFeatureEntity> features) {
+        if (features == null || features.isEmpty())
+            return Collections.emptyList();
+        return features.stream()
+                .map(feature -> VehicleFeatureResponse.builder()
+                        .id(feature.getId())
+                        .name(feature.getName())
+                        .build())
+                .sorted((a, b) -> {
+                    String left = a.getName() == null ? "" : a.getName();
+                    String right = b.getName() == null ? "" : b.getName();
+                    return left.compareToIgnoreCase(right);
+                })
+                .collect(Collectors.toList());
     }
 }

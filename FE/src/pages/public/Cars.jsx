@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
+import { Search } from 'lucide-react'
 import VehicleCard from '../../components/VehicleCard'
 import { getCarsList, searchCars } from '../../api/cars'
 import '../../styles/Cars.css'
@@ -12,6 +13,7 @@ function Cars() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [searchApplied, setSearchApplied] = useState(false)
+  const [sortBy, setSortBy] = useState('price-asc')
 
   const [filters, setFilters] = useState({
     search: '',
@@ -49,7 +51,7 @@ function Cars() {
         setCars(data || [])
         setSearchApplied(hasSearchQuery)
         setError(null)
-      } catch (err) {
+      } catch {
         setError('Không thể tải danh sách xe')
       } finally {
         setLoading(false)
@@ -89,7 +91,19 @@ function Cars() {
     })
   }, [availableCars, filters])
 
-  const totalAvailable = availableCars.length
+  const sortedCars = useMemo(() => {
+    const list = [...filteredCars]
+
+    if (sortBy === 'price-desc') {
+      return list.sort((a, b) => Number(b.pricePerDay || 0) - Number(a.pricePerDay || 0))
+    }
+
+    if (sortBy === 'name-asc') {
+      return list.sort((a, b) => `${a.brandName || ''} ${a.modelName || ''}`.localeCompare(`${b.brandName || ''} ${b.modelName || ''}`))
+    }
+
+    return list.sort((a, b) => Number(a.pricePerDay || 0) - Number(b.pricePerDay || 0))
+  }, [filteredCars, sortBy])
 
   const handleChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }))
@@ -103,18 +117,21 @@ function Cars() {
     <div className="cars-page">
       <div className="cars-container">
         <aside className="cars-sidebar">
-          <div className="filter-group">
+          <div className="cars-filter-group">
             <h3>Tìm kiếm</h3>
-            <input
-              type="text"
-              placeholder="Tìm theo hãng hoặc mẫu..."
-              value={filters.search}
-              onChange={(e) => handleChange('search', e.target.value)}
-              className="filter-search-input"
-            />
+            <div className="cars-filter-search-wrap">
+              <input
+                type="text"
+                placeholder="Hãng xe, dòng xe..."
+                value={filters.search}
+                onChange={(e) => handleChange('search', e.target.value)}
+                className="cars-filter-search-input"
+              />
+              <Search className="cars-filter-search-icon" size={16} aria-hidden="true" />
+            </div>
           </div>
 
-          <div className="filter-group">
+          <div className="cars-filter-group">
             <h3>Loại xe</h3>
             {typeOptions.map(opt => (
               <label key={opt}>
@@ -129,7 +146,7 @@ function Cars() {
             ))}
           </div>
 
-          <div className="filter-group">
+          <div className="cars-filter-group">
             <h3>Hộp số</h3>
             {transmissionOptions.map(opt => (
               <label key={opt}>
@@ -144,7 +161,7 @@ function Cars() {
             ))}
           </div>
 
-          <div className="filter-group">
+          <div className="cars-filter-group">
             <h3>Nhiên liệu</h3>
             {fuelOptions.map(opt => (
               <label key={opt}>
@@ -159,7 +176,7 @@ function Cars() {
             ))}
           </div>
 
-          <div className="filter-group">
+          <div className="cars-filter-group">
             <h3>Số ghế</h3>
             {seatOptions.map(opt => (
               <label key={opt}>
@@ -174,7 +191,7 @@ function Cars() {
             ))}
           </div>
 
-          <div className="filter-group">
+          <div className="cars-filter-group">
             <h3>Khu vực</h3>
             {cityOptions.map(opt => (
               <label key={opt}>
@@ -191,7 +208,7 @@ function Cars() {
 
           <button
             onClick={clearFilters}
-            className="clear-btn full-width"
+            className="cars-clear-btn cars-full-width"
           >
             Xóa bộ lọc
           </button>
@@ -204,24 +221,37 @@ function Cars() {
           {!loading && !error && (
             <>
               <div className="cars-toolbar">
-                <div>
+                <div className="cars-toolbar-left">
+                  <div className="toolbar-title-row">
+                    <h3 className="toolbar-title">{sortedCars.length} kết quả được tìm thấy</h3>
+                  </div>
                   {searchApplied && (
                     <p className="toolbar-sub">
                       Kết quả tìm kiếm cho {addressParam || 'tất cả khu vực'} • {pickupDateParam} - {returnDateParam}
                     </p>
                   )}
-                  {/* <p className="toolbar-kicker">Chỉ hiển thị xe còn trống</p> */}
-                  {/* <h3 className="toolbar-title">{filteredCars.length} xe phù hợp</h3> */}
-                  {/* <p className="toolbar-sub">Tổng {totalAvailable} xe khả dụng trên hệ thống</p> */}
                 </div>
-                <button className="clear-btn" onClick={clearFilters}>Xóa bộ lọc</button>
+
+                <div className="cars-sort-wrap">
+                  <label htmlFor="cars-sort" className="cars-sort-label">Sắp xếp theo:</label>
+                  <select
+                    id="cars-sort"
+                    className="cars-sort-select"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                  >
+                    <option value="price-asc">Giá tốt nhất</option>
+                    <option value="price-desc">Giá cao nhất</option>
+                    <option value="name-asc">Tên xe (A-Z)</option>
+                  </select>
+                </div>
               </div>
 
               <div className="vehicles-grid">
-                {filteredCars.length === 0 ? (
+                {sortedCars.length === 0 ? (
                   <div>Không có xe phù hợp bộ lọc</div>
                 ) : (
-                  filteredCars.map(car => (
+                  sortedCars.map(car => (
                     <VehicleCard key={car.id} vehicle={car} />
                   ))
                 )}

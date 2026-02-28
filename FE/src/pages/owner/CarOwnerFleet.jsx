@@ -2,109 +2,32 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import '../../styles/CarOwnerFleet.css'
+import FleetSidebar from '../../components/owner/fleet/FleetSidebar'
+import FleetOverview from '../../components/owner/fleet/FleetOverview'
+import FleetFilters from '../../components/owner/fleet/FleetFilters'
+import FleetListTable from '../../components/owner/fleet/FleetListTable'
+import { FleetAddCard, FleetGridCard } from '../../components/owner/fleet/FleetGridCard'
+import FleetCreateModal from '../../components/owner/fleet/FleetCreateModal'
 
 import { createVehicleModel, listVehicleModels } from '../../api/vehicleModels'
 import { listBrands } from '../../api/brands'
 
 import {
-    addVehicleImagesByUrl,
     createOwnerVehicle,
     deleteOwnerVehicle,
-    deleteVehicleImage,
     getVehicleDetail,
     listOwnerVehicles,
-    setMainVehicleImage,
-    updateOwnerVehicle,
-    updateOwnerVehicleStatus,
     uploadVehicleImages
 } from '../../api/ownerVehicles'
-
-const STATUS_VALUES = ['AVAILABLE', 'RENTED', 'MAINTENANCE', 'PENDING_APPROVAL', 'REJECTED']
-const TRANSMISSION_VALUES = ['MANUAL', 'AUTOMATIC']
-const FUEL_VALUES = ['GASOLINE', 'DIESEL', 'ELECTRIC']
-
-const ALL_STATUS_LABEL = 'Tất cả trạng thái'
-
-const createEmptyVehicleForm = () => ({
-    modelId: '',
-    licensePlate: '',
-    color: '',
-    seatCount: '',
-    transmission: '',
-    fuelType: '',
-    pricePerDay: '',
-    year: '',
-    fuelConsumption: '',
-    description: '',
-    currentKm: '',
-    province: '',
-    ward: '',
-    addressDetail: ''
-})
-
-const formatEnumLabel = (value) => {
-    if (!value) return ''
-
-    const normalized = String(value).trim().toUpperCase()
-    const map = {
-        MANUAL: 'Số sàn',
-        AUTOMATIC: 'Số tự động',
-        GASOLINE: 'Xăng',
-        DIESEL: 'Dầu diesel',
-        ELECTRIC: 'Điện',
-        AVAILABLE: 'Sẵn sàng',
-        RENTED: 'Đang thuê',
-        MAINTENANCE: 'Bảo dưỡng',
-        PENDING_APPROVAL: 'Chờ duyệt',
-        REJECTED: 'Bị từ chối'
-    }
-    if (map[normalized]) return map[normalized]
-
-    return String(value)
-        .toLowerCase()
-        .split('_')
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ')
-}
-
-const formatPrice = (value) => {
-    if (value == null || value === '') return '0 VNĐ'
-    const numberValue = typeof value === 'number' ? value : Number(value)
-    if (Number.isNaN(numberValue)) return '0 VNĐ'
-
-    const formatted = new Intl.NumberFormat('vi-VN', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0
-    }).format(numberValue)
-
-    return `${formatted} VNĐ`
-}
-
-const statusCssClass = (status) => (status ? String(status).toLowerCase().replaceAll('_', '-') : 'unknown')
-
-const getVehicleThumbnailUrl = (vehicle) => {
-    const images = Array.isArray(vehicle?.images) ? vehicle.images : []
-    if (images.length === 0) return null
-
-    const main = images.find((img) => Boolean(img?.isMain)) || images[0]
-    const url = main?.imageUrl || main?.url || null
-    return url && String(url).trim() ? String(url).trim() : null
-}
-
-const formatCarTypeLabel = (value) => {
-    if (value == null) return ''
-    const trimmed = String(value).trim()
-    if (!trimmed) return ''
-    if (trimmed.toLowerCase() === 'unknown') return ''
-    return trimmed
-}
-
-const vehicleDisplayName = (vehicle) => {
-    const brand = vehicle?.brandName ? String(vehicle.brandName).trim() : ''
-    const model = vehicle?.modelName ? String(vehicle.modelName).trim() : ''
-    const combined = `${brand} ${model}`.trim()
-    return combined || `Xe #${vehicle?.id ?? ''}`
-}
+import {
+    ALL_STATUS_LABEL,
+    createEmptyVehicleForm,
+    FUEL_VALUES,
+    formatEnumLabel,
+    STATUS_VALUES,
+    TRANSMISSION_VALUES,
+    vehicleDisplayName
+} from '../../utils/ownerFleetUtils'
 
 function CarOwnerFleet() {
     const navigate = useNavigate()
@@ -121,7 +44,6 @@ function CarOwnerFleet() {
     }
 
     const [search, setSearch] = useState('')
-    const [category, setCategory] = useState('')
     const [status, setStatus] = useState(ALL_STATUS_LABEL)
     const [currentPage, setCurrentPage] = useState(1)
 
@@ -138,15 +60,6 @@ function CarOwnerFleet() {
     const [brands, setBrands] = useState([])
     const [brandsLoading, setBrandsLoading] = useState(false)
     const [brandsError, setBrandsError] = useState('')
-
-    const [editingVehicleId, setEditingVehicleId] = useState(null)
-    const [editForm, setEditForm] = useState(null)
-    const [saving, setSaving] = useState(false)
-    const [statusUpdating, setStatusUpdating] = useState(false)
-    const [imagesUpdating, setImagesUpdating] = useState(false)
-    const [imageUrlsInput, setImageUrlsInput] = useState('')
-    const [setFirstAsMain, setSetFirstAsMain] = useState(false)
-    const [uploadFiles, setUploadFiles] = useState([])
 
     const [showCreateForm, setShowCreateForm] = useState(false)
     const [creating, setCreating] = useState(false)
@@ -300,21 +213,10 @@ function CarOwnerFleet() {
         return { total, available, rented, maintenance }
     }, [vehicles])
 
-    const categories = useMemo(() => {
-        const typeNames = vehicles
-            .map((vehicle) => vehicle?.carTypeName)
-            .filter(Boolean)
-            .map((v) => String(v))
-            .filter((name) => name.trim() && name.trim().toLowerCase() !== 'unknown')
-        const unique = Array.from(new Set(typeNames)).sort((a, b) => a.localeCompare(b))
-        return unique
-    }, [vehicles])
-
-    useEffect(() => {
-        if (category && !categories.includes(category)) {
-            setCategory('')
-        }
-    }, [categories, category])
+    const availabilityRate = useMemo(() => {
+        if (!stats.total) return 0
+        return Math.round((stats.available / stats.total) * 100)
+    }, [stats.total, stats.available])
 
     const statuses = useMemo(() => {
         const seen = vehicles
@@ -330,11 +232,10 @@ function CarOwnerFleet() {
         return vehicles.filter((vehicle) => {
             const haystack = `${vehicleDisplayName(vehicle)} ${vehicle?.licensePlate || ''}`.toLowerCase()
             const matchesSearch = haystack.includes(search.toLowerCase())
-            const matchesCategory = !category || vehicle?.carTypeName === category
             const matchesStatus = status === ALL_STATUS_LABEL || String(vehicle?.status) === String(status)
-            return matchesSearch && matchesCategory && matchesStatus
+            return matchesSearch && matchesStatus
         })
-    }, [vehicles, search, category, status])
+    }, [vehicles, search, status])
 
     const totalPages = Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE)
 
@@ -359,17 +260,6 @@ function CarOwnerFleet() {
         setCurrentPage(1)
     }
 
-    const upsertVehicle = (nextVehicle) => {
-        setVehicles((prev) => prev.map((v) => (v.id === nextVehicle.id ? nextVehicle : v)))
-    }
-
-    const refreshVehicle = async (vehicleId) => {
-        const detail = await getVehicleDetail(vehicleId)
-        if (detail) {
-            upsertVehicle(detail)
-        }
-    }
-
     const viewDetails = (vehicle) => {
         if (!vehicle?.id) return
         const ownerQuery = ownerId ? `?ownerId=${ownerId}` : ''
@@ -380,14 +270,6 @@ function CarOwnerFleet() {
         if (!vehicle?.id) return
         const ownerQuery = ownerId ? `?ownerId=${ownerId}` : ''
         navigate(`/owner/vehicles/${vehicle.id}/edit${ownerQuery}`)
-    }
-
-    const cancelEdit = () => {
-        setEditingVehicleId(null)
-        setEditForm(null)
-        setImageUrlsInput('')
-        setSetFirstAsMain(false)
-        setUploadFiles([])
     }
 
     const updateCreateField = (field, value) => {
@@ -572,85 +454,6 @@ function CarOwnerFleet() {
         }
     }
 
-    const saveEdit = async () => {
-        if (!editingVehicleId || !editForm) return
-        if (!ownerId || Number.isNaN(ownerId)) {
-            setError('Thiếu ownerId. Vui lòng đăng nhập lại hoặc truyền /owner/fleet?ownerId=1')
-            return
-        }
-
-        const requiredFields = ['modelId', 'licensePlate', 'seatCount', 'pricePerDay', 'currentKm']
-        for (const field of requiredFields) {
-            if (!String(editForm[field] ?? '').trim()) {
-                setError(`Thiếu thông tin bắt buộc: ${field}`)
-                return
-            }
-        }
-
-        setSaving(true)
-        setError('')
-        try {
-            const payload = {
-                modelId: Number(editForm.modelId),
-                licensePlate: String(editForm.licensePlate).trim(),
-                color: String(editForm.color || '').trim() || null,
-                seatCount: Number(editForm.seatCount),
-                transmission: editForm.transmission || null,
-                fuelType: editForm.fuelType || null,
-                pricePerDay: Number(editForm.pricePerDay),
-                year: String(editForm.year || '').trim() ? Number(editForm.year) : null,
-                fuelConsumption: String(editForm.fuelConsumption || '').trim() ? Number(editForm.fuelConsumption) : null,
-                description: String(editForm.description || '').trim() || null,
-                currentKm: Number(editForm.currentKm),
-                locationId: String(editForm.province || '').trim() && String(editForm.ward || '').trim() && String(editForm.addressDetail || '').trim()
-                    ? null
-                    : (String(editForm.locationId || '').trim() ? Number(editForm.locationId) : null),
-                location: String(editForm.province || '').trim() && String(editForm.ward || '').trim() && String(editForm.addressDetail || '').trim()
-                    ? {
-                        province: String(editForm.province || '').trim(),
-                        ward: String(editForm.ward || '').trim(),
-                        addressDetail: String(editForm.addressDetail || '').trim(),
-                    }
-                    : null
-            }
-
-            const updated = await updateOwnerVehicle(editingVehicleId, ownerId, payload)
-            if (updated) {
-                upsertVehicle(updated)
-            }
-            cancelEdit()
-        } catch (err) {
-            setError(err?.message || 'Không thể cập nhật xe')
-        } finally {
-            setSaving(false)
-        }
-    }
-
-    const saveStatus = async () => {
-        if (!editingVehicleId || !editForm) return
-        if (!ownerId || Number.isNaN(ownerId)) {
-            setError('Thiếu ownerId. Vui lòng đăng nhập lại hoặc truyền /owner/fleet?ownerId=1')
-            return
-        }
-        if (!editForm.status) {
-            setError('Vui lòng chọn trạng thái')
-            return
-        }
-
-        setStatusUpdating(true)
-        setError('')
-        try {
-            const updated = await updateOwnerVehicleStatus(editingVehicleId, ownerId, editForm.status)
-            if (updated) {
-                upsertVehicle(updated)
-            }
-        } catch (err) {
-            setError(err?.message || 'Không thể cập nhật trạng thái')
-        } finally {
-            setStatusUpdating(false)
-        }
-    }
-
     const onDeleteVehicle = async (vehicleId) => {
         if (!ownerId || Number.isNaN(ownerId)) {
             setError('Thiếu ownerId. Vui lòng đăng nhập lại hoặc truyền /owner/fleet?ownerId=1')
@@ -664,81 +467,8 @@ function CarOwnerFleet() {
         try {
             await deleteOwnerVehicle(vehicleId, ownerId)
             setVehicles((prev) => prev.filter((v) => v.id !== vehicleId))
-            if (editingVehicleId === vehicleId) {
-                cancelEdit()
-            }
         } catch (err) {
             setError(err?.message || 'Không thể xóa xe')
-        }
-    }
-
-    const onAddImageUrls = async () => {
-        if (!editingVehicleId || !ownerId || Number.isNaN(ownerId)) return
-        const urls = imageUrlsInput
-            .split('\n')
-            .map((line) => line.trim())
-            .filter(Boolean)
-        if (urls.length === 0) return
-
-        setImagesUpdating(true)
-        setError('')
-        try {
-            await addVehicleImagesByUrl(editingVehicleId, ownerId, { imageUrls: urls, setFirstAsMain })
-            await refreshVehicle(editingVehicleId)
-            setImageUrlsInput('')
-            setSetFirstAsMain(false)
-        } catch (err) {
-            setError(err?.message || 'Không thể thêm ảnh')
-        } finally {
-            setImagesUpdating(false)
-        }
-    }
-
-    const onUploadImages = async () => {
-        if (!editingVehicleId || !ownerId || Number.isNaN(ownerId)) return
-        if (!uploadFiles || uploadFiles.length === 0) return
-
-        setImagesUpdating(true)
-        setError('')
-        try {
-            await uploadVehicleImages(editingVehicleId, ownerId, uploadFiles, { setFirstAsMain })
-            await refreshVehicle(editingVehicleId)
-            setUploadFiles([])
-            setSetFirstAsMain(false)
-        } catch (err) {
-            setError(err?.message || 'Không thể tải ảnh lên')
-        } finally {
-            setImagesUpdating(false)
-        }
-    }
-
-    const onSetMainImage = async (imageId) => {
-        if (!editingVehicleId || !ownerId || Number.isNaN(ownerId)) return
-        setImagesUpdating(true)
-        setError('')
-        try {
-            await setMainVehicleImage(editingVehicleId, ownerId, imageId)
-            await refreshVehicle(editingVehicleId)
-        } catch (err) {
-            setError(err?.message || 'Không thể đặt ảnh chính')
-        } finally {
-            setImagesUpdating(false)
-        }
-    }
-
-    const onDeleteImage = async (imageId) => {
-        if (!editingVehicleId || !ownerId || Number.isNaN(ownerId)) return
-        const confirmed = window.confirm('Bạn có chắc muốn xóa ảnh này không?')
-        if (!confirmed) return
-        setImagesUpdating(true)
-        setError('')
-        try {
-            await deleteVehicleImage(editingVehicleId, ownerId, imageId)
-            await refreshVehicle(editingVehicleId)
-        } catch (err) {
-            setError(err?.message || 'Không thể xóa ảnh')
-        } finally {
-            setImagesUpdating(false)
         }
     }
 
@@ -764,60 +494,7 @@ function CarOwnerFleet() {
 
     return (
         <div className="fleet-dashboard">
-            <aside className="fleet-sidebar">
-                <Link to="/" className="fleet-brand">
-                    <div className="brand-icon">
-                        <img src="/favicon.svg" alt="Hệ thống CarRental" />
-                    </div>
-                    <div>
-                        <h3>Hệ thống CarRental</h3>
-                        <p>Quản lý đội xe</p>
-                    </div>
-                </Link>
-
-                <div className="fleet-nav">
-                    <p className="nav-section">Điều hướng</p>
-                    <button type="button" className="nav-item">Tổng quan</button>
-                    <button type="button" className="nav-item active">Xe của tôi</button>
-                    <button type="button" className="nav-item">Đơn thuê</button>
-                    <button type="button" className="nav-item">Khách hàng</button>
-                    <button type="button" className="nav-item">Thống kê</button>
-                </div>
-
-                <div className="fleet-system">
-                    <p className="nav-section">Hệ thống</p>
-                    <button type="button" className="nav-item">Cài đặt</button>
-                    <button type="button" className="nav-item fleet-logout" onClick={handleLogout}>
-                        <span className="fleet-logout-icon" aria-hidden="true">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="M10 17L5 12L10 7"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                />
-                                <path
-                                    d="M5 12H19"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                />
-                            </svg>
-                        </span>
-                        Đăng xuất
-                    </button>
-                </div>
-
-                <div className="fleet-user">
-                    <div className="user-avatar">{(user?.fullName || 'CO').slice(0, 2).toUpperCase()}</div>
-                    <div className="user-info">
-                        <p className="user-name">{user?.fullName || 'Chủ xe'}</p>
-                        <p className="user-email">{user?.email || 'owner@carrental.com'}</p>
-                    </div>
-                </div>
-            </aside>
+            <FleetSidebar user={user} onLogout={handleLogout} />
 
             <section className="fleet-main">
                 <header className="fleet-header">
@@ -851,670 +528,73 @@ function CarOwnerFleet() {
                     </div>
                 )}
 
-                {showCreateForm && (
-                    <div
-                        className="fleet-modal-backdrop"
-                        role="dialog"
-                        aria-modal="true"
-                        onMouseDown={(event) => {
-                            if (event.target === event.currentTarget) {
-                                closeCreateModal()
-                            }
-                        }}
-                    >
-                        <div className="fleet-modal">
-                            <section className="fleet-create">
-                                <div className="fleet-create-header">
-                                    <div>
-                                        <h2>Tạo xe mới</h2>
-                                        <p>Nhập thông tin cơ bản để thêm xe vào hệ thống.</p>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        className="btn-outline"
-                                        onClick={closeCreateModal}
-                                    >
-                                        Đóng
-                                    </button>
-                                </div>
-                                <div className="fleet-create-grid">
-                                    <label>
-                                        Hãng xe
-                                        <select
-                                            value={createBrandName}
-                                            onChange={(event) => {
-                                                const nextBrand = event.target.value
-                                                setCreateBrandName(nextBrand)
-                                                setCreateModelName('')
-                                                setCreateTypeName('')
-                                                updateCreateField('modelId', '')
-                                            }}
-                                            disabled={brandsLoading}
-                                        >
-                                            <option value="">{brandsLoading ? 'Đang tải...' : 'Chọn hãng xe'}</option>
-                                            {brandOptions.map((brand) => (
-                                                <option key={brand} value={brand}>{brand}</option>
-                                            ))}
-                                        </select>
-                                    </label>
+                <FleetCreateModal
+                    open={showCreateForm}
+                    onClose={closeCreateModal}
+                    brandsLoading={brandsLoading}
+                    brandOptions={brandOptions}
+                    createBrandName={createBrandName}
+                    setCreateBrandName={setCreateBrandName}
+                    setCreateModelName={setCreateModelName}
+                    setCreateTypeName={setCreateTypeName}
+                    updateCreateField={updateCreateField}
+                    createModelName={createModelName}
+                    modelsLoading={modelsLoading}
+                    modelOptionsForBrand={modelOptionsForBrand}
+                    createTypeName={createTypeName}
+                    selectedExistingModel={selectedExistingModel}
+                    carTypeOptions={carTypeOptions}
+                    createForm={createForm}
+                    transmissionValues={TRANSMISSION_VALUES}
+                    fuelValues={FUEL_VALUES}
+                    formatEnumLabel={formatEnumLabel}
+                    setCreateUploadFiles={setCreateUploadFiles}
+                    createSetFirstAsMain={createSetFirstAsMain}
+                    setCreateSetFirstAsMain={setCreateSetFirstAsMain}
+                    creating={creating}
+                    onCreate={createVehicle}
+                />
 
-                                    <label>
-                                        Mẫu xe
-                                        <input
-                                            type="text"
-                                            value={createModelName}
-                                            onChange={(event) => {
-                                                setCreateModelName(event.target.value)
-                                                updateCreateField('modelId', '')
-                                            }}
-                                            placeholder={!createBrandName ? 'Chọn hãng trước' : 'Chọn mẫu xe...'}
-                                            disabled={modelsLoading || !createBrandName}
-                                            list="fleet-model-suggestions"
-                                        />
-                                        <datalist id="fleet-model-suggestions">
-                                            {modelOptionsForBrand.map((model) => (
-                                                <option
-                                                    key={model.id}
-                                                    value={String(model.name || '').trim()}
-                                                />
-                                            ))}
-                                        </datalist>
-                                    </label>
+                <FleetOverview stats={stats} availabilityRate={availabilityRate} />
 
-                                    <label>
-                                        Loại xe
-                                        <input
-                                            type="text"
-                                            value={createTypeName}
-                                            onChange={(event) => setCreateTypeName(event.target.value)}
-                                            placeholder="VD: Sedan, SUV, Hatchback..."
-                                            disabled={!createBrandName || (selectedExistingModel && String(selectedExistingModel?.typeName || '').trim().toLowerCase() !== 'unknown')}
-                                            list="fleet-type-suggestions"
-                                        />
-                                        <datalist id="fleet-type-suggestions">
-                                            {carTypeOptions.map((type) => (
-                                                <option key={type} value={type} />
-                                            ))}
-                                        </datalist>
-                                    </label>
-
-                                    <label>
-                                        Biển số
-                                        <input
-                                            type="text"
-                                            value={createForm.licensePlate}
-                                            onChange={(event) => updateCreateField('licensePlate', event.target.value)}
-                                        />
-                                    </label>
-                                    <label>
-                                        Màu sắc
-                                        <input
-                                            type="text"
-                                            value={createForm.color}
-                                            onChange={(event) => updateCreateField('color', event.target.value)}
-                                        />
-                                    </label>
-                                    <label>
-                                        Số chỗ
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={createForm.seatCount}
-                                            onChange={(event) => updateCreateField('seatCount', event.target.value)}
-                                        />
-                                    </label>
-
-                                    <label>
-                                        Năm sản xuất
-                                        <input
-                                            type="number"
-                                            min="1900"
-                                            max="2100"
-                                            placeholder="VD: 2020"
-                                            value={createForm.year}
-                                            onChange={(event) => updateCreateField('year', event.target.value)}
-                                        />
-                                    </label>
-                                    <label>
-                                        Hộp số
-                                        <select
-                                            value={createForm.transmission}
-                                            onChange={(event) => updateCreateField('transmission', event.target.value)}
-                                        >
-                                            <option value="">—</option>
-                                            {TRANSMISSION_VALUES.map((v) => (
-                                                <option key={v} value={v}>{formatEnumLabel(v)}</option>
-                                            ))}
-                                        </select>
-                                    </label>
-                                    <label>
-                                        Nhiên liệu
-                                        <select
-                                            value={createForm.fuelType}
-                                            onChange={(event) => updateCreateField('fuelType', event.target.value)}
-                                        >
-                                            <option value="">—</option>
-                                            {FUEL_VALUES.map((v) => (
-                                                <option key={v} value={v}>{formatEnumLabel(v)}</option>
-                                            ))}
-                                        </select>
-                                    </label>
-
-                                    <label>
-                                        Mức tiêu thụ
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            step="0.1"
-                                            placeholder="VD: 7.5"
-                                            value={createForm.fuelConsumption}
-                                            onChange={(event) => updateCreateField('fuelConsumption', event.target.value)}
-                                        />
-                                    </label>
-                                    <label>
-                                        Giá thuê/ngày
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={createForm.pricePerDay}
-                                            onChange={(event) => updateCreateField('pricePerDay', event.target.value)}
-                                        />
-                                    </label>
-
-                                    <label style={{ gridColumn: '1 / -1' }}>
-                                        Mô tả
-                                        <textarea
-                                            rows={3}
-                                            value={createForm.description}
-                                            onChange={(event) => updateCreateField('description', event.target.value)}
-                                            placeholder="Mô tả thêm về tình trạng, trang bị, quy định..."
-                                        />
-                                    </label>
-                                    <label>
-                                        Số km hiện tại
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            value={createForm.currentKm}
-                                            onChange={(event) => updateCreateField('currentKm', event.target.value)}
-                                        />
-                                    </label>
-                                    <label>
-                                        Tỉnh/Thành phố
-                                        <input
-                                            type="text"
-                                            value={createForm.province}
-                                            onChange={(event) => updateCreateField('province', event.target.value)}
-                                        />
-                                    </label>
-                                    <label>
-                                        Phường/Xã
-                                        <input
-                                            type="text"
-                                            value={createForm.ward}
-                                            onChange={(event) => updateCreateField('ward', event.target.value)}
-                                        />
-                                    </label>
-                                    <label>
-                                        Địa chỉ cụ thể
-                                        <input
-                                            type="text"
-                                            value={createForm.addressDetail}
-                                            onChange={(event) => updateCreateField('addressDetail', event.target.value)}
-                                        />
-                                    </label>
-
-                                    <label>
-                                        Ảnh xe
-                                        <input
-                                            type="file"
-                                            accept="image/*"
-                                            multiple
-                                            onChange={(event) => {
-                                                const files = Array.from(event.target.files || [])
-                                                setCreateUploadFiles(files)
-                                            }}
-                                        />
-                                    </label>
-
-                                    <label>
-                                        <span style={{ display: 'block' }}>Đặt ảnh đầu tiên làm ảnh chính</span>
-                                        <input
-                                            type="checkbox"
-                                            checked={createSetFirstAsMain}
-                                            onChange={(event) => setCreateSetFirstAsMain(event.target.checked)}
-                                        />
-                                    </label>
-                                </div>
-                                <div className="fleet-create-actions">
-                                    <button
-                                        type="button"
-                                        className="add-vehicle"
-                                        disabled={creating}
-                                        onClick={createVehicle}
-                                    >
-                                        {creating ? 'Đang tạo...' : 'Tạo xe'}
-                                    </button>
-                                </div>
-                            </section>
-                        </div>
-                    </div>
-                )}
-
-                <div className="fleet-overview">
-                    <div className="overview-card">
-                        <p>Tổng số xe</p>
-                        <h3>{stats.total}</h3>
-                        <span>Tất cả xe đang quản lý</span>
-                    </div>
-                    <div className="overview-card">
-                        <p>Sẵn sàng</p>
-                        <h3>{stats.available}</h3>
-                        <span>Có thể cho thuê</span>
-                    </div>
-                    <div className="overview-card">
-                        <p>Đang thuê</p>
-                        <h3>{stats.rented}</h3>
-                        <span>Đang có khách thuê</span>
-                    </div>
-                    <div className="overview-card">
-                        <p>Bảo dưỡng</p>
-                        <h3>{stats.maintenance}</h3>
-                        <span>Đang bảo trì/sửa chữa</span>
-                    </div>
-                </div>
-
-                <div className="fleet-filters">
-                    <div className="search-field">
-                        <span className="search-icon">🔍</span>
-                        <input
-                            type="text"
-                            placeholder="Tìm theo tên xe hoặc hãng..."
-                            value={search}
-                            onChange={(event) => handleSearchChange(event.target.value)}
-                        />
-                    </div>
-                    <select value={status} onChange={(event) => handleStatusChange(event.target.value)}>
-                        {statuses.map((item) => (
-                            <option key={item} value={item}>{item === ALL_STATUS_LABEL ? item : formatEnumLabel(item)}</option>
-                        ))}
-                    </select>
-                    <div className="fleet-view-toggle" role="group" aria-label="Chế độ hiển thị">
-                        <button
-                            type="button"
-                            className={viewMode === 'list' ? 'active' : ''}
-                            aria-pressed={viewMode === 'list'}
-                            title="Danh sách"
-                            onClick={() => setViewMode('list')}
-                        >
-                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                <rect x="4" y="5" width="16" height="3" rx="1.5" />
-                                <rect x="4" y="10.5" width="16" height="3" rx="1.5" />
-                                <rect x="4" y="16" width="16" height="3" rx="1.5" />
-                            </svg>
-                        </button>
-                        <button
-                            type="button"
-                            className={viewMode === 'grid' ? 'active' : ''}
-                            aria-pressed={viewMode === 'grid'}
-                            title="Lưới"
-                            onClick={() => setViewMode('grid')}
-                        >
-                            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                <rect x="4" y="4" width="7" height="7" rx="1.5" />
-                                <rect x="13" y="4" width="7" height="7" rx="1.5" />
-                                <rect x="4" y="13" width="7" height="7" rx="1.5" />
-                                <rect x="13" y="13" width="7" height="7" rx="1.5" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
+                <FleetFilters
+                    search={search}
+                    onSearchChange={handleSearchChange}
+                    status={status}
+                    statuses={statuses}
+                    onStatusChange={handleStatusChange}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                    formatEnumLabel={formatEnumLabel}
+                    allStatusLabel={ALL_STATUS_LABEL}
+                />
 
                 <div className={`fleet-grid ${viewMode === 'list' ? 'fleet-grid--list' : ''}`.trim()}>
                     {loading ? (
                         <div className="fleet-loading">Đang tải...</div>
                     ) : (
-                        paginatedVehicles.map((vehicle) => (
-                            <article className="fleet-card" key={vehicle.id}>
-                                <div className="fleet-image">
-                                    <img
-                                        src={getVehicleThumbnailUrl(vehicle) || '/favicon.svg'}
-                                        alt={vehicleDisplayName(vehicle)}
+                        viewMode === 'list' ? (
+                            <FleetListTable
+                                vehicles={paginatedVehicles}
+                                onViewDetails={viewDetails}
+                                onEdit={startEdit}
+                                onDelete={onDeleteVehicle}
+                            />
+                        ) : (
+                            <>
+                                {paginatedVehicles.map((vehicle) => (
+                                    <FleetGridCard
+                                        key={vehicle.id}
+                                        vehicle={vehicle}
+                                        onViewDetails={viewDetails}
+                                        onEdit={startEdit}
+                                        onDelete={onDeleteVehicle}
                                     />
-                                    <span className={`status-badge ${statusCssClass(vehicle.status)}`}>
-                                        {formatEnumLabel(vehicle.status)}
-                                    </span>
-                                </div>
+                                ))}
 
-                                {viewMode === 'list' ? (
-                                    <div className="fleet-row">
-                                        <div className="fleet-row-main">
-                                            <h3>{vehicleDisplayName(vehicle)}</h3>
-                                            <p className="fleet-subtitle">Biển số: {vehicle.licensePlate}</p>
-
-                                            <div className="fleet-meta">
-                                                <span>👥 {vehicle.seatCount}</span>
-                                                <span>⛽ {formatEnumLabel(vehicle.fuelType)}</span>
-                                                <span>⚙️ {formatEnumLabel(vehicle.transmission)}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="fleet-row-side">
-                                            <div className="fleet-row-price">
-                                                <span className="label">Giá/ngày</span>
-                                                <strong>{formatPrice(vehicle.pricePerDay)}</strong>
-                                            </div>
-                                            {(() => {
-                                                const carTypeLabel = formatCarTypeLabel(vehicle.carTypeName)
-                                                return carTypeLabel ? <span className="type-pill">{carTypeLabel}</span> : null
-                                            })()}
-
-                                            <div className="fleet-row-actions">
-                                                <button
-                                                    type="button"
-                                                    className="btn-icon"
-                                                    title="Chi tiết"
-                                                    aria-label="Chi tiết"
-                                                    onClick={() => viewDetails(vehicle)}
-                                                >
-                                                    👁️
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="btn-icon"
-                                                    title="Sửa"
-                                                    aria-label="Sửa"
-                                                    onClick={() => startEdit(vehicle)}
-                                                >
-                                                    ✏️
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className="btn-icon danger"
-                                                    title="Xóa"
-                                                    aria-label="Xóa"
-                                                    onClick={() => onDeleteVehicle(vehicle.id)}
-                                                >
-                                                    🗑️
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="fleet-card-body">
-                                        <h3>{vehicleDisplayName(vehicle)}</h3>
-                                        <p className="fleet-subtitle">Biển số: {vehicle.licensePlate}</p>
-
-                                        <div className="fleet-meta">
-                                            <span>👥 {vehicle.seatCount}</span>
-                                            <span>⛽ {formatEnumLabel(vehicle.fuelType)}</span>
-                                            <span>⚙️ {formatEnumLabel(vehicle.transmission)}</span>
-                                        </div>
-
-                                        <div className="fleet-pricing">
-                                            <div>
-                                                <span className="label">Giá/ngày</span>
-                                                <strong>{formatPrice(vehicle.pricePerDay)}</strong>
-                                            </div>
-                                            {(() => {
-                                                const carTypeLabel = formatCarTypeLabel(vehicle.carTypeName)
-                                                return carTypeLabel ? <span className="type-pill">{carTypeLabel}</span> : null
-                                            })()}
-                                        </div>
-
-                                        <div className="fleet-actions">
-                                            <button type="button" className="btn-outline" onClick={() => viewDetails(vehicle)}>
-                                                👁️ Chi tiết
-                                            </button>
-                                            <button type="button" className="btn-outline" onClick={() => startEdit(vehicle)}>
-                                                ✏️ Sửa
-                                            </button>
-                                            <button type="button" className="btn-outline danger" onClick={() => onDeleteVehicle(vehicle.id)}>
-                                                🗑️ Xóa
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {editingVehicleId === vehicle.id && editForm && (
-                                    <div className="fleet-edit">
-                                        <div className="edit-grid">
-                                            <label>
-                                                Mẫu xe
-                                                <select
-                                                    value={editForm.modelId}
-                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, modelId: e.target.value }))}
-                                                    disabled={modelsLoading}
-                                                >
-                                                    <option value="">{modelsLoading ? 'Đang tải...' : 'Chọn mẫu xe'}</option>
-                                                    {vehicleModels.map((model) => (
-                                                        <option key={model.id} value={model.id}>
-                                                            {`${model.brandName || '—'} - ${model.name || '—'}${model.typeName ? ` (${model.typeName})` : ''}`}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </label>
-                                            <label>
-                                                Biển số
-                                                <input
-                                                    type="text"
-                                                    value={editForm.licensePlate}
-                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, licensePlate: e.target.value }))}
-                                                />
-                                            </label>
-                                            <label>
-                                                Màu sắc
-                                                <input
-                                                    type="text"
-                                                    value={editForm.color}
-                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, color: e.target.value }))}
-                                                />
-                                            </label>
-                                            <label>
-                                                Số chỗ
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    value={editForm.seatCount}
-                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, seatCount: e.target.value }))}
-                                                />
-                                            </label>
-                                            <label>
-                                                Hộp số
-                                                <select
-                                                    value={editForm.transmission}
-                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, transmission: e.target.value }))}
-                                                >
-                                                    <option value="">—</option>
-                                                    {TRANSMISSION_VALUES.map((v) => (
-                                                        <option key={v} value={v}>
-                                                            {formatEnumLabel(v)}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </label>
-                                            <label>
-                                                Nhiên liệu
-                                                <select
-                                                    value={editForm.fuelType}
-                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, fuelType: e.target.value }))}
-                                                >
-                                                    <option value="">—</option>
-                                                    {FUEL_VALUES.map((v) => (
-                                                        <option key={v} value={v}>
-                                                            {formatEnumLabel(v)}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </label>
-                                            <label>
-                                                Giá/ngày
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
-                                                    value={editForm.pricePerDay}
-                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, pricePerDay: e.target.value }))}
-                                                />
-                                            </label>
-
-                                            <label>
-                                                Năm sản xuất
-                                                <input
-                                                    type="number"
-                                                    min="1900"
-                                                    max="2100"
-                                                    value={editForm.year}
-                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, year: e.target.value }))}
-                                                />
-                                            </label>
-
-                                            <label>
-                                                Mức tiêu thụ
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.1"
-                                                    value={editForm.fuelConsumption}
-                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, fuelConsumption: e.target.value }))}
-                                                />
-                                            </label>
-                                            <label>
-                                                Số km hiện tại
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    value={editForm.currentKm}
-                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, currentKm: e.target.value }))}
-                                                />
-                                            </label>
-
-                                            <label style={{ gridColumn: '1 / -1' }}>
-                                                Mô tả
-                                                <textarea
-                                                    rows={3}
-                                                    value={editForm.description}
-                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
-                                                />
-                                            </label>
-                                            <label>
-                                                Tỉnh/Thành phố
-                                                <input
-                                                    type="text"
-                                                    value={editForm.province}
-                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, province: e.target.value }))}
-                                                />
-                                            </label>
-                                            <label>
-                                                Phường/Xã
-                                                <input
-                                                    type="text"
-                                                    value={editForm.ward}
-                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, ward: e.target.value }))}
-                                                />
-                                            </label>
-                                            <label>
-                                                Địa chỉ cụ thể
-                                                <input
-                                                    type="text"
-                                                    value={editForm.addressDetail}
-                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, addressDetail: e.target.value }))}
-                                                />
-                                            </label>
-                                            <label>
-                                                Trạng thái
-                                                <select
-                                                    value={editForm.status}
-                                                    onChange={(e) => setEditForm((prev) => ({ ...prev, status: e.target.value }))}
-                                                >
-                                                    <option value="">—</option>
-                                                    {STATUS_VALUES.map((s) => (
-                                                        <option key={s} value={s}>
-                                                            {formatEnumLabel(s)}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </label>
-                                        </div>
-
-                                        <div className="edit-actions">
-                                            <button type="button" className="btn-outline" onClick={saveEdit} disabled={saving}>
-                                                {saving ? 'Đang lưu...' : 'Lưu'}
-                                            </button>
-                                            <button type="button" className="btn-outline" onClick={saveStatus} disabled={statusUpdating}>
-                                                {statusUpdating ? 'Đang cập nhật...' : 'Cập nhật trạng thái'}
-                                            </button>
-                                            <button type="button" className="btn-outline danger" onClick={cancelEdit} disabled={saving || statusUpdating}>
-                                                Hủy
-                                            </button>
-                                        </div>
-
-                                        <div className="edit-images">
-                                            <div className="edit-images-header">
-                                                <p>Ảnh xe</p>
-                                                <label className="edit-checkbox">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={setFirstAsMain}
-                                                        onChange={(e) => setSetFirstAsMain(e.target.checked)}
-                                                    />
-                                                    Đặt ảnh đầu làm ảnh chính
-                                                </label>
-                                            </div>
-
-                                            <div className="image-grid">
-                                                {(vehicle.images || []).map((img) => (
-                                                    <div className="image-item" key={img.id}>
-                                                        <img src={img.imageUrl} alt="Xe" />
-                                                        <div className="image-actions">
-                                                            <button
-                                                                type="button"
-                                                                className="btn-outline"
-                                                                onClick={() => onSetMainImage(img.id)}
-                                                                disabled={imagesUpdating}
-                                                            >
-                                                                {img.isMain ? 'Chính' : 'Đặt làm chính'}
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                className="btn-outline danger"
-                                                                onClick={() => onDeleteImage(img.id)}
-                                                                disabled={imagesUpdating}
-                                                            >
-                                                                Xóa
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-
-                                            <div className="image-add">
-                                                <textarea
-                                                    rows="3"
-                                                    placeholder="Dán URL ảnh (mỗi dòng 1 URL)"
-                                                    value={imageUrlsInput}
-                                                    onChange={(e) => setImageUrlsInput(e.target.value)}
-                                                />
-                                                <button type="button" className="btn-outline" onClick={onAddImageUrls} disabled={imagesUpdating}>
-                                                    Thêm URL
-                                                </button>
-                                            </div>
-
-                                            <div className="image-upload">
-                                                <input
-                                                    type="file"
-                                                    multiple
-                                                    onChange={(e) => setUploadFiles(Array.from(e.target.files || []))}
-                                                />
-                                                <button type="button" className="btn-outline" onClick={onUploadImages} disabled={imagesUpdating}>
-                                                    Tải ảnh lên
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </article>
-                        ))
+                                <FleetAddCard onAdd={() => setShowCreateForm(true)} />
+                            </>
+                        )
                     )}
                 </div>
 

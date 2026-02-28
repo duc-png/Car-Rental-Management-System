@@ -22,6 +22,7 @@ import com.example.car_management.repository.OwnerRegistrationRepository;
 import com.example.car_management.repository.OwnerRegistrationImageRepository;
 import com.example.car_management.repository.UserRepository;
 import com.example.car_management.repository.VehicleImageRepository;
+import com.example.car_management.repository.VehicleFeatureRepository;
 import com.example.car_management.repository.VehicleModelRepository;
 import com.example.car_management.repository.VehicleRepository;
 import com.example.car_management.service.OwnerRegistrationService;
@@ -36,6 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.Instant;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +48,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
     private final UserRepository userRepository;
     private final VehicleRepository vehicleRepository;
     private final VehicleImageRepository vehicleImageRepository;
+    private final VehicleFeatureRepository vehicleFeatureRepository;
     private final VehicleModelRepository vehicleModelRepository;
     private final BrandRepository brandRepository;
     private final CarTypeRepository carTypeRepository;
@@ -99,21 +102,22 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
                 .fuelType(request.getVehicle().getFuelType())
                 .fuelConsumption(request.getVehicle().getFuelConsumption())
                 .description(request.getVehicle().getDescription())
+                .features(resolveFeatures(request.getVehicle().getFeatureIds()))
                 .status(OwnerRegistrationStatus.PENDING)
                 .createdAt(Instant.now())
                 .build();
 
-            OwnerRegistration saved = ownerRegistrationRepository.save(entity);
-            saveImages(saved, images);
-            return toResponse(saved);
+        OwnerRegistration saved = ownerRegistrationRepository.save(entity);
+        saveImages(saved, images);
+        return toResponse(saved);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<OwnerRegistrationRequestResponse> listForAdmin(OwnerRegistrationStatus status) {
         List<OwnerRegistration> entities = (status == null)
-            ? ownerRegistrationRepository.findAllByOrderByCreatedAtDesc()
-            : ownerRegistrationRepository.findAllByStatusOrderByCreatedAtDesc(status);
+                ? ownerRegistrationRepository.findAllByOrderByCreatedAtDesc()
+                : ownerRegistrationRepository.findAllByStatusOrderByCreatedAtDesc(status);
 
         return entities.stream().map(this::toResponse).toList();
     }
@@ -157,21 +161,23 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
 
         VehicleModelEntity model = resolveOrCreateModel(entity.getBrandName(), entity.getModelName());
         VehicleEntity vehicle = VehicleEntity.builder()
-            .owner(savedOwner)
-            .model(model)
-            .licensePlate(entity.getLicensePlate())
-            .seatCount(entity.getSeatCount())
-            .transmission(entity.getTransmission())
-            .fuelType(entity.getFuelType())
-            .pricePerDay(DEFAULT_PRICE_PER_DAY)
-            .status(VehicleStatus.PENDING_APPROVAL)
-            .description(entity.getDescription() != null ? entity.getDescription().trim() : null)
-            .year(entity.getManufacturingYear())
-            .fuelConsumption(entity.getFuelConsumption() != null ? entity.getFuelConsumption().floatValue() : null)
-            .currentKm(0)
-            .location(null)
-            .color(null)
-            .build();
+                .owner(savedOwner)
+                .model(model)
+                .licensePlate(entity.getLicensePlate())
+                .seatCount(entity.getSeatCount())
+                .transmission(entity.getTransmission())
+                .fuelType(entity.getFuelType())
+                .pricePerDay(DEFAULT_PRICE_PER_DAY)
+                .status(VehicleStatus.PENDING_APPROVAL)
+                .description(entity.getDescription() != null ? entity.getDescription().trim() : null)
+                .year(entity.getManufacturingYear())
+                .fuelConsumption(entity.getFuelConsumption() != null ? entity.getFuelConsumption().floatValue() : null)
+                .currentKm(0)
+                .location(null)
+                .color(null)
+                .features(entity.getFeatures() == null ? new java.util.LinkedHashSet<>()
+                        : new java.util.LinkedHashSet<>(entity.getFeatures()))
+                .build();
 
         VehicleEntity savedVehicle = vehicleRepository.save(vehicle);
         copyRegistrationImagesToVehicle(entity.getId(), savedVehicle);
@@ -199,7 +205,8 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
                             .orElseGet(() -> brandRepository.save(BrandEntity.builder().name(brandName).build()));
 
                     CarTypeEntity type = carTypeRepository.findByNameIgnoreCase(DEFAULT_CAR_TYPE_NAME)
-                            .orElseGet(() -> carTypeRepository.save(CarTypeEntity.builder().name(DEFAULT_CAR_TYPE_NAME).build()));
+                            .orElseGet(() -> carTypeRepository
+                                    .save(CarTypeEntity.builder().name(DEFAULT_CAR_TYPE_NAME).build()));
 
                     VehicleModelEntity created = VehicleModelEntity.builder()
                             .brand(brand)
@@ -212,7 +219,8 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
 
     private void copyRegistrationImagesToVehicle(Integer requestId, VehicleEntity vehicle) {
         List<OwnerRegistrationImage> images = imageRepository.findByRequest_IdOrderByIdAsc(requestId);
-        if (images == null || images.isEmpty()) return;
+        if (images == null || images.isEmpty())
+            return;
 
         List<VehicleImageEntity> toSave = new java.util.ArrayList<>(images.size());
         for (int i = 0; i < images.size(); i++) {
@@ -270,9 +278,9 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
 
     private OwnerRegistrationRequestResponse toResponse(OwnerRegistration entity) {
         var images = imageRepository.findByRequest_IdOrderByIdAsc(entity.getId())
-            .stream()
+                .stream()
                 .map(OwnerRegistrationImage::getImageUrl)
-            .toList();
+                .toList();
         return OwnerRegistrationRequestResponse.builder()
                 .requestId(entity.getId())
                 .fullName(entity.getFullName())
@@ -295,7 +303,38 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
                 .reviewedByName(entity.getReviewedBy() != null ? entity.getReviewedBy().getFullName() : null)
                 .approvedOwnerId(entity.getApprovedOwner() != null ? entity.getApprovedOwner().getId() : null)
                 .vehicleImageUrls(images)
+                .features(entity.getFeatures() == null
+                        ? List.of()
+                        : entity.getFeatures().stream()
+                                .map(feature -> com.example.car_management.dto.response.VehicleFeatureResponse.builder()
+                                        .id(feature.getId())
+                                        .name(feature.getName())
+                                        .build())
+                                .sorted((a, b) -> {
+                                    String left = a.getName() == null ? "" : a.getName();
+                                    String right = b.getName() == null ? "" : b.getName();
+                                    return left.compareToIgnoreCase(right);
+                                })
+                                .toList())
                 .build();
+    }
+
+    private Set<com.example.car_management.entity.VehicleFeatureEntity> resolveFeatures(List<Integer> featureIds) {
+        if (featureIds == null || featureIds.isEmpty()) {
+            return new java.util.LinkedHashSet<>();
+        }
+
+        List<Integer> ids = featureIds.stream().filter(java.util.Objects::nonNull).distinct().toList();
+        if (ids.isEmpty()) {
+            return new java.util.LinkedHashSet<>();
+        }
+
+        List<com.example.car_management.entity.VehicleFeatureEntity> found = vehicleFeatureRepository.findAllById(ids);
+        if (found.size() != ids.size()) {
+            throw new AppException(ErrorCode.VEHICLE_FEATURE_NOT_FOUND);
+        }
+
+        return new java.util.LinkedHashSet<>(found);
     }
 
     private void validateImages(List<MultipartFile> images) {
@@ -313,10 +352,10 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
             MultipartFile file = images.get(i);
             String url = cloudinaryService.uploadOwnerRegistrationImage(file, request.getId());
             OwnerRegistrationImage img = OwnerRegistrationImage.builder()
-                            .request(request)
-                            .imageUrl(url)
-                            .isMain(i == 0)
-                            .build();
+                    .request(request)
+                    .imageUrl(url)
+                    .isMain(i == 0)
+                    .build();
             toSave.add(img);
         }
         imageRepository.saveAll(toSave);

@@ -181,6 +181,30 @@
     margin-top: 16px;
 }
 
+.owner-feature-grid {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+}
+
+.owner-feature-item {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid var(--owner-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: #fff;
+}
+
+.owner-feature-item input[type='checkbox'] {
+    width: 16px;
+    height: 16px;
+    padding: 0;
+    flex: 0 0 auto;
+}
+
 .helper-text {
     color: var(--owner-muted);
     margin-top: 4px;
