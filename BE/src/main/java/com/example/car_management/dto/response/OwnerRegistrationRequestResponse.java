@@ -28,6 +28,7 @@ public class OwnerRegistrationRequestResponse {
     private Integer manufacturingYear;
     private Transmission transmission;
     private FuelType fuelType;
+    private String addressDetail;
     private BigDecimal fuelConsumption;
     private String description;
 

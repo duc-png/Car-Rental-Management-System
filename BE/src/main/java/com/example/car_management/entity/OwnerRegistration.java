@@ -59,6 +59,39 @@ public class OwnerRegistration {
     @Column(name = "fuel_type", nullable = false, length = 20)
     private FuelType fuelType;
 
+    @Column(name = "price_per_day", nullable = false, precision = 12, scale = 2)
+    private BigDecimal pricePerDay;
+
+    @Column(name = "address_detail", length = 255)
+    private String addressDetail;
+
+    @Column(name = "discount_enabled", nullable = false)
+    private Boolean discountEnabled;
+
+    @Column(name = "discount_percent", precision = 5, scale = 2)
+    private BigDecimal discountPercent;
+
+    @Column(name = "instant_booking", nullable = false)
+    private Boolean instantBooking;
+
+    @Column(name = "delivery_enabled", nullable = false)
+    private Boolean deliveryEnabled;
+
+    @Column(name = "free_delivery_within_km")
+    private Integer freeDeliveryWithinKm;
+
+    @Column(name = "max_delivery_distance_km")
+    private Integer maxDeliveryDistanceKm;
+
+    @Column(name = "max_km_per_day")
+    private Integer maxKmPerDay;
+
+    @Column(name = "extra_fee_per_km", precision = 12, scale = 2)
+    private BigDecimal extraFeePerKm;
+
+    @Column(name = "rental_terms", columnDefinition = "TEXT")
+    private String rentalTerms;
+
     @Column(name = "fuel_consumption", precision = 10, scale = 2)
     private BigDecimal fuelConsumption;
 

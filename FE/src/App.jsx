@@ -31,7 +31,9 @@ import './index.css'
 
 function AppLayout() {
   const location = useLocation()
-  const isOwnerDashboard = location.pathname.startsWith('/owner') || location.pathname.startsWith('/admin')
+  const isOwnerArea = /^\/owner(\/|$)/.test(location.pathname)
+  const isAdminArea = /^\/admin(\/|$)/.test(location.pathname)
+  const isOwnerDashboard = isOwnerArea || isAdminArea
   const isCarDetailsPage = location.pathname.startsWith('/car/') || (location.pathname.startsWith('/cars/') && location.pathname !== '/cars')
 
   return (

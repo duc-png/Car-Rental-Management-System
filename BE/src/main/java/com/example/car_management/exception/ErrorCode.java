@@ -34,6 +34,8 @@ public enum ErrorCode {
     OWNER_REGISTRATION_IMAGES_REQUIRED(2011, "Owner registration images are required", HttpStatus.BAD_REQUEST),
     OWNER_REGISTRATION_IMAGES_LIMIT(2012, "Owner registration images exceed limit", HttpStatus.BAD_REQUEST),
     VEHICLE_FEATURE_NOT_FOUND(2013, "Vehicle feature not found", HttpStatus.NOT_FOUND),
+    IMAGE_UPLOAD_FAILED(2014, "Invalid image file or upload failed", HttpStatus.BAD_REQUEST),
+    VEHICLE_APPROVAL_REQUIRED(2015, "Vehicle is pending admin approval", HttpStatus.BAD_REQUEST),
 
     // ===== Booking =====
     BOOKING_NOT_FOUND(3001, "Booking not found", HttpStatus.NOT_FOUND),

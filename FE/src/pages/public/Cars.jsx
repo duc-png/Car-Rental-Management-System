@@ -171,7 +171,7 @@ function Cars() {
                   checked={filters.fuel === opt}
                   onChange={() => handleChange('fuel', opt)}
                 />
-                {opt === 'all' ? 'Tất cả' : opt === 'DIESEL' ? 'Dầu' : opt === 'PETROL' ? 'Xăng' : opt}
+                {opt === 'all' ? 'Tất cả' : opt === 'DIESEL' ? 'Dầu' : opt === 'GASOLINE' ? 'Xăng' : opt}
               </label>
             ))}
           </div>
