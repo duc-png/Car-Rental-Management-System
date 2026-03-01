@@ -338,7 +338,7 @@ export default function AdminOwnerRegistrationDetails() {
                                 onClick={onApprove}
                                 disabled={!canAct || actionLoading}
                             >
-                                Approve Registration
+                                Approve
                             </button>
 
                             <button
@@ -347,7 +347,7 @@ export default function AdminOwnerRegistrationDetails() {
                                 onClick={onCancel}
                                 disabled={!canAct || actionLoading}
                             >
-                                Cancel Request
+                                Cancel
                             </button>
 
                             <button

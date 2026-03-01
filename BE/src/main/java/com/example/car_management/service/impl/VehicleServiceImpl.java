@@ -4,6 +4,7 @@ import com.example.car_management.dto.request.*;
 import com.example.car_management.dto.response.*;
 import com.example.car_management.entity.*;
 import com.example.car_management.entity.enums.BookingStatus;
+import com.example.car_management.entity.enums.VehicleStatus;
 import com.example.car_management.exception.AppException;
 import com.example.car_management.exception.ErrorCode;
 import com.example.car_management.mapper.VehicleMapper;
@@ -59,7 +60,7 @@ public class VehicleServiceImpl implements VehicleService {
                 .transmission(req.getTransmission())
                 .fuelType(req.getFuelType())
                 .pricePerDay(req.getPricePerDay())
-                .status(com.example.car_management.entity.enums.VehicleStatus.PENDING_APPROVAL)
+                .status(VehicleStatus.PENDING_APPROVAL)
                 .description(req.getDescription() != null ? req.getDescription().trim() : null)
                 .year(req.getYear())
                 .fuelConsumption(req.getFuelConsumption())
@@ -137,8 +138,9 @@ public class VehicleServiceImpl implements VehicleService {
             v.setFuelConsumption(req.getFuelConsumption());
         if (req.getCurrentKm() != null)
             v.setCurrentKm(req.getCurrentKm());
-        if (req.getStatus() != null)
-            v.setStatus(req.getStatus());
+        if (req.getStatus() != null) {
+            throw new AppException(ErrorCode.VEHICLE_APPROVAL_REQUIRED);
+        }
         if (req.getFeatureIds() != null)
             v.setFeatures(resolveFeatures(req.getFeatureIds()));
 
@@ -250,6 +252,14 @@ public class VehicleServiceImpl implements VehicleService {
         VehicleEntity v = vehicleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_NOT_FOUND));
         assertOwner(v, ownerId);
+
+        if (v.getStatus() == VehicleStatus.PENDING_APPROVAL || v.getStatus() == VehicleStatus.REJECTED) {
+            throw new AppException(ErrorCode.VEHICLE_APPROVAL_REQUIRED);
+        }
+
+        if (req.getStatus() == VehicleStatus.PENDING_APPROVAL || req.getStatus() == VehicleStatus.REJECTED) {
+            throw new AppException(ErrorCode.FORBIDDEN_RESOURCE);
+        }
 
         v.setStatus(req.getStatus());
         // không cần save(v) vì v đang managed trong transaction

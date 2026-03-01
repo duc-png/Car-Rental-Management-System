@@ -12,6 +12,17 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:quanghao040102@gmail.com}
+    password: ${MAIL_PASSWORD:nlck asdg bomc gggb}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 
 cloudinary:
@@ -37,3 +48,5 @@ payos:
 
 app:
   frontend-url: http://localhost:3000
+  mail:
+    enabled: true

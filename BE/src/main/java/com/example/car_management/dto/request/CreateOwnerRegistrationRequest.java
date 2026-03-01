@@ -82,6 +82,42 @@ public class CreateOwnerRegistrationRequest {
         @NotNull
         private FuelType fuelType;
 
+        @NotNull
+        @DecimalMin(value = "0.0", inclusive = false)
+        private BigDecimal pricePerDay;
+
+        @NotBlank
+        @Size(max = 255)
+        private String addressDetail;
+
+        @Builder.Default
+        private Boolean discountEnabled = Boolean.FALSE;
+
+        @DecimalMin(value = "0.0", inclusive = true)
+        @DecimalMax(value = "100.0", inclusive = true)
+        private BigDecimal discountPercent;
+
+        @Builder.Default
+        private Boolean instantBooking = Boolean.TRUE;
+
+        @Builder.Default
+        private Boolean deliveryEnabled = Boolean.TRUE;
+
+        @Min(0)
+        private Integer freeDeliveryWithinKm;
+
+        @Min(0)
+        private Integer maxDeliveryDistanceKm;
+
+        @Min(0)
+        private Integer maxKmPerDay;
+
+        @DecimalMin(value = "0.0", inclusive = true)
+        private BigDecimal extraFeePerKm;
+
+        @Size(max = 2000)
+        private String rentalTerms;
+
         @DecimalMin(value = "0.0", inclusive = false)
         private BigDecimal fuelConsumption;
 
