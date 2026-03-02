@@ -3,8 +3,10 @@ package com.example.car_management.mapper;
 import com.example.car_management.dto.response.BookedPeriodResponse;
 import com.example.car_management.dto.response.BookingResponse;
 import com.example.car_management.entity.BookingEntity;
+import com.example.car_management.entity.DisputeEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 
 import java.util.List;
 
@@ -20,6 +22,8 @@ public interface BookingMapper {
     @Mapping(target = "ownerId", source = "vehicle.owner.id")
     @Mapping(target = "ownerName", source = "vehicle.owner.fullName")
     @Mapping(target = "ownerPhone", source = "vehicle.owner.phone")
+    @Mapping(target = "disputeId", ignore = true)
+    @Mapping(target = "disputeStatus", ignore = true)
     BookingResponse toResponse(BookingEntity booking);
 
     List<BookingResponse> toResponseList(List<BookingEntity> bookings);
@@ -28,4 +32,13 @@ public interface BookingMapper {
     BookedPeriodResponse toBookedPeriodResponse(BookingEntity booking);
 
     List<BookedPeriodResponse> toBookedPeriodResponseList(List<BookingEntity> bookings);
+
+    default BookingResponse toResponseWithDispute(BookingEntity booking, DisputeEntity dispute) {
+        BookingResponse response = toResponse(booking);
+        if (dispute != null) {
+            response.setDisputeId(dispute.getId());
+            response.setDisputeStatus(dispute.getStatus().name());
+        }
+        return response;
+    }
 }

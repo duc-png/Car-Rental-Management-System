@@ -1,14 +1,20 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { getMyBookings, updateBookingStatus } from '../api/bookings'
 import { useAuth } from '../hooks/useAuth'
-import '../styles/MyBookings.css' // Reuse main styles for consistency
+import ReturnInspectionModal from '../components/ReturnInspectionModal'
+import DisputeChatModal from '../components/DisputeChatModal'
+import '../styles/MyBookings.css'
 
 function ManageRentals() {
     const [rentals, setRentals] = useState([])
     const [loading, setLoading] = useState(true)
+    const [showReturnModal, setShowReturnModal] = useState(false)
+    const [showChatModal, setShowChatModal] = useState(false)
+    const [selectedBooking, setSelectedBooking] = useState(null)
     const { user } = useAuth()
+    const navigate = useNavigate()
 
     useEffect(() => {
         if (user) {
@@ -19,13 +25,8 @@ function ManageRentals() {
     const fetchRentals = async () => {
         try {
             const data = await getMyBookings()
-            // Filter only bookings where I am the owner
-            // Note: user.userId comes from decoded JWT in AuthContext
             const myRentals = data.filter(booking => booking.ownerId === user?.userId)
-
-            // Sort by date desc
             myRentals.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-
             setRentals(myRentals)
         } catch (error) {
             console.error('Failed to fetch rentals:', error)
@@ -41,11 +42,21 @@ function ManageRentals() {
 
             await updateBookingStatus(bookingId, newStatus)
             toast.success(`Booking updated to ${newStatus}`)
-            fetchRentals() // Refresh list
+            fetchRentals()
         } catch (error) {
             console.error('Update failed:', error)
             toast.error('Failed to update booking status')
         }
+    }
+
+    const handleReturnInspection = (booking) => {
+        setSelectedBooking(booking)
+        setShowReturnModal(true)
+    }
+
+    const handleOpenChat = (booking) => {
+        setSelectedBooking(booking)
+        setShowChatModal(true)
     }
 
     const getStatusColor = (status) => {
@@ -57,6 +68,28 @@ function ManageRentals() {
             case 'CANCELLED': return 'cancelled'
             default: return ''
         }
+    }
+
+    const getReturnStatusLabel = (returnStatus) => {
+        const labels = {
+            'NOT_RETURNED': null,
+            'PENDING_INSPECTION': 'Pending Inspection',
+            'FEES_CALCULATED': 'Awaiting Customer Confirm',
+            'CUSTOMER_CONFIRMED': 'Customer Confirmed',
+            'DISPUTED': 'Disputed',
+            'RESOLVED': 'Resolved'
+        }
+        return labels[returnStatus] || null
+    }
+
+    const getReturnStatusColor = (returnStatus) => {
+        const colors = {
+            'FEES_CALCULATED': '#f59e0b',
+            'DISPUTED': '#ef4444',
+            'RESOLVED': '#10b981',
+            'CUSTOMER_CONFIRMED': '#10b981'
+        }
+        return colors[returnStatus] || '#6b7280'
     }
 
     if (loading) {
@@ -87,7 +120,6 @@ function ManageRentals() {
                 ) : (
                     rentals.map((booking) => (
                         <div key={booking.id} className={`booking-card ${getStatusColor(booking.status)}`}>
-                            {/* Left: Image */}
                             <div className="booking-image">
                                 <img
                                     src={booking.vehicleImage || '/placeholder.svg'}
@@ -95,22 +127,35 @@ function ManageRentals() {
                                 />
                             </div>
 
-                            {/* Middle: Info */}
                             <div className="booking-details">
-                                <h3>{booking.vehicleName}</h3>
+                                <h3>{booking.vehicleName || `Vehicle #${booking.vehicleId}`}</h3>
                                 <div className="booking-info">
-                                    <p><strong>Renter:</strong> {booking.renterName} ({booking.renterEmail})</p>
-                                    <p><strong>Dates:</strong> {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}</p>
-                                    <p><strong>Total:</strong> {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(booking.totalPrice)}</p>
+                                    <p><strong>Renter:</strong> {booking.renterName || 'N/A'} {booking.renterEmail && `(${booking.renterEmail})`}</p>
+                                    <p><strong>Dates:</strong> {booking.startDate ? new Date(booking.startDate).toLocaleDateString() : 'N/A'} - {booking.endDate ? new Date(booking.endDate).toLocaleDateString() : 'N/A'}</p>
+                                    <p><strong>Total:</strong> ${(booking.totalPrice || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                                    
+                                    {booking.totalAdditionalFees > 0 && (
+                                        <p><strong>Extra Fees:</strong> <span style={{color: '#f87171', fontWeight: 600}}>+${booking.totalAdditionalFees.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></p>
+                                    )}
+                                    
                                     <div className="booking-status">
                                         <span className={`status-badge ${getStatusColor(booking.status)}`}>
                                             {booking.status}
                                         </span>
+                                        {getReturnStatusLabel(booking.returnStatus) && (
+                                            <span 
+                                                className="status-badge" 
+                                                style={{ 
+                                                    background: getReturnStatusColor(booking.returnStatus)
+                                                }}
+                                            >
+                                                {getReturnStatusLabel(booking.returnStatus)}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Right: Actions */}
                             <div className="booking-actions">
                                 {booking.status === 'PENDING' && (
                                     <>
@@ -140,17 +185,26 @@ function ManageRentals() {
                                     </button>
                                 )}
 
-                                {booking.status === 'ONGOING' && (
+                                {booking.status === 'ONGOING' && booking.returnStatus === 'NOT_RETURNED' && (
                                     <button
                                         className="btn-view"
                                         style={{ background: '#3b82f6', color: 'white' }}
-                                        onClick={() => handleStatusUpdate(booking.id, 'COMPLETED')}
+                                        onClick={() => handleReturnInspection(booking)}
                                     >
-                                        Complete
+                                        Return Inspection
                                     </button>
                                 )}
 
-                                {/* Always allow cancel if active? No, maybe restricted. Using backend rules. */}
+                                {booking.returnStatus === 'DISPUTED' && (
+                                    <button
+                                        className="btn-view"
+                                        style={{ background: '#f59e0b', color: 'white' }}
+                                        onClick={() => handleOpenChat(booking)}
+                                    >
+                                        Open Chat
+                                    </button>
+                                )}
+
                                 {['PENDING', 'CONFIRMED'].includes(booking.status) && (
                                     <button
                                         className="btn-cancel"
@@ -164,6 +218,33 @@ function ManageRentals() {
                     ))
                 )}
             </div>
+
+            {showReturnModal && selectedBooking && (
+                <ReturnInspectionModal
+                    booking={selectedBooking}
+                    onClose={() => {
+                        setShowReturnModal(false)
+                        setSelectedBooking(null)
+                    }}
+                    onSuccess={() => {
+                        fetchRentals()
+                    }}
+                />
+            )}
+
+            {showChatModal && selectedBooking && (
+                <DisputeChatModal
+                    booking={selectedBooking}
+                    isOwner={true}
+                    onClose={() => {
+                        setShowChatModal(false)
+                        setSelectedBooking(null)
+                    }}
+                    onResolved={() => {
+                        fetchRentals()
+                    }}
+                />
+            )}
         </div>
     )
 }

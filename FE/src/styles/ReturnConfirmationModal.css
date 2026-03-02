@@ -1,0 +1,449 @@
+/* Return Confirmation Modal - Dark Theme */
+.return-confirmation-modal {
+    background: #1e293b;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.return-confirmation-modal .modal-loading {
+    padding: 60px;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.return-confirmation-modal .modal-loading .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(99, 102, 241, 0.2);
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.return-confirmation-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    background: #1e293b;
+    z-index: 10;
+}
+
+.return-confirmation-modal .modal-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: #f1f5f9;
+    font-weight: 700;
+}
+
+.return-confirmation-modal .close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #94a3b8;
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.return-confirmation-modal .close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.return-confirmation-modal .booking-summary {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    padding: 16px 24px;
+}
+
+.return-confirmation-modal .booking-summary h4 {
+    margin: 0 0 4px 0;
+    font-weight: 600;
+}
+
+.return-confirmation-modal .booking-summary p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.return-confirmation-modal .inspection-details {
+    padding: 20px 24px;
+}
+
+.return-confirmation-modal .detail-section {
+    margin-bottom: 20px;
+}
+
+.return-confirmation-modal .detail-section h3 {
+    font-size: 0.95rem;
+    color: #94a3b8;
+    margin: 0 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.return-confirmation-modal .detail-grid {
+    display: grid;
+    gap: 8px;
+}
+
+.return-confirmation-modal .detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    font-size: 0.9rem;
+    color: #f1f5f9;
+}
+
+.return-confirmation-modal .detail-item .label {
+    color: #94a3b8;
+}
+
+.return-confirmation-modal .detail-item.highlight {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #fbbf24;
+}
+
+.return-confirmation-modal .detail-section.damage {
+    background: rgba(239, 68, 68, 0.1);
+    padding: 16px;
+    border-radius: 12px;
+    border-left: 4px solid #ef4444;
+}
+
+.return-confirmation-modal .detail-section.damage h3 {
+    color: #f87171;
+    border-bottom-color: rgba(239, 68, 68, 0.3);
+}
+
+.return-confirmation-modal .damage-description {
+    color: #fca5a5;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.return-confirmation-modal .damage-images {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+
+.return-confirmation-modal .damage-images img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid rgba(239, 68, 68, 0.3);
+}
+
+.return-confirmation-modal .notes {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 12px;
+    border-radius: 10px;
+    margin: 0;
+    color: #cbd5e1;
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.return-confirmation-modal .fee-breakdown {
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 14px;
+    padding: 20px;
+    margin-top: 16px;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.return-confirmation-modal .fee-breakdown h3 {
+    margin: 0 0 16px 0;
+    color: #f1f5f9;
+    font-size: 1rem;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.return-confirmation-modal .fee-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: #cbd5e1;
+}
+
+.return-confirmation-modal .fee-item:last-child {
+    border-bottom: none;
+}
+
+.return-confirmation-modal .fee-label {
+    display: flex;
+    flex-direction: column;
+}
+
+.return-confirmation-modal .fee-label small {
+    color: #64748b;
+    font-size: 0.75rem;
+    margin-top: 2px;
+}
+
+.return-confirmation-modal .fee-amount {
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.return-confirmation-modal .fee-amount.negative {
+    color: #f87171;
+}
+
+.return-confirmation-modal .fee-item.total-additional {
+    border-top: 2px solid #6366f1;
+    margin-top: 8px;
+    padding-top: 14px;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.return-confirmation-modal .fee-item.original {
+    color: #64748b;
+}
+
+.return-confirmation-modal .fee-item.grand-total {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+    margin: 12px -20px -20px;
+    padding: 16px 20px;
+    border-radius: 0 0 14px 14px;
+}
+
+.return-confirmation-modal .modal-actions {
+    display: flex;
+    gap: 12px;
+    padding: 20px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.return-confirmation-modal .btn-dispute {
+    flex: 1;
+    padding: 14px;
+    border: 2px solid #f59e0b;
+    background: transparent;
+    color: #f59e0b;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.return-confirmation-modal .btn-dispute:hover {
+    background: rgba(245, 158, 11, 0.15);
+}
+
+.return-confirmation-modal .btn-confirm {
+    flex: 2;
+    padding: 14px;
+    border: none;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.return-confirmation-modal .btn-confirm:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+}
+
+.return-confirmation-modal .btn-confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.return-confirmation-modal .dispute-form {
+    padding: 20px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.return-confirmation-modal .dispute-form h3 {
+    margin: 0 0 8px 0;
+    color: #f59e0b;
+    font-size: 1.1rem;
+}
+
+.return-confirmation-modal .dispute-form p {
+    margin: 0 0 12px 0;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.return-confirmation-modal .dispute-form textarea {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 12px;
+    font-size: 1rem;
+    resize: vertical;
+    min-height: 100px;
+    box-sizing: border-box;
+    background: #0f172a;
+    color: #f1f5f9;
+    transition: border-color 0.2s;
+}
+
+.return-confirmation-modal .dispute-form textarea::placeholder {
+    color: #64748b;
+}
+
+.return-confirmation-modal .dispute-form textarea:focus {
+    outline: none;
+    border-color: #f59e0b;
+}
+
+.return-confirmation-modal .dispute-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.return-confirmation-modal .dispute-actions .btn-cancel {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: #94a3b8;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.return-confirmation-modal .dispute-actions .btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f1f5f9;
+}
+
+.return-confirmation-modal .btn-dispute-submit {
+    flex: 2;
+    padding: 12px;
+    border: none;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.return-confirmation-modal .btn-dispute-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
+}
+
+.return-confirmation-modal .btn-dispute-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .return-confirmation-modal {
+        max-height: 95vh;
+        border-radius: 20px 20px 0 0;
+        max-width: 100%;
+    }
+    
+    .return-confirmation-modal .modal-header {
+        padding: 16px 20px;
+    }
+    
+    .return-confirmation-modal .booking-summary {
+        padding: 14px 20px;
+    }
+    
+    .return-confirmation-modal .inspection-details {
+        padding: 16px 20px;
+    }
+    
+    .return-confirmation-modal .detail-item {
+        flex-direction: column;
+        gap: 4px;
+        align-items: flex-start;
+    }
+    
+    .return-confirmation-modal .fee-breakdown {
+        padding: 16px;
+    }
+    
+    .return-confirmation-modal .fee-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .return-confirmation-modal .fee-item.grand-total {
+        flex-direction: row;
+        align-items: center;
+    }
+    
+    .return-confirmation-modal .modal-actions {
+        flex-direction: column-reverse;
+        padding: 16px 20px;
+    }
+    
+    .return-confirmation-modal .btn-dispute,
+    .return-confirmation-modal .btn-confirm {
+        flex: none;
+        width: 100%;
+    }
+    
+    .return-confirmation-modal .dispute-form {
+        padding: 16px 20px;
+    }
+    
+    .return-confirmation-modal .dispute-actions {
+        flex-direction: column-reverse;
+    }
+    
+    .return-confirmation-modal .dispute-actions .btn-cancel,
+    .return-confirmation-modal .btn-dispute-submit {
+        flex: none;
+        width: 100%;
+    }
+}

@@ -32,7 +32,24 @@ public enum ErrorCode {
     MAINTENANCE_INVALID_STATUS_TRANSITION(3003, "Invalid maintenance status transition", HttpStatus.BAD_REQUEST),
     MAINTENANCE_CANNOT_MODIFY_COMPLETED(3004, "Cannot modify completed or cancelled maintenance", HttpStatus.BAD_REQUEST),
     VEHICLE_NOT_AVAILABLE_FOR_MAINTENANCE(3005, "Vehicle is not available for maintenance", HttpStatus.BAD_REQUEST),
-    VEHICLE_OWNERSHIP_REQUIRED(3006, "You do not own this vehicle", HttpStatus.FORBIDDEN);
+    VEHICLE_OWNERSHIP_REQUIRED(3006, "You do not own this vehicle", HttpStatus.FORBIDDEN),
+    
+    // Return & Inspection
+    BOOKING_NOT_FOUND(4001, "Booking not found", HttpStatus.NOT_FOUND),
+    BOOKING_NOT_ONGOING(4002, "Booking is not in ONGOING status", HttpStatus.BAD_REQUEST),
+    BOOKING_ALREADY_INSPECTED(4003, "Booking already has return inspection", HttpStatus.BAD_REQUEST),
+    BOOKING_NOT_INSPECTED(4004, "Booking has not been inspected yet", HttpStatus.BAD_REQUEST),
+    INVALID_ODOMETER_READING(4005, "Odometer end must be greater than or equal to start", HttpStatus.BAD_REQUEST),
+    
+    // Dispute
+    DISPUTE_NOT_FOUND(5001, "Dispute not found", HttpStatus.NOT_FOUND),
+    DISPUTE_ALREADY_EXISTS(5002, "Active dispute already exists for this booking", HttpStatus.BAD_REQUEST),
+    DISPUTE_ALREADY_RESOLVED(5003, "Dispute is already resolved", HttpStatus.BAD_REQUEST),
+    CANNOT_CREATE_DISPUTE(5004, "Cannot create dispute at this stage", HttpStatus.BAD_REQUEST),
+    
+    // Message
+    MESSAGE_NOT_FOUND(6001, "Message not found", HttpStatus.NOT_FOUND),
+    CANNOT_SEND_MESSAGE(6002, "Cannot send message to this dispute", HttpStatus.BAD_REQUEST);
     // ===== Cloudinary / Image =====
 //    IMAGE_UPLOAD_FAILED(2007, "Upload image failed", HttpStatus.BAD_REQUEST);
 //
