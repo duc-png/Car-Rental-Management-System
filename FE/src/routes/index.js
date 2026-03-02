@@ -9,6 +9,7 @@ import CarOwnerFleet from '../pages/owner/CarOwnerFleet';
 import OwnerPublicProfile from '../pages/public/OwnerPublicProfile';
 import ManageRentals from '../pages/ManageRentals';
 import Customers from '../pages/Customers';
+import ChatInbox from '../pages/chat/ChatInbox';
 
 export const routes = [
   {
@@ -40,6 +41,11 @@ export const routes = [
     path: '/my-bookings',
     element: <MyBookings />,
     name: 'My Bookings'
+  },
+  {
+    path: '/messages',
+    element: <ChatInbox />,
+    name: 'Messages'
   },
   {
     path: '/manage-rentals',
