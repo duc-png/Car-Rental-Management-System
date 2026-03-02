@@ -1,14 +1,7 @@
-import { useState } from "react";
-import { Avatar, AvatarImage, AvatarFallback } from "../../components/ui/avatar";
-import { Button } from "../../components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { Badge } from "../../components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast, Toaster } from "sonner";
 import {
-    User,
     Mail,
     Phone,
     MapPin,
@@ -20,576 +13,562 @@ import {
     Clock,
     Upload,
     AlertCircle,
-    IdCard
+    IdCard,
+    Loader2
 } from "lucide-react";
+import { useAuth } from "../../hooks/useAuth";
+import { getMyProfile, updateMyProfile, getMyBookings } from "../../api/profile";
+import { Button } from "../../components/ui/button";
+import { Badge } from "../../components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import { Input } from "../../components/ui/input";
+import "../../styles/UserProfile.css";
+
+function formatDateTime(value: any): string {
+    if (!value) return "";
+    try {
+        return new Date(value).toLocaleDateString("vi-VN");
+    } catch {
+        return String(value);
+    }
+}
+
+function mapStatus(status: string): string {
+    const map: Record<string, string> = {
+        PENDING: "Chờ xác nhận",
+        CONFIRMED: "Đã xác nhận",
+        ONGOING: "Đang thuê",
+        COMPLETED: "Hoàn thành",
+        CANCELLED: "Đã hủy",
+    };
+    return map[status] || status;
+}
+
+function statusVariant(status: string): "default" | "secondary" | "outline" {
+    if (status === "ONGOING" || status === "CONFIRMED") return "default";
+    return "secondary";
+}
 
 export default function UserProfile() {
+    const navigate = useNavigate();
+    const { user, token, isAuthenticated, loading: authLoading } = useAuth();
+
     const [isEditing, setIsEditing] = useState(false);
     const [licenseFile, setLicenseFile] = useState<string | null>(null);
+    const [profileLoading, setProfileLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [bookings, setBookings] = useState<any[]>([]);
 
     const [userData, setUserData] = useState({
-        name: "Nguyễn Văn An",
-        email: "nguyenvanan@email.com",
-        phone: "+84 901 234 567",
-        dateOfBirth: "15/03/1990",
-        address: "123 Lê Lợi, Quận 1, TP. Hồ Chí Minh",
-        memberSince: "Tháng 3, 2023",
+        name: "",
+        email: "",
+        phone: "",
+        dateOfBirth: "",
+        address: "",
+        memberSince: "",
         avatarUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop",
         license: {
-            number: "012345678",
-            issuedDate: "10/01/2015",
-            expiryDate: "10/01/2030",
-            class: "B2",
-            verified: true
+            number: "",
+            issuedDate: "",
+            expiryDate: "",
+            licenseClass: "B2",
+            verified: false
         },
         stats: {
-            totalRentals: 24,
-            activeRentals: 1,
-            loyaltyPoints: 1250
+            totalRentals: 0,
+            activeRentals: 0,
+            loyaltyPoints: 0
         }
     });
 
     const [formData, setFormData] = useState({
-        name: userData.name,
-        email: userData.email,
-        phone: userData.phone,
-        dateOfBirth: userData.dateOfBirth,
-        address: userData.address
+        name: "",
+        email: "",
+        phone: "",
+        dateOfBirth: "",
+        address: "",
+        licenseNumber: ""
     });
 
-    const rentalHistory = [
-        {
-            id: 1,
-            car: "Toyota Camry 2023",
-            type: "Sedan",
-            startDate: "05/01/2026",
-            endDate: "08/01/2026",
-            status: "Hoàn thành",
-            total: "3.500.000 ₫",
-            image: "https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=300&h=200&fit=crop"
-        },
-        {
-            id: 2,
-            car: "Honda CR-V 2024",
-            type: "SUV",
-            startDate: "20/12/2025",
-            endDate: "25/12/2025",
-            status: "Hoàn thành",
-            total: "5.000.000 ₫",
-            image: "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=300&h=200&fit=crop"
-        },
-        {
-            id: 3,
-            car: "Mercedes-Benz C-Class",
-            type: "Luxury",
-            startDate: "10/01/2026",
-            endDate: "12/01/2026",
-            status: "Đang thuê",
-            total: "4.200.000 ₫",
-            image: "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=300&h=200&fit=crop"
+    useEffect(() => {
+        if (!authLoading && !isAuthenticated) {
+            navigate("/login");
         }
-    ];
+    }, [authLoading, isAuthenticated, navigate]);
+
+    useEffect(() => {
+        if (!user?.userId || !token) return;
+
+        const fetchData = async () => {
+            setProfileLoading(true);
+            try {
+                const [profile, bookingList] = await Promise.all([
+                    getMyProfile(token, user.userId),
+                    getMyBookings(token)
+                ]);
+
+                const activeRentals = bookingList.filter(
+                    (b: any) => b.status === "ONGOING" || b.status === "CONFIRMED"
+                ).length;
+
+                setUserData({
+                    name: profile.fullName || "",
+                    email: profile.email || "",
+                    phone: profile.phone || "",
+                    dateOfBirth: profile.dateOfBirth || "",
+                    address: profile.address || "",
+                    memberSince: profile.createdAt
+                        ? new Date(profile.createdAt).toLocaleDateString("vi-VN", { month: "long", year: "numeric" })
+                        : "",
+                    avatarUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop",
+                    license: {
+                        number: profile.licenseNumber || "",
+                        issuedDate: "",
+                        expiryDate: "",
+                        licenseClass: "B2",
+                        verified: !!profile.licenseNumber
+                    },
+                    stats: {
+                        totalRentals: Number(profile.totalBookings) || 0,
+                        activeRentals,
+                        loyaltyPoints: 0
+                    }
+                });
+
+                setFormData({
+                    name: profile.fullName || "",
+                    email: profile.email || "",
+                    phone: profile.phone || "",
+                    dateOfBirth: profile.dateOfBirth || "",
+                    address: profile.address || "",
+                    licenseNumber: profile.licenseNumber || ""
+                });
+
+                setBookings(bookingList);
+            } catch (err: any) {
+                toast.error(err.message || "Không thể tải dữ liệu hồ sơ");
+            } finally {
+                setProfileLoading(false);
+            }
+        };
+
+        fetchData();
+    }, [user?.userId, token]);
 
     const handleLicenseUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setLicenseFile(reader.result as string);
-            };
+            reader.onloadend = () => { setLicenseFile(reader.result as string); };
             reader.readAsDataURL(file);
         }
     };
 
-    const handleSaveProfile = (e: React.FormEvent) => {
+    const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        // Cập nhật userData với formData mới
-        setUserData({
-            ...userData,
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            dateOfBirth: formData.dateOfBirth,
-            address: formData.address
-        });
-
-        setIsEditing(false);
-        toast.success("Cập nhật thông tin thành công!");
+        if (!user?.userId || !token) return;
+        setSaving(true);
+        try {
+            const updated = await updateMyProfile(token, user.userId, {
+                fullName: formData.name,
+                email: formData.email,
+                phone: formData.phone,
+                licenseNumber: formData.licenseNumber,
+                address: formData.address
+            });
+            setUserData(prev => ({
+                ...prev,
+                name: updated.fullName || formData.name,
+                email: updated.email || formData.email,
+                phone: updated.phone || formData.phone,
+                address: updated.address || formData.address,
+                license: {
+                    ...prev.license,
+                    number: updated.licenseNumber || formData.licenseNumber,
+                    verified: !!updated.licenseNumber
+                }
+            }));
+            setIsEditing(false);
+            toast.success("Cập nhật thông tin thành công!");
+        } catch (err: any) {
+            toast.error(err.message || "Cập nhật thất bại!");
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleCancelEdit = () => {
-        // Reset formData về userData hiện tại
         setFormData({
             name: userData.name,
             email: userData.email,
             phone: userData.phone,
             dateOfBirth: userData.dateOfBirth,
-            address: userData.address
+            address: userData.address,
+            licenseNumber: userData.license.number
         });
         setIsEditing(false);
     };
 
     const handleStartEdit = () => {
-        // Đồng bộ formData với userData trước khi chỉnh sửa
         setFormData({
             name: userData.name,
             email: userData.email,
             phone: userData.phone,
             dateOfBirth: userData.dateOfBirth,
-            address: userData.address
+            address: userData.address,
+            licenseNumber: userData.license.number
         });
         setIsEditing(true);
     };
 
+    const initials = userData.name
+        ? userData.name.split(" ").map(w => w[0]).slice(-2).join("").toUpperCase()
+        : "U";
+
+    if (authLoading || profileLoading) {
+        return (
+            <div className="profile-page" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#2563eb" }} />
+            </div>
+        );
+    }
+
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="profile-page">
             <Toaster position="top-center" richColors />
+
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-8">
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <Car className="w-8 h-8" />
-                            <h1 className="text-2xl">Hồ Sơ Của Tôi</h1>
-                        </div>
-                        <Button variant="secondary" size="sm">
-                            <Mail className="w-4 h-4 mr-2" />
-                            Hỗ Trợ
-                        </Button>
+            <div className="profile-header">
+                <div className="profile-header-inner">
+                    <div className="profile-header-title">
+                        <Car size={22} />
+                        <span>Hồ Sơ Của Tôi</span>
                     </div>
+                    <button className="profile-header-support">
+                        <Mail size={14} style={{ display: "inline", marginRight: 6, verticalAlign: "middle" }} />
+                        Hỗ Trợ
+                    </button>
                 </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Profile Overview */}
-                <Card className="mb-8">
-                    <CardContent className="p-6">
-                        <div className="flex flex-col md:flex-row gap-6">
-                            <div className="flex flex-col items-center gap-4">
-                                <div className="relative">
-                                    <Avatar className="w-32 h-32">
-                                        <AvatarImage src={userData.avatarUrl} alt={userData.name} />
-                                        <AvatarFallback>NA</AvatarFallback>
-                                    </Avatar>
-                                    <Button
-                                        size="sm"
-                                        className="absolute bottom-0 right-0 rounded-full w-10 h-10 p-0"
-                                    >
-                                        <Camera className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                                <Badge variant={userData.license.verified ? "default" : "secondary"} className="flex items-center gap-1">
-                                    {userData.license.verified ? (
-                                        <>
-                                            <CheckCircle className="w-3 h-3" />
-                                            Đã Xác Minh
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Clock className="w-3 h-3" />
-                                            Chưa Xác Minh
-                                        </>
-                                    )}
-                                </Badge>
+            <div className="profile-content">
+                {/* Profile card */}
+                <div className="profile-card">
+                    {/* Left: Avatar */}
+                    <div className="profile-avatar-col">
+                        <div className="profile-avatar-wrap">
+                            <img
+                                className="profile-avatar"
+                                src={userData.avatarUrl}
+                                alt={userData.name}
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = "none";
+                                }}
+                            />
+                            <button className="profile-avatar-camera">
+                                <Camera size={12} />
+                            </button>
+                        </div>
+                        <span className={`profile-verified-badge ${userData.license.verified ? "verified" : "unverified"}`}>
+                            {userData.license.verified
+                                ? <><CheckCircle size={11} /> Đã Xác Minh</>
+                                : <><Clock size={11} /> Chưa Xác Minh</>
+                            }
+                        </span>
+                    </div>
+
+                    {/* Right: Info */}
+                    <div className="profile-info-col">
+                        <div className="profile-info-header">
+                            <div>
+                                <p className="profile-name">{userData.name}</p>
+                                <p className="profile-member-since">Thành viên từ {userData.memberSince}</p>
                             </div>
-
-                            <div className="flex-1">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                        <h2 className="text-2xl mb-1">{userData.name}</h2>
-                                        <p className="text-sm text-gray-600">Thành viên từ {userData.memberSince}</p>
-                                    </div>
-                                    <Button onClick={isEditing ? handleCancelEdit : handleStartEdit}>
-                                        {isEditing ? "Hủy" : "Chỉnh Sửa"}
-                                    </Button>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                    <div className="flex items-center gap-2 text-gray-700">
-                                        <Mail className="w-4 h-4 text-gray-400" />
-                                        <span>{userData.email}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-gray-700">
-                                        <Phone className="w-4 h-4 text-gray-400" />
-                                        <span>{userData.phone}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-gray-700">
-                                        <Calendar className="w-4 h-4 text-gray-400" />
-                                        <span>{userData.dateOfBirth}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-gray-700">
-                                        <MapPin className="w-4 h-4 text-gray-400" />
-                                        <span>{userData.address}</span>
-                                    </div>
-                                </div>
+                            <button
+                                className={`profile-edit-btn ${isEditing ? "cancel" : ""}`}
+                                onClick={isEditing ? handleCancelEdit : handleStartEdit}
+                            >
+                                {isEditing ? "Hủy" : "Chỉnh Sửa"}
+                            </button>
+                        </div>
+                        <div className="profile-meta-grid">
+                            <div className="profile-meta-item">
+                                <Mail size={14} />
+                                <span>{userData.email}</span>
+                            </div>
+                            <div className="profile-meta-item">
+                                <Phone size={14} />
+                                <span>{userData.phone}</span>
+                            </div>
+                            <div className="profile-meta-item">
+                                <Calendar size={14} />
+                                <span>{userData.dateOfBirth || "Chưa cập nhật"}</span>
+                            </div>
+                            <div className="profile-meta-item">
+                                <MapPin size={14} />
+                                <span>{userData.address || "Chưa cập nhật"}</span>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <Card>
-                        <CardContent className="p-6 text-center">
-                            <Car className="w-8 h-8 mx-auto mb-2 text-blue-600" />
-                            <div className="text-3xl mb-1">{userData.stats.totalRentals}</div>
-                            <div className="text-sm text-gray-600">Tổng Số Lần Thuê</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="p-6 text-center">
-                            <Clock className="w-8 h-8 mx-auto mb-2 text-green-600" />
-                            <div className="text-3xl mb-1">{userData.stats.activeRentals}</div>
-                            <div className="text-sm text-gray-600">Đang Thuê</div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="p-6 text-center">
-                            <CreditCard className="w-8 h-8 mx-auto mb-2 text-purple-600" />
-                            <div className="text-3xl mb-1">{userData.stats.loyaltyPoints.toLocaleString()}</div>
-                            <div className="text-sm text-gray-600">Điểm Thưởng</div>
-                        </CardContent>
-                    </Card>
+                <div className="profile-stats-grid">
+                    <div className="profile-stat-card">
+                        <div className="profile-stat-icon">
+                            <Car size={28} color="#2563eb" />
+                        </div>
+                        <div className="profile-stat-number">{userData.stats.totalRentals}</div>
+                        <div className="profile-stat-label">Tổng Số Lần Thuê</div>
+                    </div>
+                    <div className="profile-stat-card">
+                        <div className="profile-stat-icon">
+                            <Clock size={28} color="#16a34a" />
+                        </div>
+                        <div className="profile-stat-number">{userData.stats.activeRentals}</div>
+                        <div className="profile-stat-label">Đang Thuê</div>
+                    </div>
+                    <div className="profile-stat-card">
+                        <div className="profile-stat-icon">
+                            <CreditCard size={28} color="#9333ea" />
+                        </div>
+                        <div className="profile-stat-number">{userData.stats.loyaltyPoints.toLocaleString()}</div>
+                        <div className="profile-stat-label">Điểm Thưởng</div>
+                    </div>
                 </div>
 
                 {/* Tabs */}
-                <Tabs defaultValue="personal" className="space-y-6">
-                    <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="personal">Thông Tin Cá Nhân</TabsTrigger>
-                        <TabsTrigger value="license">Bằng Lái Xe</TabsTrigger>
-                        <TabsTrigger value="history">Lịch Sử Thuê</TabsTrigger>
+                <Tabs defaultValue="personal">
+                    <TabsList className="profile-tabs-list grid w-full grid-cols-3">
+                        <TabsTrigger className="profile-tabs-trigger" value="personal">Thông Tin Cá Nhân</TabsTrigger>
+                        <TabsTrigger className="profile-tabs-trigger" value="license">Bằng Lái Xe</TabsTrigger>
+                        <TabsTrigger className="profile-tabs-trigger" value="history">Lịch Sử Thuê</TabsTrigger>
                     </TabsList>
 
-                    {/* Personal Info Tab */}
+                    {/* Personal Tab */}
                     <TabsContent value="personal">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Cập Nhật Thông Tin Cá Nhân</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <form className="space-y-4" onSubmit={handleSaveProfile}>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="fullname">Họ và Tên</Label>
-                                            <Input
-                                                id="fullname"
-                                                value={formData.name}
-                                                disabled={!isEditing}
-                                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="email">Email</Label>
-                                            <Input
-                                                id="email"
-                                                type="email"
-                                                value={formData.email}
-                                                disabled={!isEditing}
-                                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="phone">Số Điện Thoại</Label>
-                                            <Input
-                                                id="phone"
-                                                value={formData.phone}
-                                                disabled={!isEditing}
-                                                onChange={(e) => {
-                                                    let value = e.target.value;
-
-                                                    // Tự động loại bỏ ký tự không phải số
-                                                    const cleaned = value.replace(/[^0-9]/g, '');
-
-                                                    if (value !== cleaned) {
-                                                        toast.error("chỉ được nhập số");
-                                                    }
-
-                                                    if (cleaned.length > 11) {
-                                                        toast.error("Số điện thoại không được quá 11 chữ số!");
-                                                        return;
-                                                    }
-
-                                                    setFormData({ ...formData, phone: cleaned });
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="dob">Ngày Sinh</Label>
-                                            <Input
-                                                id="dob"
-                                                value={formData.dateOfBirth}
-                                                disabled={!isEditing}
-                                                placeholder="DD/MM/YYYY"
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-
-                                                    // Kiểm tra format DD/MM/YYYY
-                                                    const parts = value.split('/');
-
-                                                    if (parts.length === 3) {
-                                                        const month = parseInt(parts[1]);
-
-                                                        if (month > 12) {
-                                                            toast.error("Tháng không hợp lệ! Vui lòng nhập tháng từ 01-12");
-                                                            return;
-                                                        }
-                                                    }
-
-                                                    setFormData({ ...formData, dateOfBirth: value });
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="space-y-2 md:col-span-2">
-                                            <Label htmlFor="address">Địa Chỉ</Label>
-                                            <Input
-                                                id="address"
-                                                value={formData.address}
-                                                disabled={!isEditing}
-                                                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                            />
-                                        </div>
-                                    </div>
-                                    {isEditing && (
-                                        <div className="flex gap-2 pt-4">
-                                            <Button type="submit">Lưu Thay Đổi</Button>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={handleCancelEdit}
-                                            >
-                                                Hủy
-                                            </Button>
-                                        </div>
-                                    )}
-                                </form>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    {/* Driver's License Tab */}
-                    <TabsContent value="license">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <IdCard className="w-5 h-5" />
-                                        Thông Tin Bằng Lái
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="license-number">Số Bằng Lái</Label>
-                                        <Input
-                                            id="license-number"
-                                            defaultValue={userData.license.number}
+                        <div className="profile-tab-card">
+                            <p className="profile-tab-title">Cập Nhật Thông Tin Cá Nhân</p>
+                            <form onSubmit={handleSaveProfile}>
+                                <div className="profile-form-grid">
+                                    <div className="profile-field">
+                                        <label htmlFor="fullname" className={isEditing ? "active-label" : ""}>Họ và Tên</label>
+                                        <input
+                                            id="fullname"
+                                            value={formData.name}
+                                            disabled={!isEditing}
+                                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         />
                                     </div>
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="license-class">Hạng</Label>
-                                            <Input
-                                                id="license-class"
-                                                defaultValue={userData.license.class}
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="issued-date">Ngày Cấp</Label>
-                                            <Input
-                                                id="issued-date"
-                                                defaultValue={userData.license.issuedDate}
-                                                placeholder="DD/MM/YYYY"
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    const parts = value.split('/');
-
-                                                    if (parts.length === 3) {
-                                                        const month = parseInt(parts[1]);
-
-                                                        if (month > 12) {
-                                                            toast.error("Tháng không hợp lệ! Vui lòng nhập tháng từ 01-12");
-                                                            return;
-                                                        }
-                                                    }
-                                                }}
-                                            />
-                                        </div>
+                                    <div className="profile-field">
+                                        <label htmlFor="email" className={isEditing ? "active-label" : ""}>Email</label>
+                                        <input
+                                            id="email"
+                                            type="email"
+                                            value={formData.email}
+                                            disabled={!isEditing}
+                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                        />
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="expiry-date">Ngày Hết Hạn</Label>
-                                        <Input
-                                            id="expiry-date"
-                                            defaultValue={userData.license.expiryDate}
+                                    <div className="profile-field">
+                                        <label htmlFor="phone" className={isEditing ? "active-label" : ""}>Số Điện Thoại</label>
+                                        <input
+                                            id="phone"
+                                            value={formData.phone}
+                                            disabled={!isEditing}
+                                            onChange={(e) => {
+                                                const cleaned = e.target.value.replace(/[^0-9]/g, '');
+                                                if (e.target.value !== cleaned) toast.error("Chỉ được nhập số");
+                                                if (cleaned.length > 11) { toast.error("Số điện thoại không được quá 11 chữ số!"); return; }
+                                                setFormData({ ...formData, phone: cleaned });
+                                            }}
+                                        />
+                                    </div>
+                                    <div className="profile-field">
+                                        <label htmlFor="dob" className={isEditing ? "active-label" : ""}>Ngày Sinh</label>
+                                        <input
+                                            id="dob"
+                                            value={formData.dateOfBirth}
+                                            disabled={!isEditing}
                                             placeholder="DD/MM/YYYY"
                                             onChange={(e) => {
                                                 const value = e.target.value;
                                                 const parts = value.split('/');
-
-                                                if (parts.length === 3) {
-                                                    const month = parseInt(parts[1]);
-
-                                                    if (month > 12) {
-                                                        toast.error("Tháng không hợp lệ! Vui lòng nhập tháng từ 01-12");
-                                                        return;
-                                                    }
+                                                if (parts.length === 3 && parseInt(parts[1]) > 12) {
+                                                    toast.error("Tháng không hợp lệ!"); return;
                                                 }
+                                                setFormData({ ...formData, dateOfBirth: value });
                                             }}
                                         />
                                     </div>
-                                    <div className="pt-4 border-t">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            {userData.license.verified ? (
-                                                <Badge className="bg-green-100 text-green-800">
-                                                    <CheckCircle className="w-3 h-3 mr-1" />
-                                                    Đã Xác Minh
-                                                </Badge>
-                                            ) : (
-                                                <Badge variant="secondary">
-                                                    <AlertCircle className="w-3 h-3 mr-1" />
-                                                    Chờ Xác Minh
-                                                </Badge>
-                                            )}
-                                        </div>
-                                        <p className="text-sm text-gray-600">
-                                            {userData.license.verified
-                                                ? "Bằng lái của bạn đã được xác minh và có thể thuê xe."
-                                                : "Vui lòng tải lên ảnh bằng lái để được xác minh."}
-                                        </p>
+                                    <div className="profile-field col-span-2">
+                                        <label htmlFor="address" className={isEditing ? "active-label" : ""}>Địa Chỉ</label>
+                                        <input
+                                            id="address"
+                                            value={formData.address}
+                                            disabled={!isEditing}
+                                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                        />
                                     </div>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="flex items-center gap-2">
-                                        <Upload className="w-5 h-5" />
-                                        Tải Lên Bằng Lái
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                                            {licenseFile ? (
-                                                <div className="space-y-4">
-                                                    <img
-                                                        src={licenseFile}
-                                                        alt="License preview"
-                                                        className="max-w-full h-48 mx-auto object-contain rounded"
-                                                    />
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => setLicenseFile(null)}
-                                                    >
-                                                        Xóa Ảnh
-                                                    </Button>
-                                                </div>
-                                            ) : (
-                                                <>
-                                                    <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                                                    <p className="text-sm text-gray-600 mb-2">
-                                                        Kéo thả ảnh hoặc nhấp để tải lên
-                                                    </p>
-                                                    <p className="text-xs text-gray-500 mb-4">
-                                                        Chấp nhận: JPG, PNG (Tối đa 5MB)
-                                                    </p>
-                                                    <Input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        onChange={handleLicenseUpload}
-                                                        className="hidden"
-                                                        id="license-upload"
-                                                    />
-                                                    <Label htmlFor="license-upload">
-                                                        <Button variant="outline" asChild>
-                                                            <span>Chọn Ảnh</span>
-                                                        </Button>
-                                                    </Label>
-                                                </>
-                                            )}
-                                        </div>
-
-                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                            <h4 className="text-sm font-medium text-blue-900 mb-2">
-                                                Lưu ý khi chụp ảnh:
-                                            </h4>
-                                            <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-                                                <li>Chụp rõ nét, đầy đủ 2 mặt bằng lái</li>
-                                                <li>Đảm bảo đủ ánh sáng, không bị mờ</li>
-                                                <li>Thông tin trên bằng phải đọc được</li>
-                                                <li>Bằng lái còn hiệu lực</li>
-                                            </ul>
-                                        </div>
-
-                                        {licenseFile && (
-                                            <Button className="w-full">
-                                                Gửi Để Xác Minh
-                                            </Button>
-                                        )}
+                                </div>
+                                {isEditing && (
+                                    <div className="profile-form-actions">
+                                        <button type="submit" className="profile-save-btn" disabled={saving}>
+                                            {saving && <Loader2 size={14} style={{ display: "inline", marginRight: 6, animation: "spin 1s linear infinite" }} />}
+                                            Lưu Thay Đổi
+                                        </button>
+                                        <button type="button" className="profile-cancel-btn" onClick={handleCancelEdit}>
+                                            Hủy
+                                        </button>
                                     </div>
-                                </CardContent>
-                            </Card>
+                                )}
+                            </form>
                         </div>
                     </TabsContent>
 
-                    {/* Rental History Tab */}
+                    {/* License Tab */}
+                    <TabsContent value="license">
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                            <div className="profile-tab-card">
+                                <p className="profile-tab-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <IdCard size={18} /> Thông Tin Bằng Lái
+                                </p>
+                                <div className="profile-form-grid" style={{ gridTemplateColumns: "1fr" }}>
+                                    <div className="profile-field">
+                                        <label htmlFor="license-number">Số Bằng Lái</label>
+                                        <input id="license-number" defaultValue={userData.license.number} />
+                                    </div>
+                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                                        <div className="profile-field">
+                                            <label htmlFor="license-class">Hạng</label>
+                                            <input id="license-class" defaultValue={userData.license.licenseClass} />
+                                        </div>
+                                        <div className="profile-field">
+                                            <label htmlFor="issued-date">Ngày Cấp</label>
+                                            <input id="issued-date" defaultValue={userData.license.issuedDate} placeholder="DD/MM/YYYY" />
+                                        </div>
+                                    </div>
+                                    <div className="profile-field">
+                                        <label htmlFor="expiry-date">Ngày Hết Hạn</label>
+                                        <input id="expiry-date" defaultValue={userData.license.expiryDate} placeholder="DD/MM/YYYY" />
+                                    </div>
+                                </div>
+                                <div style={{ borderTop: "1px solid #e2e8f0", marginTop: 16, paddingTop: 14 }}>
+                                    <span className={`profile-verified-badge ${userData.license.verified ? "verified" : "unverified"}`} style={{ marginBottom: 8, display: "inline-flex" }}>
+                                        {userData.license.verified
+                                            ? <><CheckCircle size={11} /> Đã Xác Minh</>
+                                            : <><AlertCircle size={11} /> Chờ Xác Minh</>
+                                        }
+                                    </span>
+                                    <p style={{ fontSize: "0.8125rem", color: "#64748b", marginTop: 8 }}>
+                                        {userData.license.verified
+                                            ? "Bằng lái của bạn đã được xác minh."
+                                            : "Vui lòng tải lên ảnh bằng lái để xác minh."}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="profile-tab-card">
+                                <p className="profile-tab-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <Upload size={18} /> Tải Lên Bằng Lái
+                                </p>
+                                <div style={{ border: "2px dashed #e2e8f0", borderRadius: 10, padding: "32px 16px", textAlign: "center" }}>
+                                    {licenseFile ? (
+                                        <div>
+                                            <img src={licenseFile} alt="license" style={{ maxWidth: "100%", height: 160, objectFit: "contain", borderRadius: 8, margin: "0 auto 12px" }} />
+                                            <button className="profile-cancel-btn" onClick={() => setLicenseFile(null)}>Xóa Ảnh</button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <Upload size={36} color="#cbd5e1" style={{ margin: "0 auto 10px" }} />
+                                            <p style={{ fontSize: "0.8125rem", color: "#64748b", marginBottom: 4 }}>Kéo thả ảnh hoặc nhấp để tải lên</p>
+                                            <p style={{ fontSize: "0.75rem", color: "#94a3b8", marginBottom: 14 }}>JPG, PNG · Tối đa 5MB</p>
+                                            <input type="file" accept="image/*" onChange={handleLicenseUpload} className="hidden" id="license-upload" style={{ display: "none" }} />
+                                            <label htmlFor="license-upload">
+                                                <span className="profile-cancel-btn" style={{ cursor: "pointer" }}>Chọn Ảnh</span>
+                                            </label>
+                                        </>
+                                    )}
+                                </div>
+                                <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "12px 14px", marginTop: 14 }}>
+                                    <p style={{ fontSize: "0.8125rem", fontWeight: 600, color: "#1e40af", marginBottom: 6 }}>Lưu ý khi chụp ảnh:</p>
+                                    <ul style={{ fontSize: "0.8rem", color: "#1e40af", paddingLeft: 18, margin: 0 }}>
+                                        <li>Chụp rõ nét, đầy đủ 2 mặt</li>
+                                        <li>Đủ ánh sáng, không bị mờ</li>
+                                        <li>Thông tin phải đọc được</li>
+                                        <li>Bằng lái còn hiệu lực</li>
+                                    </ul>
+                                </div>
+                                {licenseFile && (
+                                    <button className="profile-save-btn" style={{ width: "100%", marginTop: 14 }}>
+                                        Gửi Để Xác Minh
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    </TabsContent>
+
+                    {/* History Tab */}
                     <TabsContent value="history">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Lịch Sử Thuê Xe</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="space-y-4">
-                                    {rentalHistory.map((rental) => (
+                        <div className="profile-tab-card">
+                            <p className="profile-tab-title">Lịch Sử Thuê Xe</p>
+                            {bookings.length === 0 ? (
+                                <div style={{ textAlign: "center", padding: "40px 0", color: "#94a3b8" }}>
+                                    <Car size={40} color="#e2e8f0" style={{ margin: "0 auto 12px" }} />
+                                    <p style={{ fontSize: "0.875rem" }}>Bạn chưa có lần thuê xe nào.</p>
+                                </div>
+                            ) : (
+                                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                                    {bookings.map((booking) => (
                                         <div
-                                            key={rental.id}
-                                            className="flex flex-col md:flex-row gap-4 p-4 border rounded-lg hover:shadow-md transition-shadow"
+                                            key={booking.id}
+                                            style={{
+                                                display: "flex",
+                                                gap: 16,
+                                                padding: "14px",
+                                                border: "1px solid #e2e8f0",
+                                                borderRadius: 12,
+                                                transition: "box-shadow 0.15s",
+                                            }}
                                         >
-                                            <img
-                                                src={rental.image}
-                                                alt={rental.car}
-                                                className="w-full md:w-48 h-32 object-cover rounded-lg"
-                                            />
-                                            <div className="flex-1">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div>
-                                                        <h3 className="text-lg mb-1">{rental.car}</h3>
-                                                        <Badge variant="outline">{rental.type}</Badge>
-                                                    </div>
-                                                    <Badge variant={rental.status === "Đang thuê" ? "default" : "secondary"}>
-                                                        {rental.status}
-                                                    </Badge>
+                                            {booking.vehicleImage && (
+                                                <img
+                                                    src={booking.vehicleImage}
+                                                    alt={booking.vehicleName}
+                                                    style={{ width: 140, height: 90, objectFit: "cover", borderRadius: 8, flexShrink: 0 }}
+                                                />
+                                            )}
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                                                    <p style={{ fontWeight: 600, fontSize: "0.9375rem", color: "#0f172a", margin: 0 }}>{booking.vehicleName}</p>
+                                                    <Badge variant={statusVariant(booking.status)}>{mapStatus(booking.status)}</Badge>
                                                 </div>
-                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm text-gray-600 mt-4">
+                                                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "6px 12px" }}>
                                                     <div>
-                                                        <p className="text-xs text-gray-500">Ngày Nhận</p>
-                                                        <p>{rental.startDate}</p>
+                                                        <p style={{ fontSize: "0.75rem", color: "#94a3b8", margin: 0 }}>Ngày Nhận</p>
+                                                        <p style={{ fontSize: "0.875rem", color: "#374151", margin: 0 }}>{formatDateTime(booking.startDate)}</p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-gray-500">Ngày Trả</p>
-                                                        <p>{rental.endDate}</p>
+                                                        <p style={{ fontSize: "0.75rem", color: "#94a3b8", margin: 0 }}>Ngày Trả</p>
+                                                        <p style={{ fontSize: "0.875rem", color: "#374151", margin: 0 }}>{formatDateTime(booking.endDate)}</p>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-gray-500">Tổng Tiền</p>
-                                                        <p className="font-medium text-blue-600">{rental.total}</p>
+                                                        <p style={{ fontSize: "0.75rem", color: "#94a3b8", margin: 0 }}>Tổng Tiền</p>
+                                                        <p style={{ fontSize: "0.875rem", color: "#2563eb", fontWeight: 600, margin: 0 }}>{booking.totalPrice?.toLocaleString("vi-VN")} ₫</p>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="flex md:flex-col gap-2">
-                                                <Button variant="outline" size="sm" className="flex-1 md:flex-none">
-                                                    Chi Tiết
-                                                </Button>
-                                                {rental.status === "Đang thuê" && (
-                                                    <Button size="sm" className="flex-1 md:flex-none">
-                                                        Gia Hạn
-                                                    </Button>
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 8, justifyContent: "center" }}>
+                                                <button className="profile-cancel-btn" style={{ fontSize: "0.8rem", padding: "6px 14px" }}>Chi Tiết</button>
+                                                {(booking.status === "ONGOING" || booking.status === "CONFIRMED") && (
+                                                    <button className="profile-save-btn" style={{ fontSize: "0.8rem", padding: "6px 14px" }}>Gia Hạn</button>
                                                 )}
                                             </div>
                                         </div>
                                     ))}
                                 </div>
-                            </CardContent>
-                        </Card>
+                            )}
+                        </div>
                     </TabsContent>
                 </Tabs>
             </div>

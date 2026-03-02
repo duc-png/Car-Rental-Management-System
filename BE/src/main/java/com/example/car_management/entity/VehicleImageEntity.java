@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@NoArgsConstructor @AllArgsConstructor
+@Builder
 @Entity
 @Table(name = "vehicle_images")
 public class VehicleImageEntity {
@@ -24,3 +25,4 @@ public class VehicleImageEntity {
     @Column(name = "is_main")
     private Boolean isMain;
 }
+

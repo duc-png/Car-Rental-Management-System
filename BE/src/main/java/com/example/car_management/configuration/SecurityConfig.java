@@ -1,58 +1,117 @@
 package com.example.car_management.configuration;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import org.springframework.web.filter.CorsFilter;
+
 import java.util.List;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+        private final String[] PUBLIC_ENDPOINTS = {
+                        "/auth/token", "/auth/logout", "/auth/refresh", "/auth/register", "/api/v1/owner-registrations"
+        };
 
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/v1/vehicles/**",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**"
-                        ).permitAll()
-                        .anyRequest().permitAll()
-                )
-                .httpBasic(Customizer.withDefaults());
+        private final CustomJwtDecoder customJwtDecoder;
 
-        return http.build();
-    }
+        @Bean
+        public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+                http.authorizeHttpRequests(request -> request
+                                .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+                                // Allow public GET access to vehicles (for browsing)
+                                .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/**").permitAll()
+                                // Allow public GET access to vehicle models (for dropdowns)
+                                .requestMatchers(HttpMethod.GET, "/api/v1/vehicle-models/**").permitAll()
+                                // Allow public GET access to brands
+                                .requestMatchers(HttpMethod.GET, "/api/v1/brands/**").permitAll()
+                                // Allow public GET access to vehicle features
+                                .requestMatchers(HttpMethod.GET, "/api/v1/vehicle-features/**").permitAll()
+                                // Allow public vehicle search
+                                .requestMatchers(HttpMethod.POST, "/api/v1/vehicles/search").permitAll()
+                                // Allow public owner profiles
+                                .requestMatchers(HttpMethod.GET, "/api/v1/owners/**").permitAll()
+                                // Allow public GET access to booked dates for vehicles
+                                .requestMatchers(HttpMethod.GET, "/api/v1/bookings/vehicle/*/booked-dates").permitAll()
+                                // Allow PayOS Webhook
+                                .requestMatchers(HttpMethod.POST, "/api/v1/payments/payos-webhook").permitAll()
+                                // Allow Test PayOS
+                                .requestMatchers(HttpMethod.GET, "/api/v1/test-payos").permitAll()
+                                .anyRequest()
+                                .authenticated());
 
-    // CẤU HÌNH CORS CHO SPRING SECURITY
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
+                http.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer
+                                .decoder(customJwtDecoder)
+                                // jwtAuthenticationConverter:
+                                // Convert JWT claims thành Spring Security Authentication object
+                                // Extract authorities (roles/permissions) từ JWT
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                                .authenticationEntryPoint(new JwtAuthenticationEntryPoint()));
 
-        config.setAllowedOriginPatterns(List.of(
-                "http://localhost:*",
-                "http://127.0.0.1:*"
-        ));
+                // Enable CORS
+                http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
 
-        config.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS"
-        ));
-        config.setAllowedHeaders(List.of("*"));
-        config.setAllowCredentials(true);
+                // Disable CSRF
+                http.csrf(AbstractHttpConfigurer::disable);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
+                return http.build();
+
+        }
+
+        // CẤU HÌNH CORS CHO SPRING SECURITY
+        @Bean
+        public CorsConfigurationSource corsConfigurationSource() {
+                CorsConfiguration config = new CorsConfiguration();
+
+                config.setAllowedOriginPatterns(List.of(
+                                "http://localhost:*",
+                                "http://127.0.0.1:*"));
+
+                config.setAllowedMethods(List.of(
+                                "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+                config.setAllowedHeaders(List.of("*"));
+                config.setAllowCredentials(true);
+
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                source.registerCorsConfiguration("/**", config);
+                return source;
+        }
+
+        @Bean
+        public CorsFilter corsFilter() {
+                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                CorsConfiguration config = new CorsConfiguration();
+                config.addAllowedOrigin("*");
+                config.addAllowedHeader("*");
+                config.addAllowedMethod("*");
+                source.registerCorsConfiguration("/**", config);
+                return new CorsFilter(source);
+        }
+
+        @Bean
+        JwtAuthenticationConverter jwtAuthenticationConverter() {
+                JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+                jwtGrantedAuthoritiesConverter.setAuthorityPrefix("");
+
+                JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+                jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
+
+                return jwtAuthenticationConverter;
+        }
 
 }

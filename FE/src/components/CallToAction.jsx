@@ -1,6 +1,9 @@
+import { useNavigate } from 'react-router-dom'
 import '../styles/Home.css'
 
 function CallToAction() {
+  const navigate = useNavigate()
+
   return (
     <section className="cta-section">
       <div className="container">
@@ -12,12 +15,14 @@ function CallToAction() {
               Chúng tôi lo lắng về bảo hiểm, xác minh tài xế và thanh toán an toàn
               – để bạn có thể tận hưởng doanh thu thụ động mà không lo lắng.
             </p>
-            <button className="cta-btn">Đăng ký xe của bạn</button>
+            <button className="cta-btn" onClick={() => navigate('/become-owner')}>
+              Đăng ký xe của bạn
+            </button>
           </div>
           <div className="cta-image">
             <img
-              src="https://res.cloudinary.com/dntzdrmc8/image/upload/v1769344789/RR-removebg-preview_tr10r4.png"
-              alt="RR car"
+              src="https://res.cloudinary.com/dntzdrmc8/image/upload/v1769501417/download-removebg-preview_vhpzlh.png"
+              alt="vehhicle"
             />
           </div>
         </div>
