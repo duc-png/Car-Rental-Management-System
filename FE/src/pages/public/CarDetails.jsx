@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getCarById, getCarsList } from '../../api/cars';
 import { getOwnerById } from '../../api/owners';
+import { createBooking } from '../../api/bookings';
+import { useAuth } from '../../hooks/useAuth';
+import { toast } from 'sonner';
 import MapModal from '../../components/MapModal';
 import DeliveryLocationModal from '../../components/DeliveryLocationModal';
 import CustomAddressModal from '../../components/CustomAddressModal';
@@ -163,6 +166,10 @@ export default function CarDetails() {
     const [deliveryCoords, setDeliveryCoords] = useState(null);
     const [deliveryDistanceKm, setDeliveryDistanceKm] = useState(0);
     const [deliveryFeeVnd, setDeliveryFeeVnd] = useState(0);
+    const [bookingLoading, setBookingLoading] = useState(false);
+
+    const navigate = useNavigate();
+    const { user } = useAuth();
 
     const specsRef = useRef(null);
     const docsRef = useRef(null);
@@ -457,11 +464,48 @@ export default function CarDetails() {
         setReturnDate(normalized);
     };
 
-    const applyTimeSelection = () => {
+    const handleBooking = () => {
+        if (!user) {
+            toast.error('Vui lòng đăng nhập để đặt xe!');
+            navigate('/login');
+            return;
+        }
+        setIsTimeModalOpen(true);
+    };
+
+    const applyTimeSelection = async () => {
         if (!returnDate) {
             setReturnDate(new Date(pickupDate.getTime() + DAY_MS));
         }
         setIsTimeModalOpen(false);
+
+        // If booking was triggered from the CHỌN THUÊ button, submit now
+        if (!user) return;
+
+        const resolvedReturn = returnDate || new Date(pickupDate.getTime() + DAY_MS);
+
+        const [pickupHour, pickupMin] = pickupTime.split(':').map(Number);
+        const [returnHour, returnMin] = returnTime.split(':').map(Number);
+
+        const startDt = new Date(pickupDate);
+        startDt.setHours(pickupHour, pickupMin, 0, 0);
+
+        const endDt = new Date(resolvedReturn);
+        endDt.setHours(returnHour, returnMin, 0, 0);
+
+        const pad = (n) => String(n).padStart(2, '0');
+        const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+
+        setBookingLoading(true);
+        try {
+            await createBooking(car.id, fmt(startDt), fmt(endDt));
+            toast.success('Đặt xe thành công! Vui lòng chờ chủ xe duyệt.');
+            navigate('/my-bookings');
+        } catch (err) {
+            toast.error(err.message || 'Đặt xe thất bại. Vui lòng thử lại!');
+        } finally {
+            setBookingLoading(false);
+        }
     };
 
     return (
@@ -761,7 +805,14 @@ export default function CarDetails() {
                                 </label>
                             </div>
 
-                            <button type="button" className="btn-primary full-width">CHỌN THUÊ</button>
+                            <button
+                                type="button"
+                                className="btn-primary full-width"
+                                onClick={handleBooking}
+                                disabled={bookingLoading}
+                            >
+                                {bookingLoading ? 'Đang đặt xe...' : 'CHỌN THUÊ'}
+                            </button>
 
                             <div className="fee-breakdown">
                                 <h4>Chi tiết giá</h4>
@@ -890,7 +941,9 @@ export default function CarDetails() {
 
                         <div className="detail-time-modal-footer">
                             <p>{pickupTime}, {formatDateShort(pickupDate)} - {returnTime}, {formatDateShort(returnDate || pickupDate)} • Thuê {selectedDays} ngày</p>
-                            <button type="button" onClick={applyTimeSelection}>Tiếp tục</button>
+                            <button type="button" onClick={applyTimeSelection} disabled={bookingLoading}>
+                                {bookingLoading ? 'Đang đặt xe...' : 'Xác nhận thuê xe'}
+                            </button>
                         </div>
                     </div>
                 </div>

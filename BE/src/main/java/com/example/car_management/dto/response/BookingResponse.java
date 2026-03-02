@@ -42,4 +42,5 @@ public class BookingResponse {
     private Integer endFuelLevel;
     private BigDecimal surchargeAmount;
     private String returnNotes;
+    private BigDecimal pricePerDay; // Vehicle's daily rate, used for late return penalty calc
 }

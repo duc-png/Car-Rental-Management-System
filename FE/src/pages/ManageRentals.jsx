@@ -23,6 +23,7 @@ function ManageRentals() {
     const [endFuelLevel, setEndFuelLevel] = useState('')
     const [otherSurcharge, setOtherSurcharge] = useState('')
     const [returnNotes, setReturnNotes] = useState('')
+    const [actualReturnTime, setActualReturnTime] = useState('')
 
     useEffect(() => {
         if (user) {
@@ -86,6 +87,11 @@ function ManageRentals() {
         setEndFuelLevel(100)
         setOtherSurcharge('')
         setReturnNotes('')
+        // Default actual return time = now (formatted for datetime-local input)
+        const now = new Date()
+        const pad = (n) => String(n).padStart(2, '0')
+        const localNow = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
+        setActualReturnTime(localNow)
         setCompleteTripModal(booking)
     }
 
@@ -104,11 +110,34 @@ function ManageRentals() {
         return { rentalDays, allowedKm, drivenKm, overKm, overKmFee }
     }, [completeTripModal, endKm])
 
+    // Calculate late return fee in real-time
+    const lateReturnInfo = useMemo(() => {
+        if (!completeTripModal || !actualReturnTime) return null
+        const endDate = new Date(completeTripModal.endDate)
+        const returnDate = new Date(actualReturnTime)
+        if (returnDate <= endDate) return null
+
+        const lateMs = returnDate - endDate
+        const lateMinutes = Math.floor(lateMs / 60000)
+        const lateHours = Math.ceil(lateMinutes / 60)
+        const pricePerDay = completeTripModal.pricePerDay || 0
+
+        if (lateHours < 24) {
+            const fee = pricePerDay * 0.10 * lateHours
+            return { lateHours, lateDays: null, fee, type: 'hourly' }
+        } else {
+            const lateDays = Math.ceil(lateHours / 24)
+            const fee = pricePerDay * 1.50 * lateDays
+            return { lateHours, lateDays, fee, type: 'daily' }
+        }
+    }, [completeTripModal, actualReturnTime])
+
     const totalSurcharge = useMemo(() => {
         const overFee = overKmInfo?.overKmFee || 0
+        const lateFee = lateReturnInfo?.fee || 0
         const otherFee = parseFloat(otherSurcharge) || 0
-        return overFee + otherFee
-    }, [overKmInfo, otherSurcharge])
+        return overFee + lateFee + otherFee
+    }, [overKmInfo, lateReturnInfo, otherSurcharge])
 
     const submitCompleteTtrip = async () => {
         if (!endKm || endKm <= 0) {
@@ -129,6 +158,7 @@ function ManageRentals() {
             endFuelLevel: parseInt(endFuelLevel),
             otherSurcharge: parseFloat(otherSurcharge) || 0,
             returnNotes: returnNotes || null,
+            actualReturnTime: actualReturnTime ? new Date(actualReturnTime).toISOString().slice(0, 19) : null,
         })
         setCompleteTripModal(null)
     }
@@ -392,6 +422,33 @@ function ManageRentals() {
                                         </p>
                                     ) : (
                                         <p className="surcharge-ok">✅ Trong giới hạn cho phép</p>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="form-group">
+                                <label>⏰ Thời gian trả xe thực tế</label>
+                                <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '4px' }}>
+                                    Dự kiến: {completeTripModal && new Date(completeTripModal.endDate).toLocaleString('vi-VN')}
+                                </div>
+                                <input
+                                    type="datetime-local"
+                                    value={actualReturnTime}
+                                    onChange={(e) => setActualReturnTime(e.target.value)}
+                                />
+                            </div>
+
+                            {/* Late return warning */}
+                            {lateReturnInfo && (
+                                <div className="surcharge-box warning">
+                                    {lateReturnInfo.type === 'hourly' ? (
+                                        <p className="surcharge-amount">
+                                            🕐 Trả muộn <strong>{lateReturnInfo.lateHours} giờ</strong> × 10% × {formatVND(completeTripModal.pricePerDay || 0)}/ngày = <strong>{formatVND(lateReturnInfo.fee)}</strong>
+                                        </p>
+                                    ) : (
+                                        <p className="surcharge-amount">
+                                            🕐 Trả muộn <strong>{lateReturnInfo.lateDays} ngày</strong> × 150% × {formatVND(completeTripModal.pricePerDay || 0)}/ngày = <strong>{formatVND(lateReturnInfo.fee)}</strong>
+                                        </p>
                                     )}
                                 </div>
                             )}
