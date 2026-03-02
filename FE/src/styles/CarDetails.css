@@ -581,6 +581,11 @@
     background: #f9fafb;
 }
 
+.owner-contact-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .owner-review-note {
     margin-top: 14px;
     color: #111827;
