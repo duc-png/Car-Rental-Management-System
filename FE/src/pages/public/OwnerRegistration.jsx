@@ -348,13 +348,6 @@ function OwnerRegistration() {
     const handleImagesChange = (event) => {
         const files = Array.from(event.target.files || []);
         if (files.length === 0) {
-            setImages([]);
-            return;
-        }
-
-        if (files.length > MAX_IMAGES) {
-            toast.error(`Tối đa ${MAX_IMAGES} ảnh`);
-            setImages(files.slice(0, MAX_IMAGES));
             return;
         }
 
@@ -365,7 +358,22 @@ function OwnerRegistration() {
             return;
         }
 
-        setImages(files);
+        const currentFiles = Array.isArray(images) ? images : [];
+        const mergedFiles = [...currentFiles, ...files];
+
+        if (mergedFiles.length > MAX_IMAGES) {
+            toast.error(`Tối đa ${MAX_IMAGES} ảnh`);
+            setImages(mergedFiles.slice(0, MAX_IMAGES));
+            event.target.value = '';
+            return;
+        }
+
+        setImages(mergedFiles);
+        event.target.value = '';
+    };
+
+    const removeImageAt = (indexToRemove) => {
+        setImages((prev) => prev.filter((_, index) => index !== indexToRemove));
     };
 
     const goToStep = (step) => {
@@ -834,14 +842,28 @@ function OwnerRegistration() {
                             <span>Kéo thả ảnh hoặc bấm để tải lên</span>
                             <small>PNG, JPG. Tối đa 5 ảnh.</small>
                         </label>
-                        <div className="image-preview-grid">
-                            {previews.map((src, index) => (
-                                <div className="image-preview" key={`${src}-${index}`}>
-                                    <img src={src} alt={`Xe ${index + 1}`} />
-                                    {index === 0 && <span className="image-badge">Ảnh chính</span>}
-                                </div>
-                            ))}
+                        <div className="image-preview-head">
+                            <span>Ảnh đã chọn ({previews.length})</span>
+                            <small>Bấm vào ảnh để bỏ ảnh</small>
                         </div>
+                        {previews.length === 0 ? (
+                            <p className="image-preview-empty">Chưa có ảnh nào được chọn.</p>
+                        ) : (
+                            <div className="image-preview-grid">
+                                {previews.map((src, index) => (
+                                    <button
+                                        type="button"
+                                        className="image-preview image-preview-button"
+                                        key={`${src}-${index}`}
+                                        onClick={() => removeImageAt(index)}
+                                        title="Bấm để xóa ảnh này"
+                                    >
+                                        <img src={src} alt={`Xe ${index + 1}`} />
+                                        {index === 0 && <span className="image-badge">Ảnh chính</span>}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>}
 
                     <div className="form-actions">

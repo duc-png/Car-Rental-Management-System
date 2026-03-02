@@ -182,6 +182,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
                 .build();
 
         UserEntity savedOwner = userRepository.save(owner);
+        Instant vehicleReviewedAt = Instant.now();
 
         VehicleModelEntity model = resolveOrCreateModel(entity.getBrandName(), entity.getModelName());
         boolean deliveryEnabled = entity.getDeliveryEnabled() == null
@@ -199,6 +200,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
                 .year(entity.getManufacturingYear())
                 .fuelConsumption(entity.getFuelConsumption() != null ? entity.getFuelConsumption().floatValue() : null)
                 .currentKm(0)
+                .reviewedAt(vehicleReviewedAt)
                 .deliveryEnabled(deliveryEnabled)
                 .freeDeliveryWithinKm(deliveryEnabled
                         ? (entity.getFreeDeliveryWithinKm() == null ? 0 : Math.max(0, entity.getFreeDeliveryWithinKm()))
@@ -219,6 +221,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
                 .build();
 
         VehicleEntity savedVehicle = vehicleRepository.save(vehicle);
+        enforceRegistrationVehicleApproved(savedOwner.getId(), entity.getLicensePlate(), vehicleReviewedAt);
         copyRegistrationImagesToVehicle(entity.getId(), savedVehicle);
 
         entity.setStatus(OwnerRegistrationStatus.APPROVED);
@@ -231,6 +234,27 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
         ownerRegistrationNotificationService.sendApprovedEmail(savedRegistration);
         notificationService.notifyOwnerVehicleApproved(savedVehicle);
         return toResponse(savedRegistration);
+    }
+
+    private void enforceRegistrationVehicleApproved(Integer ownerId, String licensePlate, Instant reviewedAt) {
+        if (ownerId == null || licensePlate == null || licensePlate.isBlank()) {
+            return;
+        }
+
+        String normalizedTargetPlate = normalizeLicensePlate(licensePlate);
+        List<VehicleEntity> ownerVehicles = vehicleRepository.findByOwner_Id(ownerId);
+        for (VehicleEntity ownerVehicle : ownerVehicles) {
+            if (ownerVehicle == null || ownerVehicle.getLicensePlate() == null) {
+                continue;
+            }
+
+            String ownerVehiclePlate = normalizeLicensePlate(ownerVehicle.getLicensePlate());
+            if (normalizedTargetPlate.equals(ownerVehiclePlate)
+                    && ownerVehicle.getStatus() == VehicleStatus.PENDING_APPROVAL) {
+                ownerVehicle.setStatus(VehicleStatus.AVAILABLE);
+                ownerVehicle.setReviewedAt(reviewedAt == null ? Instant.now() : reviewedAt);
+            }
+        }
     }
 
     private VehicleModelEntity resolveOrCreateModel(String brandNameRaw, String modelNameRaw) {

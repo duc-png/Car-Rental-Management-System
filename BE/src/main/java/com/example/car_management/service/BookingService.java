@@ -57,8 +57,9 @@ public class BookingService {
 
         // 3. Check availability
         // PENDING bookings must also block overlapping dates
+        // Only CONFIRMED/ONGOING block dates — multiple PENDING allowed (owner picks
+        // one)
         List<BookingStatus> activeStatuses = Arrays.asList(
-                BookingStatus.PENDING,
                 BookingStatus.CONFIRMED,
                 BookingStatus.ONGOING);
 
@@ -88,6 +89,7 @@ public class BookingService {
                 .status(BookingStatus.PENDING)
                 .paymentStatus(com.example.car_management.entity.enums.PaymentStatus.UNPAID)
                 .createdAt(Instant.now())
+                .updatedAt(Instant.now())
                 .build();
 
         BookingEntity saved = bookingRepository.save(booking);
@@ -196,7 +198,26 @@ public class BookingService {
                 booking.setCheckoutUrl(checkoutResponse.getCheckoutUrl());
                 log.info("Checkout URL: {}", checkoutResponse.getCheckoutUrl());
             } catch (Exception e) {
-                log.warn("Could not create PayOS payment link (PayOS might not be configured): {}", e.getMessage());
+                // Throw so @Transactional rolls back — booking stays PENDING, not stuck
+                // CONFIRMED
+                log.error("Failed to create PayOS deposit link for booking #{}: {}", booking.getId(), e.getMessage());
+                throw new AppException(ErrorCode.PAYMENT_ERROR);
+            }
+
+            // Auto-cancel all competing PENDING bookings for the same vehicle/dates
+            List<BookingEntity> competing = bookingRepository.findCompetingPendingBookings(
+                    booking.getVehicle().getId(),
+                    booking.getId(),
+                    booking.getStartDate(),
+                    booking.getEndDate());
+            if (!competing.isEmpty()) {
+                log.info("Auto-cancelling {} competing PENDING bookings for vehicle {} (booking #{} confirmed)",
+                        competing.size(), booking.getVehicle().getId(), booking.getId());
+                for (BookingEntity competitor : competing) {
+                    competitor.setStatus(BookingStatus.CANCELLED);
+                    competitor.setUpdatedAt(Instant.now());
+                }
+                bookingRepository.saveAll(competing);
             }
         }
 
@@ -277,12 +298,44 @@ public class BookingService {
                 }
             }
 
-            // Total surcharge = over-KM + other surcharges from owner
+            // Calculate late return surcharge
+            // - Under 24h late: 10% of pricePerDay per hour
+            // - 24h or more: 150% of pricePerDay per full day
+            BigDecimal lateReturnSurcharge = BigDecimal.ZERO;
+            LocalDateTime actualReturn = request.getActualReturnTime() != null
+                    ? request.getActualReturnTime()
+                    : LocalDateTime.now();
+            if (actualReturn.isAfter(booking.getEndDate())) {
+                long lateMinutes = Duration.between(booking.getEndDate(), actualReturn).toMinutes();
+                long lateHours = (lateMinutes + 59) / 60; // round up to nearest hour
+
+                BigDecimal pricePerDay = booking.getVehicle().getPricePerDay();
+
+                if (lateHours < 24) {
+                    // Per hour penalty: 10% of daily rate per hour
+                    lateReturnSurcharge = pricePerDay
+                            .multiply(BigDecimal.valueOf(0.10))
+                            .multiply(BigDecimal.valueOf(lateHours));
+                    log.info("Late return: {} hours → surcharge = {} VND (10%/hour × {} hours)",
+                            lateHours, lateReturnSurcharge, lateHours);
+                } else {
+                    // Per day penalty: 150% of daily rate per full day
+                    long lateDays = (lateHours + 23) / 24; // round up to nearest day
+                    lateReturnSurcharge = pricePerDay
+                            .multiply(BigDecimal.valueOf(1.50))
+                            .multiply(BigDecimal.valueOf(lateDays));
+                    log.info("Late return: {} days → surcharge = {} VND (150%/day × {} days)",
+                            lateDays, lateReturnSurcharge, lateDays);
+                }
+            }
+
+            // Total surcharge = over-KM + late return + other surcharges from owner
             BigDecimal otherSurcharge = request.getOtherSurcharge() != null ? request.getOtherSurcharge()
                     : BigDecimal.ZERO;
-            booking.setSurchargeAmount(overKmSurcharge.add(otherSurcharge));
-            log.info("Total surcharge for Booking #{}: {} VND (overKm={}, other={})",
-                    booking.getId(), booking.getSurchargeAmount(), overKmSurcharge, otherSurcharge);
+            booking.setSurchargeAmount(overKmSurcharge.add(lateReturnSurcharge).add(otherSurcharge));
+            log.info("Total surcharge for Booking #{}: {} VND (overKm={}, lateReturn={}, other={})",
+                    booking.getId(), booking.getSurchargeAmount(), overKmSurcharge, lateReturnSurcharge,
+                    otherSurcharge);
 
             // Update vehicle's current KM and fuel level for next rental
             VehicleEntity vehicle = booking.getVehicle();
