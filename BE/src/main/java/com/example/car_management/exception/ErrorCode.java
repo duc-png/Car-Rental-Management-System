@@ -26,6 +26,17 @@ public enum ErrorCode {
     LICENSE_PLATE_EXISTED(2004, "License plate existed", HttpStatus.BAD_REQUEST),
     IMAGE_NOT_FOUND(2005, "Vehicle image not found", HttpStatus.NOT_FOUND),
     FORBIDDEN_RESOURCE(2006, "You do not have permission", HttpStatus.FORBIDDEN),
+    OWNER_REGISTRATION_NOT_FOUND(2007, "Owner registration request not found", HttpStatus.NOT_FOUND),
+    OWNER_REGISTRATION_ALREADY_PENDING(2008, "Owner registration request already pending", HttpStatus.BAD_REQUEST),
+    OWNER_REGISTRATION_LICENSE_PLATE_PENDING(2009, "License plate already exists in pending request",
+            HttpStatus.BAD_REQUEST),
+    OWNER_REGISTRATION_INVALID_STATUS(2010, "Owner registration request cannot be processed", HttpStatus.BAD_REQUEST),
+    OWNER_REGISTRATION_IMAGES_REQUIRED(2011, "Owner registration images are required", HttpStatus.BAD_REQUEST),
+    OWNER_REGISTRATION_IMAGES_LIMIT(2012, "Owner registration images exceed limit", HttpStatus.BAD_REQUEST),
+    VEHICLE_FEATURE_NOT_FOUND(2013, "Vehicle feature not found", HttpStatus.NOT_FOUND),
+    IMAGE_UPLOAD_FAILED(2014, "Invalid image file or upload failed", HttpStatus.BAD_REQUEST),
+    VEHICLE_APPROVAL_REQUIRED(2015, "Vehicle is pending admin approval", HttpStatus.BAD_REQUEST),
+    VEHICLE_IMMUTABLE_FIELDS(2016, "Core vehicle information cannot be changed after creation", HttpStatus.BAD_REQUEST),
 
     // ===== Booking =====
     BOOKING_NOT_FOUND(3001, "Booking not found", HttpStatus.NOT_FOUND),

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import '../styles/LocationModal.css';
+import { reverseGeocode } from '../utils/carDetailsUtils';
 
 const AIRPORTS = [
     { id: 1, name: 'Tân Sơn Nhất', icon: '✈️' },
@@ -151,11 +152,8 @@ function LocationModal({ isOpen, onClose, onSelect, value }) {
 
                 // Lấy tên địa điểm từ tọa độ (reverse geocoding)
                 try {
-                    const response = await fetch(
-                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-                    );
-                    const data = await response.json();
-                    const locationName = data.address?.city || data.address?.province || data.address?.county || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                    const locationName = await reverseGeocode(latitude, longitude)
+                        || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
 
                     setCurrentLocationName(locationName);
                     setSelectedLocation(locationName);

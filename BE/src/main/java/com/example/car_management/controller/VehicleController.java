@@ -132,4 +132,31 @@ public class VehicleController {
                 return ResponseEntity.ok(vehicleService.uploadImages(id, ownerId, files, setFirstAsMain));
         }
 
+        // ADMIN duyệt
+        @PatchMapping("/{id}/approve")
+        @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ADMIN')")
+        public ResponseEntity<ApiResponse<VehicleResponse>> approve(@PathVariable Integer id) {
+                VehicleResponse data = vehicleService.approveVehicle(id);
+                return ResponseEntity.ok(ApiResponse.<VehicleResponse>builder()
+                                .code(1000).message("Approved").result(data).build());
+        }
+
+        // ADMIN từ chối
+        @PatchMapping("/{id}/reject")
+        @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ADMIN')")
+        public ResponseEntity<ApiResponse<VehicleResponse>> reject(
+                        @PathVariable Integer id,
+                        @RequestParam(required = false) String reason) {
+                VehicleResponse data = vehicleService.rejectVehicle(id, reason);
+                return ResponseEntity.ok(ApiResponse.<VehicleResponse>builder()
+                                .code(1000).message("Rejected").result(data).build());
+        }
+
+        @PostMapping("/search")
+        public ResponseEntity<ApiResponse<List<VehicleResponse>>> search(@Valid @RequestBody VehicleSearchRequest req) {
+                List<VehicleResponse> data = vehicleService.searchVehicles(req);
+                return ResponseEntity.ok(ApiResponse.<List<VehicleResponse>>builder()
+                                .code(1000).message("Success").result(data).build());
+        }
+
 }

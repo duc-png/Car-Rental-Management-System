@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import 'leaflet/dist/leaflet.css'
 import '../styles/MapModal.css'
+import { geocodeAddress, generateQueryVariants } from '../utils/carDetailsUtils'
 
 function MapModal({ isOpen, onClose, addressText }) {
     const mapContainerRef = useRef(null)
@@ -43,26 +44,26 @@ function MapModal({ isOpen, onClose, addressText }) {
         const fetchCoords = async () => {
             try {
                 setLoading(true)
-                const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&addressdetails=1&limit=1&countrycodes=vn`
-                const response = await fetch(url, {
-                    signal: controller.signal,
-                    headers: {
-                        'Accept-Language': 'vi'
-                    }
-                })
+                const parts = q.split(',').map((part) => part.trim()).filter(Boolean)
+                const city = parts.length > 0 ? parts[parts.length - 1] : ''
+                const district = parts.length > 1 ? parts[parts.length - 2] : ''
+                const detail = parts.length > 2 ? parts.slice(0, -2).join(', ') : q
+                const variants = generateQueryVariants(detail, district, city)
 
-                if (!response.ok) throw new Error('Failed to fetch location')
-                const data = await response.json()
-                const first = Array.isArray(data) ? data[0] : null
+                let result = null
+                for (const variant of variants) {
+                    result = await geocodeAddress(variant, controller.signal)
+                    if (result) break
+                }
 
-                if (!first?.lat || !first?.lon) {
+                if (!result?.lat || !result?.lon) {
                     setError('Không tìm thấy tọa độ cho địa chỉ này')
                     return
                 }
 
                 setCoords({
-                    lat: Number(first.lat),
-                    lon: Number(first.lon)
+                    lat: Number(result.lat),
+                    lon: Number(result.lon)
                 })
             } catch (err) {
                 if (err?.name === 'AbortError') return

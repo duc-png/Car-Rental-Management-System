@@ -6,10 +6,29 @@ import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../hooks/useAuth'
 import '../styles/Navbar.css'
 
+const looksLikeEmail = (value) => /.+@.+\..+/.test(String(value || '').trim())
+
+const getDisplayName = (user) => {
+  const candidates = [
+    user?.fullName,
+    user?.name,
+    user?.full_name,
+    user?.preferred_username,
+    user?.username
+  ]
+
+  const firstValid = candidates
+    .map((item) => String(item || '').trim())
+    .find((item) => item && !looksLikeEmail(item))
+
+  return firstValid || 'User'
+}
+
 function Navbar({ sticky = true }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
   const { isAuthenticated, user, logout } = useAuth()
+  const displayName = getDisplayName(user)
 
 
   return (
@@ -38,26 +57,10 @@ function Navbar({ sticky = true }) {
               Cars
             </Link>
           </li>
-          {isAuthenticated && (
-            <>
-              <li>
-                <Link to="/my-bookings" onClick={() => setIsMobileMenuOpen(false)}>
-                  My Bookings
-                </Link>
-              </li>
-              {(user?.role?.includes('ROLE_CAR_OWNER') || user?.role?.includes('ROLE_ADMIN')) && (
-                <li>
-                  <Link to="/manage-rentals" onClick={() => setIsMobileMenuOpen(false)}>
-                    Manage Rentals
-                  </Link>
-                </li>
-              )}
-            </>
-          )}
           <li>
-            <a href="#search" onClick={() => setIsMobileMenuOpen(false)}>
-              About us
-            </a>
+            <Link to="/become-owner" onClick={() => setIsMobileMenuOpen(false)}>
+              Trở thành chủ xe
+            </Link>
           </li>
         </ul>
 
@@ -72,7 +75,7 @@ function Navbar({ sticky = true }) {
 
           {isAuthenticated ? (
             <div className="nav-user-menu">
-              <span className="user-name">Hi, {user?.fullName || user?.sub || 'User'}</span>
+              <span className="user-name">Hi, {displayName}</span>
               <button onClick={logout} className="btn-logout">
                 Logout
               </button>

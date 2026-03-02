@@ -38,11 +38,11 @@ function Login() {
                         const decoded = jwtDecode(token)
                         const scope = decoded?.scope || ''
                         if (scope.includes('ROLE_ADMIN')) {
-                            navigate('/admin/customers')
+                            navigate('/admin/dashboard')
                             return
                         }
                         if (scope.includes('ROLE_CAR_OWNER')) {
-                            navigate('/manage-rentals')
+                            navigate('/owner/fleet')
                             return
                         }
                     } catch (decodeError) {
@@ -163,9 +163,9 @@ function Login() {
 
                     <div className="auth-footer">
                         <p>
-                            Don't have an account?{' '}
+                            Bạn không có tài khoản?{' '}
                             <Link to="/register" className="auth-link">
-                                Sign up now
+                                Đăng ký Ngày
                             </Link>
                         </p>
                     </div>

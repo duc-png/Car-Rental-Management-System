@@ -6,10 +6,14 @@ import com.example.car_management.entity.enums.VehicleStatus;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class VehicleResponse {
     private Integer id;
     private Integer ownerId;
@@ -27,7 +31,20 @@ public class VehicleResponse {
 
     private BigDecimal pricePerDay;
     private VehicleStatus status;
+
+    private Instant createdAt;
+    private Instant reviewedAt;
+
+    private String description;
+    private Integer year;
+    private Float fuelConsumption;
+
     private Integer currentKm;
+
+    private Boolean deliveryEnabled;
+    private Integer freeDeliveryWithinKm;
+    private Integer maxDeliveryDistanceKm;
+    private BigDecimal extraFeePerKm;
 
     private Integer locationId;
     private String city;
@@ -35,4 +52,5 @@ public class VehicleResponse {
     private String addressDetail;
 
     private List<VehicleImageResponse> images;
+    private List<VehicleFeatureResponse> features;
 }

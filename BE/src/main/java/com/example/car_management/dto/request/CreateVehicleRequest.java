@@ -2,13 +2,18 @@ package com.example.car_management.dto.request;
 
 import com.example.car_management.entity.enums.FuelType;
 import com.example.car_management.entity.enums.Transmission;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor @Builder
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CreateVehicleRequest {
 
     @NotNull
@@ -34,8 +39,34 @@ public class CreateVehicleRequest {
     @DecimalMin(value = "0.0", inclusive = false)
     private BigDecimal pricePerDay;
 
+    @Size(max = 2000)
+    private String description;
+
+    @Min(1900)
+    private Integer year;
+
+    @Positive
+    private Float fuelConsumption;
+
     @Min(0)
     private Integer currentKm;
 
+    @Builder.Default
+    private Boolean deliveryEnabled = Boolean.TRUE;
+
+    @Min(0)
+    private Integer freeDeliveryWithinKm;
+
+    @Min(0)
+    private Integer maxDeliveryDistanceKm;
+
+    @DecimalMin(value = "0.0", inclusive = true)
+    private BigDecimal extraFeePerKm;
+
     private Integer locationId;
+
+    @Valid
+    private LocationInputRequest location;
+
+    private List<Integer> featureIds;
 }

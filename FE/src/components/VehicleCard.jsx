@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { Fuel, Gauge, MapPin, Users } from 'lucide-react'
 import '../styles/VehicleCard.css'
 
 function VehicleCard({ vehicle }) {
@@ -25,6 +26,29 @@ function VehicleCard({ vehicle }) {
       default:
         return '#6b7280'
     }
+  }
+
+  const formatFeatureValue = (value) => {
+    if (value === null || value === undefined || value === '') return 'N/A'
+    return value
+      .toString()
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace(/\b\w/g, (char) => char.toUpperCase())
+  }
+
+  const formatFuelType = (fuelType) => {
+    const normalizedFuelType = (fuelType || '').toString().trim().toUpperCase()
+    const fuelTypeMap = {
+      GASOLINE: 'Xăng',
+      DIESEL: 'Dầu',
+      ELECTRIC: 'Điện',
+      HYBRID: 'Hybrid',
+      PETROL: 'Xăng'
+    }
+
+    if (fuelTypeMap[normalizedFuelType]) return fuelTypeMap[normalizedFuelType]
+    return formatFeatureValue(fuelType)
   }
 
   const handleOpenDetails = () => {
@@ -55,23 +79,31 @@ function VehicleCard({ vehicle }) {
 
         <div className="vehicle-features">
           <div className="feature">
-            <span className="feature-icon">👥</span>
-            <span>{vehicle.seatCount} Seats</span>
+            <span className="feature-icon-wrapper" aria-hidden="true">
+              <Users className="vehicle-feature-icon" />
+            </span>
+            <span>{vehicle.seatCount} Chỗ </span>
           </div>
           <div className="feature">
-            <span className="feature-icon">⚙️</span>
-            <span>{vehicle.transmission}</span>
+            <span className="feature-icon-wrapper" aria-hidden="true">
+              <Gauge className="vehicle-feature-icon" />
+            </span>
+            <span>{formatFeatureValue(vehicle.transmission)}</span>
           </div>
         </div>
 
         <div className="vehicle-features">
           <div className="feature">
-            <span className="feature-icon">⛽</span>
-            <span>{vehicle.fuelType}</span>
+            <span className="feature-icon-wrapper" aria-hidden="true">
+              <Fuel className="vehicle-feature-icon" />
+            </span>
+            <span>{formatFuelType(vehicle.fuelType)}</span>
           </div>
           <div className="feature">
-            <span className="feature-icon">📍</span>
-            <span>{vehicle.city}</span>
+            <span className="feature-icon-wrapper" aria-hidden="true">
+              <MapPin className="vehicle-feature-icon" />
+            </span>
+            <span>{formatFeatureValue(vehicle.city)}</span>
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Award, CarFront, Headset, ShieldCheck } from 'lucide-react'
 import SearchBar from '../../components/SearchBar'
 import FeaturedVehicles from '../../components/FeaturedVehicles'
 import CallToAction from '../../components/CallToAction'
@@ -11,14 +12,6 @@ import '../../styles/Home.css'
 
 function Home() {
   const navigate = useNavigate()
-  const [searchData, setSearchData] = useState({
-    location: '',
-    pickupDate: '',
-    returnDate: '',
-    pickupTime: '',
-    returnTime: ''
-  })
-
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
 
   const heroImages = [
@@ -50,8 +43,6 @@ function Home() {
   }, [heroImages.length])
 
   const handleSearch = (data) => {
-    setSearchData(data)
-
     const params = new URLSearchParams()
     if (data.location) params.set('address', data.location)
     if (data.pickupDate) params.set('pickupDate', data.pickupDate)
@@ -70,7 +61,7 @@ function Home() {
         <div className="hero-container">
           <div className="hero-content">
             <div className="hero-badge">
-              <span className="badge-icon">✨</span>
+              <span className="badge-icon" aria-hidden="true"><Award size={16} strokeWidth={2.2} /></span>
               Trải Nghiệm Lái Xe Cao Cấp
             </div>
             <h1>
@@ -82,21 +73,21 @@ function Home() {
 
             <div className="hero-features">
               <div className="feature-item">
-                <span className="feature-icon">🚗</span>
+                <span className="feature-icon" aria-hidden="true"><CarFront size={20} strokeWidth={2.2} /></span>
                 <div className="feature-content">
                   <h4>Ô Tô Cao Cấp</h4>
                   <span>Các xe mới nhất</span>
                 </div>
               </div>
               <div className="feature-item">
-                <span className="feature-icon">🛡️</span>
+                <span className="feature-icon" aria-hidden="true"><ShieldCheck size={20} strokeWidth={2.2} /></span>
                 <div className="feature-content">
                   <h4>Bảo Hiểm Đầy Đủ</h4>
                   <span>An tâm khi lái xe</span>
                 </div>
               </div>
               <div className="feature-item">
-                <span className="feature-icon">📱</span>
+                <span className="feature-icon" aria-hidden="true"><Headset size={20} strokeWidth={2.2} /></span>
                 <div className="feature-content">
                   <h4>Hỗ Trợ 24/7</h4>
                   <span>Luôn sẵn sàng</span>
@@ -135,7 +126,9 @@ function Home() {
       <FeaturedVehicles />
       <CallToAction />
       <Testimonials />
-      <Newsletter />
+      <div className="home-newsletter">
+        <Newsletter />
+      </div>
     </div>
   )
 }

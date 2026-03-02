@@ -32,4 +32,11 @@ public interface VehicleService {
     List<VehicleImageResponse> uploadImages(Integer vehicleId, Integer ownerId,
             List<org.springframework.web.multipart.MultipartFile> files, Boolean setFirstAsMain);
 
+    VehicleResponse approveVehicle(Integer vehicleId);
+
+    VehicleResponse rejectVehicle(Integer vehicleId, String reason);
+
+    List<VehicleResponse> searchVehicles(VehicleSearchRequest req);
+
+
 }

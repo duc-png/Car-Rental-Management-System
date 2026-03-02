@@ -1,8 +1,11 @@
 .footer {
   background: linear-gradient(135deg, var(--hero-gradient-1) 0%, var(--hero-gradient-2) 50%, var(--hero-gradient-3) 100%);
   color: var(--text-primary);
-  padding: 100px 40px 40px;
-  margin-top: 120px;
+
+  padding: 60px 40px 30px;
+
+  /* margin-top: 40px; */
+
   border-top: 1px solid var(--border-color);
   position: relative;
   overflow: hidden;

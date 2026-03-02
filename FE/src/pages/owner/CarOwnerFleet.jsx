@@ -1,78 +1,126 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useAuth } from '../../hooks/useAuth'
 import '../../styles/CarOwnerFleet.css'
+import FleetSidebar from '../../components/owner/fleet/FleetSidebar'
+import DashboardNotificationBell from '../../components/DashboardNotificationBell'
+import FleetOverview from '../../components/owner/fleet/FleetOverview'
+import FleetFilters from '../../components/owner/fleet/FleetFilters'
+import FleetListTable from '../../components/owner/fleet/FleetListTable'
+import { FleetAddCard, FleetGridCard } from '../../components/owner/fleet/FleetGridCard'
+import FleetCreateModal from '../../components/owner/fleet/FleetCreateModal'
+
+import { createVehicleModel, listVehicleModels } from '../../api/vehicleModels'
+import { listBrands } from '../../api/brands'
+import { listVehicleFeatures } from '../../api/vehicleFeatures'
 
 import {
-    addVehicleImagesByUrl,
+    createOwnerVehicle,
     deleteOwnerVehicle,
-    deleteVehicleImage,
     getVehicleDetail,
     listOwnerVehicles,
-    setMainVehicleImage,
-    updateOwnerVehicle,
-    updateOwnerVehicleStatus,
     uploadVehicleImages
 } from '../../api/ownerVehicles'
-
-const STATUS_VALUES = ['AVAILABLE', 'RENTED', 'MAINTENANCE', 'PENDING_APPROVAL', 'REJECTED']
-const TRANSMISSION_VALUES = ['MANUAL', 'AUTOMATIC']
-const FUEL_VALUES = ['GASOLINE', 'DIESEL', 'ELECTRIC']
-
-const formatEnumLabel = (value) => {
-    if (!value) return ''
-    return String(value)
-        .toLowerCase()
-        .split('_')
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ')
-}
-
-const formatPrice = (value) => {
-    if (value == null || value === '') return '$0'
-    const numberValue = typeof value === 'number' ? value : Number(value)
-    if (Number.isNaN(numberValue)) return '$0'
-    return `$${numberValue.toLocaleString('en-US')}`
-}
-
-const statusCssClass = (status) => (status ? String(status).toLowerCase().replaceAll('_', '-') : 'unknown')
-
-const vehicleDisplayName = (vehicle) => {
-    const brand = vehicle?.brandName ? String(vehicle.brandName).trim() : ''
-    const model = vehicle?.modelName ? String(vehicle.modelName).trim() : ''
-    const combined = `${brand} ${model}`.trim()
-    return combined || `Vehicle #${vehicle?.id ?? ''}`
-}
+import {
+    ALL_STATUS_LABEL,
+    createEmptyVehicleForm,
+    FUEL_VALUES,
+    formatEnumLabel,
+    STATUS_VALUES,
+    TRANSMISSION_VALUES,
+    vehicleDisplayName
+} from '../../utils/ownerFleetUtils'
 
 function CarOwnerFleet() {
+    const navigate = useNavigate()
+    const { user, isAuthenticated, logout } = useAuth()
     const [searchParams] = useSearchParams()
     const ownerIdParam = searchParams.get('ownerId')
-    const ownerId = ownerIdParam ? Number(ownerIdParam) : null
+    const ownerIdFromUser = user?.userId || user?.id
+    const ownerId = ownerIdFromUser ?? (ownerIdParam ? Number(ownerIdParam) : null)
+    const canManage = Boolean(user?.role?.includes('ROLE_CAR_OWNER') || user?.role?.includes('ROLE_ADMIN'))
+
+    const handleLogout = async () => {
+        await logout()
+        navigate('/login')
+    }
 
     const [search, setSearch] = useState('')
-    const [category, setCategory] = useState('All Categories')
-    const [status, setStatus] = useState('All Status')
+    const [status, setStatus] = useState(ALL_STATUS_LABEL)
     const [currentPage, setCurrentPage] = useState(1)
 
+    const [viewMode, setViewMode] = useState('list')
     const [vehicles, setVehicles] = useState([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
-    const [editingVehicleId, setEditingVehicleId] = useState(null)
-    const [editForm, setEditForm] = useState(null)
-    const [saving, setSaving] = useState(false)
-    const [statusUpdating, setStatusUpdating] = useState(false)
-    const [imagesUpdating, setImagesUpdating] = useState(false)
-    const [imageUrlsInput, setImageUrlsInput] = useState('')
-    const [setFirstAsMain, setSetFirstAsMain] = useState(false)
-    const [uploadFiles, setUploadFiles] = useState([])
+    const [vehicleModels, setVehicleModels] = useState([])
+    const [modelsLoading, setModelsLoading] = useState(false)
+    const [modelsError, setModelsError] = useState('')
+
+    const [brands, setBrands] = useState([])
+    const [brandsLoading, setBrandsLoading] = useState(false)
+    const [brandsError, setBrandsError] = useState('')
+
+    const [showCreateForm, setShowCreateForm] = useState(false)
+    const [creating, setCreating] = useState(false)
+    const [createForm, setCreateForm] = useState(createEmptyVehicleForm)
+    const [featureCatalog, setFeatureCatalog] = useState([])
+    const [selectedFeatureIds, setSelectedFeatureIds] = useState([])
+
+    const [createBrandName, setCreateBrandName] = useState('')
+    const [createModelName, setCreateModelName] = useState('')
+    const [createTypeName, setCreateTypeName] = useState('')
+    const [createUploadFiles, setCreateUploadFiles] = useState([])
+
+    const closeCreateModal = useCallback(() => {
+        setCreateForm(createEmptyVehicleForm())
+        setCreateBrandName('')
+        setCreateModelName('')
+        setCreateTypeName('')
+        setCreateUploadFiles([])
+        setSelectedFeatureIds([])
+        setShowCreateForm(false)
+    }, [])
+
+    useEffect(() => {
+        if (!showCreateForm) return
+
+        const onKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                closeCreateModal()
+            }
+        }
+
+        const previousOverflow = document.body.style.overflow
+        document.body.style.overflow = 'hidden'
+        window.addEventListener('keydown', onKeyDown)
+
+        return () => {
+            document.body.style.overflow = previousOverflow
+            window.removeEventListener('keydown', onKeyDown)
+        }
+    }, [showCreateForm, closeCreateModal])
 
     useEffect(() => {
         let cancelled = false
 
         const load = async () => {
+            if (!isAuthenticated) {
+                setVehicles([])
+                setError('Vui lòng đăng nhập bằng tài khoản chủ xe')
+                return
+            }
+
+            if (!canManage) {
+                setVehicles([])
+                setError('Tài khoản hiện tại không đủ quyền quản lý xe')
+                return
+            }
+
             if (!ownerId || Number.isNaN(ownerId)) {
                 setVehicles([])
-                setError('Missing ownerId. Use /owner/fleet?ownerId=1')
+                setError('Không tìm thấy ID chủ xe. Hãy đăng nhập lại hoặc truyền ownerId.')
                 return
             }
 
@@ -85,7 +133,7 @@ function CarOwnerFleet() {
                 }
             } catch (err) {
                 if (!cancelled) {
-                    setError(err?.message || 'Failed to load vehicles')
+                    setError(err?.message || 'Không thể tải danh sách xe')
                 }
             } finally {
                 if (!cancelled) {
@@ -98,7 +146,87 @@ function CarOwnerFleet() {
         return () => {
             cancelled = true
         }
-    }, [ownerId])
+    }, [ownerId, isAuthenticated, canManage])
+
+    useEffect(() => {
+        let cancelled = false
+
+        const loadModels = async () => {
+            setModelsLoading(true)
+            setModelsError('')
+            try {
+                const data = await listVehicleModels()
+                if (!cancelled) {
+                    setVehicleModels(Array.isArray(data) ? data : [])
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    setVehicleModels([])
+                    setModelsError(err?.message || 'Không thể tải danh sách mẫu xe')
+                }
+            } finally {
+                if (!cancelled) {
+                    setModelsLoading(false)
+                }
+            }
+        }
+
+        loadModels()
+        return () => {
+            cancelled = true
+        }
+    }, [])
+
+    useEffect(() => {
+        let cancelled = false
+
+        const loadBrands = async () => {
+            setBrandsLoading(true)
+            setBrandsError('')
+            try {
+                const data = await listBrands()
+                if (!cancelled) {
+                    setBrands(Array.isArray(data) ? data : [])
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    setBrands([])
+                    setBrandsError(err?.message || 'Không thể tải danh sách hãng xe')
+                }
+            } finally {
+                if (!cancelled) {
+                    setBrandsLoading(false)
+                }
+            }
+        }
+
+        loadBrands()
+        return () => {
+            cancelled = true
+        }
+    }, [])
+
+    useEffect(() => {
+        let cancelled = false
+
+        const loadFeatures = async () => {
+            try {
+                const data = await listVehicleFeatures()
+                if (!cancelled) {
+                    setFeatureCatalog(Array.isArray(data) ? data : [])
+                }
+            } catch {
+                if (!cancelled) {
+                    setFeatureCatalog([])
+                }
+            }
+        }
+
+        loadFeatures()
+        return () => {
+            cancelled = true
+        }
+    }, [])
 
     const ITEMS_PER_PAGE = 8
 
@@ -110,14 +238,10 @@ function CarOwnerFleet() {
         return { total, available, rented, maintenance }
     }, [vehicles])
 
-    const categories = useMemo(() => {
-        const typeNames = vehicles
-            .map((vehicle) => vehicle?.carTypeName)
-            .filter(Boolean)
-            .map((v) => String(v))
-        const unique = Array.from(new Set(typeNames)).sort((a, b) => a.localeCompare(b))
-        return ['All Categories', ...unique]
-    }, [vehicles])
+    const availabilityRate = useMemo(() => {
+        if (!stats.total) return 0
+        return Math.round((stats.available / stats.total) * 100)
+    }, [stats.total, stats.available])
 
     const statuses = useMemo(() => {
         const seen = vehicles
@@ -126,18 +250,17 @@ function CarOwnerFleet() {
             .map((s) => String(s))
         const unique = Array.from(new Set(seen))
         const sorted = STATUS_VALUES.filter((s) => unique.includes(s)).concat(unique.filter((s) => !STATUS_VALUES.includes(s)))
-        return ['All Status', ...sorted]
+        return [ALL_STATUS_LABEL, ...sorted]
     }, [vehicles])
 
     const filteredVehicles = useMemo(() => {
         return vehicles.filter((vehicle) => {
             const haystack = `${vehicleDisplayName(vehicle)} ${vehicle?.licensePlate || ''}`.toLowerCase()
             const matchesSearch = haystack.includes(search.toLowerCase())
-            const matchesCategory = category === 'All Categories' || vehicle?.carTypeName === category
-            const matchesStatus = status === 'All Status' || String(vehicle?.status) === String(status)
-            return matchesSearch && matchesCategory && matchesStatus
+            const matchesStatus = status === ALL_STATUS_LABEL || String(vehicle?.status) === String(status)
+            return matchesSearch && matchesStatus
         })
-    }, [vehicles, search, category, status])
+    }, [vehicles, search, status])
 
     const totalPages = Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE)
 
@@ -157,258 +280,274 @@ function CarOwnerFleet() {
         setCurrentPage(1)
     }
 
-    const handleCategoryChange = (value) => {
-        setCategory(value)
-        setCurrentPage(1)
-    }
-
     const handleStatusChange = (value) => {
         setStatus(value)
         setCurrentPage(1)
     }
 
-    const upsertVehicle = (nextVehicle) => {
-        setVehicles((prev) => prev.map((v) => (v.id === nextVehicle.id ? nextVehicle : v)))
-    }
-
-    const refreshVehicle = async (vehicleId) => {
-        const detail = await getVehicleDetail(vehicleId)
-        if (detail) {
-            upsertVehicle(detail)
-        }
+    const viewDetails = (vehicle) => {
+        if (!vehicle?.id) return
+        const ownerQuery = ownerId ? `?ownerId=${ownerId}` : ''
+        navigate(`/owner/vehicles/${vehicle.id}${ownerQuery}`)
     }
 
     const startEdit = (vehicle) => {
-        setEditingVehicleId(vehicle.id)
-        setEditForm({
-            modelId: vehicle?.modelId != null ? String(vehicle.modelId) : '',
-            licensePlate: vehicle?.licensePlate || '',
-            color: vehicle?.color || '',
-            seatCount: vehicle?.seatCount != null ? String(vehicle.seatCount) : '',
-            transmission: vehicle?.transmission || '',
-            fuelType: vehicle?.fuelType || '',
-            pricePerDay: vehicle?.pricePerDay != null ? String(vehicle.pricePerDay) : '',
-            currentKm: vehicle?.currentKm != null ? String(vehicle.currentKm) : '',
-            locationId: vehicle?.locationId != null ? String(vehicle.locationId) : '',
-            status: vehicle?.status || ''
+        if (!vehicle?.id) return
+        const ownerQuery = ownerId ? `?ownerId=${ownerId}` : ''
+        navigate(`/owner/vehicles/${vehicle.id}/edit${ownerQuery}`)
+    }
+
+    const updateCreateField = (field, value) => {
+        setCreateForm((prev) => ({
+            ...prev,
+            [field]: value
+        }))
+    }
+
+    const resetCreateForm = () => {
+        setCreateForm(createEmptyVehicleForm())
+        setCreateBrandName('')
+        setCreateModelName('')
+        setCreateTypeName('')
+        setCreateUploadFiles([])
+        setSelectedFeatureIds([])
+    }
+
+    const onToggleCreateFeature = (featureId) => {
+        setSelectedFeatureIds((prev) => {
+            if (prev.includes(featureId)) {
+                return prev.filter((item) => item !== featureId)
+            }
+            return [...prev, featureId]
         })
-        setImageUrlsInput('')
-        setSetFirstAsMain(false)
-        setUploadFiles([])
     }
 
-    const cancelEdit = () => {
-        setEditingVehicleId(null)
-        setEditForm(null)
-        setImageUrlsInput('')
-        setSetFirstAsMain(false)
-        setUploadFiles([])
-    }
+    const carTypeOptions = useMemo(() => {
+        const types = vehicleModels
+            .map((m) => m?.typeName)
+            .filter(Boolean)
+            .map((name) => String(name).trim())
+            .filter((name) => name && name.toLowerCase() !== 'unknown')
 
-    const saveEdit = async () => {
-        if (!editingVehicleId || !editForm) return
+        return Array.from(new Set(types)).sort((a, b) => a.localeCompare(b))
+    }, [vehicleModels])
+
+    const brandOptions = useMemo(() => {
+        const fromBrandsTable = brands
+            .map((b) => b?.name)
+            .filter(Boolean)
+            .map((name) => String(name).trim())
+            .filter(Boolean)
+
+        // fallback nếu API brands lỗi -> derive từ models
+        const fromModels = vehicleModels
+            .map((model) => model?.brandName)
+            .filter(Boolean)
+            .map((name) => String(name).trim())
+            .filter(Boolean)
+
+        const merged = fromBrandsTable.length > 0 ? fromBrandsTable : fromModels
+        return Array.from(new Set(merged)).sort((a, b) => a.localeCompare(b))
+    }, [brands, vehicleModels])
+
+    const modelOptionsForBrand = useMemo(() => {
+        if (!createBrandName) return []
+        return vehicleModels
+            .filter((m) => String(m?.brandName || '').trim() === String(createBrandName).trim())
+            .slice()
+            .sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || '')))
+    }, [vehicleModels, createBrandName])
+
+    const selectedExistingModel = useMemo(() => {
+        const typed = String(createModelName || '').trim()
+        if (!typed) return null
+        return modelOptionsForBrand.find((m) => String(m?.name || '').trim().toLowerCase() === typed.toLowerCase()) || null
+    }, [createModelName, modelOptionsForBrand])
+
+    useEffect(() => {
+        if (!selectedExistingModel) return
+        const typeName = String(selectedExistingModel?.typeName || '').trim()
+        if (typeName && typeName.toLowerCase() !== 'unknown') {
+            setCreateTypeName(typeName)
+        }
+    }, [selectedExistingModel])
+
+    const createVehicle = async () => {
         if (!ownerId || Number.isNaN(ownerId)) {
-            setError('Missing ownerId. Use /owner/fleet?ownerId=1')
+            setError('Không tìm thấy ID chủ xe')
             return
         }
 
-        const requiredFields = ['modelId', 'licensePlate', 'seatCount', 'pricePerDay', 'currentKm']
+        if (!String(createBrandName || '').trim()) {
+            setError('Vui lòng chọn hãng xe')
+            return
+        }
+
+        if (!String(createModelName || '').trim()) {
+            setError('Vui lòng nhập mẫu xe')
+            return
+        }
+
+        const selectedTypeName = String(createTypeName || '').trim()
+        const existingTypeName = String(selectedExistingModel?.typeName || '').trim()
+        const existingTypeKnown = existingTypeName && existingTypeName.toLowerCase() !== 'unknown'
+        const needsType = !selectedExistingModel || !existingTypeKnown
+        if (needsType && !selectedTypeName) {
+            setError('Vui lòng nhập loại xe (VD: Sedan, SUV, Hatchback...)')
+            return
+        }
+
+        const requiredFields = ['licensePlate', 'seatCount', 'pricePerDay', 'currentKm', 'province', 'ward', 'addressDetail']
         for (const field of requiredFields) {
-            if (!String(editForm[field] ?? '').trim()) {
-                setError(`Missing required field: ${field}`)
+            if (!String(createForm[field] ?? '').trim()) {
+                setError(`Thiếu thông tin bắt buộc: ${field}`)
                 return
             }
         }
 
-        setSaving(true)
+        if (!createUploadFiles.length) {
+            setError('Vui lòng thêm ít nhất 1 ảnh xe trước khi tạo.')
+            return
+        }
+
+        setCreating(true)
         setError('')
         try {
+            let modelId = selectedExistingModel?.id ? Number(selectedExistingModel.id) : null
+
+            const shouldUpsertModelType =
+                Boolean(modelId) &&
+                String(selectedExistingModel?.typeName || '').trim().toLowerCase() === 'unknown' &&
+                Boolean(String(createTypeName || '').trim())
+
+            if (!modelId) {
+                const createdModel = await createVehicleModel({
+                    brandName: createBrandName,
+                    modelName: createModelName,
+                    typeName: String(createTypeName || '').trim()
+                })
+                if (!createdModel?.id) {
+                    throw new Error('Không thể tạo mẫu xe mới')
+                }
+                modelId = Number(createdModel.id)
+                setVehicleModels((prev) => {
+                    const exists = prev.some((m) => String(m?.id) === String(createdModel.id))
+                    return exists ? prev : [createdModel, ...prev]
+                })
+            } else if (shouldUpsertModelType) {
+                const updatedModel = await createVehicleModel({
+                    brandName: createBrandName,
+                    modelName: createModelName,
+                    typeName: String(createTypeName || '').trim()
+                })
+                if (updatedModel?.id) {
+                    setVehicleModels((prev) => prev.map((m) => (String(m?.id) === String(updatedModel.id) ? updatedModel : m)))
+                }
+            }
+
+            if (!modelId || Number.isNaN(modelId)) {
+                throw new Error('Vui lòng chọn mẫu xe hợp lệ')
+            }
+
             const payload = {
-                modelId: Number(editForm.modelId),
-                licensePlate: String(editForm.licensePlate).trim(),
-                color: String(editForm.color || '').trim() || null,
-                seatCount: Number(editForm.seatCount),
-                transmission: editForm.transmission || null,
-                fuelType: editForm.fuelType || null,
-                pricePerDay: Number(editForm.pricePerDay),
-                currentKm: Number(editForm.currentKm),
-                locationId: String(editForm.locationId || '').trim() ? Number(editForm.locationId) : null,
-                location: null
+                ownerId,
+                modelId,
+                licensePlate: String(createForm.licensePlate).trim(),
+                color: String(createForm.color || '').trim() || null,
+                seatCount: Number(createForm.seatCount),
+                transmission: createForm.transmission || null,
+                fuelType: createForm.fuelType || null,
+                pricePerDay: Number(createForm.pricePerDay),
+                year: String(createForm.year || '').trim() ? Number(createForm.year) : null,
+                fuelConsumption: String(createForm.fuelConsumption || '').trim() ? Number(createForm.fuelConsumption) : null,
+                description: String(createForm.description || '').trim() || null,
+                currentKm: Number(createForm.currentKm),
+                featureIds: selectedFeatureIds,
+                locationId: null,
+                location: {
+                    province: String(createForm.province || '').trim(),
+                    ward: String(createForm.ward || '').trim(),
+                    addressDetail: String(createForm.addressDetail || '').trim(),
+                }
             }
 
-            const updated = await updateOwnerVehicle(editingVehicleId, ownerId, payload)
-            if (updated) {
-                upsertVehicle(updated)
+            const created = await createOwnerVehicle(payload)
+
+            if (created) {
+                setVehicles((prev) => [created, ...prev])
             }
-            cancelEdit()
+
+            if (created?.id && createUploadFiles.length > 0) {
+                await uploadVehicleImages(created.id, ownerId, createUploadFiles)
+                const detail = await getVehicleDetail(created.id)
+                if (detail) {
+                    setVehicles((prev) => prev.map((v) => (v.id === detail.id ? detail : v)))
+                }
+            }
+
+            resetCreateForm()
+            setShowCreateForm(false)
         } catch (err) {
-            setError(err?.message || 'Failed to update vehicle')
+            setError(err?.message || 'Không thể tạo xe mới')
         } finally {
-            setSaving(false)
-        }
-    }
-
-    const saveStatus = async () => {
-        if (!editingVehicleId || !editForm) return
-        if (!ownerId || Number.isNaN(ownerId)) {
-            setError('Missing ownerId. Use /owner/fleet?ownerId=1')
-            return
-        }
-        if (!editForm.status) {
-            setError('Missing status')
-            return
-        }
-
-        setStatusUpdating(true)
-        setError('')
-        try {
-            const updated = await updateOwnerVehicleStatus(editingVehicleId, ownerId, editForm.status)
-            if (updated) {
-                upsertVehicle(updated)
-            }
-        } catch (err) {
-            setError(err?.message || 'Failed to update status')
-        } finally {
-            setStatusUpdating(false)
+            setCreating(false)
         }
     }
 
     const onDeleteVehicle = async (vehicleId) => {
         if (!ownerId || Number.isNaN(ownerId)) {
-            setError('Missing ownerId. Use /owner/fleet?ownerId=1')
+            setError('Thiếu ownerId. Vui lòng đăng nhập lại hoặc truyền /owner/fleet?ownerId=1')
             return
         }
 
-        const confirmed = window.confirm('Delete this vehicle?')
+        const confirmed = window.confirm('Bạn có chắc muốn xóa xe này không?')
         if (!confirmed) return
 
         setError('')
         try {
             await deleteOwnerVehicle(vehicleId, ownerId)
             setVehicles((prev) => prev.filter((v) => v.id !== vehicleId))
-            if (editingVehicleId === vehicleId) {
-                cancelEdit()
-            }
         } catch (err) {
-            setError(err?.message || 'Failed to delete vehicle')
+            setError(err?.message || 'Không thể xóa xe')
         }
     }
 
-    const onAddImageUrls = async () => {
-        if (!editingVehicleId || !ownerId || Number.isNaN(ownerId)) return
-        const urls = imageUrlsInput
-            .split('\n')
-            .map((line) => line.trim())
-            .filter(Boolean)
-        if (urls.length === 0) return
-
-        setImagesUpdating(true)
-        setError('')
-        try {
-            await addVehicleImagesByUrl(editingVehicleId, ownerId, { imageUrls: urls, setFirstAsMain })
-            await refreshVehicle(editingVehicleId)
-            setImageUrlsInput('')
-            setSetFirstAsMain(false)
-        } catch (err) {
-            setError(err?.message || 'Failed to add images')
-        } finally {
-            setImagesUpdating(false)
-        }
+    if (!isAuthenticated) {
+        return (
+            <div className="fleet-guard">
+                <h2>Vui lòng đăng nhập</h2>
+                <p>Chỉ tài khoản chủ xe mới có thể truy cập trang này.</p>
+                <Link to="/login" className="add-vehicle">Đăng nhập ngay</Link>
+            </div>
+        )
     }
 
-    const onUploadImages = async () => {
-        if (!editingVehicleId || !ownerId || Number.isNaN(ownerId)) return
-        if (!uploadFiles || uploadFiles.length === 0) return
-
-        setImagesUpdating(true)
-        setError('')
-        try {
-            await uploadVehicleImages(editingVehicleId, ownerId, uploadFiles, { setFirstAsMain })
-            await refreshVehicle(editingVehicleId)
-            setUploadFiles([])
-            setSetFirstAsMain(false)
-        } catch (err) {
-            setError(err?.message || 'Failed to upload images')
-        } finally {
-            setImagesUpdating(false)
-        }
-    }
-
-    const onSetMainImage = async (imageId) => {
-        if (!editingVehicleId || !ownerId || Number.isNaN(ownerId)) return
-        setImagesUpdating(true)
-        setError('')
-        try {
-            await setMainVehicleImage(editingVehicleId, ownerId, imageId)
-            await refreshVehicle(editingVehicleId)
-        } catch (err) {
-            setError(err?.message || 'Failed to set main image')
-        } finally {
-            setImagesUpdating(false)
-        }
-    }
-
-    const onDeleteImage = async (imageId) => {
-        if (!editingVehicleId || !ownerId || Number.isNaN(ownerId)) return
-        const confirmed = window.confirm('Delete this image?')
-        if (!confirmed) return
-        setImagesUpdating(true)
-        setError('')
-        try {
-            await deleteVehicleImage(editingVehicleId, ownerId, imageId)
-            await refreshVehicle(editingVehicleId)
-        } catch (err) {
-            setError(err?.message || 'Failed to delete image')
-        } finally {
-            setImagesUpdating(false)
-        }
+    if (!canManage) {
+        return (
+            <div className="fleet-guard">
+                <h2>Không đủ quyền truy cập</h2>
+                <p>Vui lòng đăng nhập bằng tài khoản chủ xe.</p>
+                <Link to="/" className="add-vehicle">Quay lại trang chủ</Link>
+            </div>
+        )
     }
 
     return (
         <div className="fleet-dashboard">
-            <aside className="fleet-sidebar">
-                <Link to="/" className="fleet-brand">
-                    <div className="brand-icon">
-                        <img src="/favicon.svg" alt="CarRental System" />
-                    </div>
-                    <div>
-                        <h3>CarRental System</h3>
-                        <p>Fleet Management</p>
-                    </div>
-                </Link>
-
-                <div className="fleet-nav">
-                    <p className="nav-section">Navigation</p>
-                    <button type="button" className="nav-item">Dashboard</button>
-                    <button type="button" className="nav-item active">Fleet</button>
-                    <button type="button" className="nav-item">Bookings</button>
-                    <button type="button" className="nav-item">Customers</button>
-                    <button type="button" className="nav-item">Analytics</button>
-                </div>
-
-                <div className="fleet-system">
-                    <p className="nav-section">System</p>
-                    <button type="button" className="nav-item">Settings</button>
-                </div>
-
-                <div className="fleet-user">
-                    <div className="user-avatar">AD</div>
-                    <div className="user-info">
-                        <p className="user-name">Car Owner</p>
-                        <p className="user-email">owner@carrental.com</p>
-                    </div>
-                </div>
-            </aside>
+            <FleetSidebar user={user} onLogout={handleLogout} />
 
             <section className="fleet-main">
                 <header className="fleet-header">
                     <div>
-                        <p className="fleet-breadcrumb">Car Owner / Fleet</p>
-                        <h1>Fleet Management</h1>
-                        <p>Manage your vehicle inventory</p>
+                        <p className="fleet-breadcrumb">Chủ xe </p>
+                        <h1>Quản lý xe</h1>
+                        <p>Quản lý danh sách xe của bạn</p>
                     </div>
                     <div className="fleet-header-actions">
-                        <button className="add-vehicle">+ Add Vehicle</button>
+                        <DashboardNotificationBell />
+                        <button className="add-vehicle" onClick={() => setShowCreateForm(true)}>
+                            + Thêm xe mới
+                        </button>
                     </div>
                 </header>
 
@@ -418,281 +557,87 @@ function CarOwnerFleet() {
                     </div>
                 )}
 
-                <div className="fleet-overview">
-                    <div className="overview-card">
-                        <p>Total Vehicles</p>
-                        <h3>{stats.total}</h3>
-                        <span>All listed vehicles</span>
+                {modelsError && (
+                    <div className="fleet-alert" role="alert">
+                        {modelsError}
                     </div>
-                    <div className="overview-card">
-                        <p>Available</p>
-                        <h3>{stats.available}</h3>
-                        <span>Ready for booking</span>
-                    </div>
-                    <div className="overview-card">
-                        <p>Rented</p>
-                        <h3>{stats.rented}</h3>
-                        <span>On the road</span>
-                    </div>
-                    <div className="overview-card">
-                        <p>Maintenance</p>
-                        <h3>{stats.maintenance}</h3>
-                        <span>In service</span>
-                    </div>
-                </div>
+                )}
 
-                <div className="fleet-filters">
-                    <div className="search-field">
-                        <span className="search-icon">🔍</span>
-                        <input
-                            type="text"
-                            placeholder="Search by name or brand..."
-                            value={search}
-                            onChange={(event) => handleSearchChange(event.target.value)}
-                        />
+                {brandsError && (
+                    <div className="fleet-alert" role="alert">
+                        {brandsError}
                     </div>
-                    <select value={category} onChange={(event) => handleCategoryChange(event.target.value)}>
-                        {categories.map((item) => (
-                            <option key={item} value={item}>{item}</option>
-                        ))}
-                    </select>
-                    <select value={status} onChange={(event) => handleStatusChange(event.target.value)}>
-                        {statuses.map((item) => (
-                            <option key={item} value={item}>{item === 'All Status' ? item : formatEnumLabel(item)}</option>
-                        ))}
-                    </select>
-                </div>
+                )}
 
-                <div className="fleet-grid">
+                <FleetCreateModal
+                    open={showCreateForm}
+                    onClose={closeCreateModal}
+                    brandsLoading={brandsLoading}
+                    brandOptions={brandOptions}
+                    createBrandName={createBrandName}
+                    setCreateBrandName={setCreateBrandName}
+                    setCreateModelName={setCreateModelName}
+                    setCreateTypeName={setCreateTypeName}
+                    updateCreateField={updateCreateField}
+                    createModelName={createModelName}
+                    modelsLoading={modelsLoading}
+                    modelOptionsForBrand={modelOptionsForBrand}
+                    createTypeName={createTypeName}
+                    selectedExistingModel={selectedExistingModel}
+                    carTypeOptions={carTypeOptions}
+                    createForm={createForm}
+                    transmissionValues={TRANSMISSION_VALUES}
+                    fuelValues={FUEL_VALUES}
+                    formatEnumLabel={formatEnumLabel}
+                    featureCatalog={featureCatalog}
+                    selectedFeatureIds={selectedFeatureIds}
+                    onToggleCreateFeature={onToggleCreateFeature}
+                    createUploadFiles={createUploadFiles}
+                    setCreateUploadFiles={setCreateUploadFiles}
+                    creating={creating}
+                    onCreate={createVehicle}
+                />
+
+                <FleetOverview stats={stats} availabilityRate={availabilityRate} />
+
+                <FleetFilters
+                    search={search}
+                    onSearchChange={handleSearchChange}
+                    status={status}
+                    statuses={statuses}
+                    onStatusChange={handleStatusChange}
+                    viewMode={viewMode}
+                    onViewModeChange={setViewMode}
+                    formatEnumLabel={formatEnumLabel}
+                    allStatusLabel={ALL_STATUS_LABEL}
+                />
+
+                <div className={`fleet-grid ${viewMode === 'list' ? 'fleet-grid--list' : ''}`.trim()}>
                     {loading ? (
-                        <div className="fleet-loading">Loading...</div>
+                        <div className="fleet-loading">Đang tải...</div>
                     ) : (
-                        paginatedVehicles.map((vehicle) => (
-                            <article className="fleet-card" key={vehicle.id}>
-                                <div className="fleet-image">
-                                    <img
-                                        src={vehicle.mainImageUrl || 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=80'}
-                                        alt={vehicleDisplayName(vehicle)}
+                        viewMode === 'list' ? (
+                            <FleetListTable
+                                vehicles={paginatedVehicles}
+                                onViewDetails={viewDetails}
+                                onEdit={startEdit}
+                                onDelete={onDeleteVehicle}
+                            />
+                        ) : (
+                            <>
+                                {paginatedVehicles.map((vehicle) => (
+                                    <FleetGridCard
+                                        key={vehicle.id}
+                                        vehicle={vehicle}
+                                        onViewDetails={viewDetails}
+                                        onEdit={startEdit}
+                                        onDelete={onDeleteVehicle}
                                     />
-                                    <span className={`status-badge ${statusCssClass(vehicle.status)}`}>
-                                        {formatEnumLabel(vehicle.status)}
-                                    </span>
-                                </div>
+                                ))}
 
-                                <div className="fleet-card-body">
-                                    <h3>{vehicleDisplayName(vehicle)}</h3>
-                                    <p className="fleet-subtitle">Plate: {vehicle.licensePlate}</p>
-
-                                    <div className="fleet-meta">
-                                        <span>👥 {vehicle.seatCount}</span>
-                                        <span>⛽ {formatEnumLabel(vehicle.fuelType)}</span>
-                                        <span>⚙️ {formatEnumLabel(vehicle.transmission)}</span>
-                                    </div>
-
-                                    <div className="fleet-pricing">
-                                        <div>
-                                            <span className="label">Per day</span>
-                                            <strong>{formatPrice(vehicle.pricePerDay)}</strong>
-                                        </div>
-                                        <span className="type-pill">{vehicle.carTypeName || '—'}</span>
-                                    </div>
-
-                                    <div className="fleet-actions">
-                                        <button type="button" className="btn-outline" onClick={() => startEdit(vehicle)}>
-                                            ✏️ Edit
-                                        </button>
-                                        <button type="button" className="btn-outline danger" onClick={() => onDeleteVehicle(vehicle.id)}>
-                                            🗑️ Delete
-                                        </button>
-                                    </div>
-
-                                    {editingVehicleId === vehicle.id && editForm && (
-                                        <div className="fleet-edit">
-                                            <div className="edit-grid">
-                                                <label>
-                                                    Model ID
-                                                    <input
-                                                        type="number"
-                                                        value={editForm.modelId}
-                                                        onChange={(e) => setEditForm((prev) => ({ ...prev, modelId: e.target.value }))}
-                                                    />
-                                                </label>
-                                                <label>
-                                                    License Plate
-                                                    <input
-                                                        type="text"
-                                                        value={editForm.licensePlate}
-                                                        onChange={(e) => setEditForm((prev) => ({ ...prev, licensePlate: e.target.value }))}
-                                                    />
-                                                </label>
-                                                <label>
-                                                    Color
-                                                    <input
-                                                        type="text"
-                                                        value={editForm.color}
-                                                        onChange={(e) => setEditForm((prev) => ({ ...prev, color: e.target.value }))}
-                                                    />
-                                                </label>
-                                                <label>
-                                                    Seats
-                                                    <input
-                                                        type="number"
-                                                        min="1"
-                                                        value={editForm.seatCount}
-                                                        onChange={(e) => setEditForm((prev) => ({ ...prev, seatCount: e.target.value }))}
-                                                    />
-                                                </label>
-                                                <label>
-                                                    Transmission
-                                                    <select
-                                                        value={editForm.transmission}
-                                                        onChange={(e) => setEditForm((prev) => ({ ...prev, transmission: e.target.value }))}
-                                                    >
-                                                        <option value="">—</option>
-                                                        {TRANSMISSION_VALUES.map((v) => (
-                                                            <option key={v} value={v}>
-                                                                {formatEnumLabel(v)}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </label>
-                                                <label>
-                                                    Fuel
-                                                    <select
-                                                        value={editForm.fuelType}
-                                                        onChange={(e) => setEditForm((prev) => ({ ...prev, fuelType: e.target.value }))}
-                                                    >
-                                                        <option value="">—</option>
-                                                        {FUEL_VALUES.map((v) => (
-                                                            <option key={v} value={v}>
-                                                                {formatEnumLabel(v)}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </label>
-                                                <label>
-                                                    Price/Day
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        step="0.01"
-                                                        value={editForm.pricePerDay}
-                                                        onChange={(e) => setEditForm((prev) => ({ ...prev, pricePerDay: e.target.value }))}
-                                                    />
-                                                </label>
-                                                <label>
-                                                    Current KM
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        value={editForm.currentKm}
-                                                        onChange={(e) => setEditForm((prev) => ({ ...prev, currentKm: e.target.value }))}
-                                                    />
-                                                </label>
-                                                <label>
-                                                    Location ID
-                                                    <input
-                                                        type="number"
-                                                        min="0"
-                                                        value={editForm.locationId}
-                                                        onChange={(e) => setEditForm((prev) => ({ ...prev, locationId: e.target.value }))}
-                                                    />
-                                                </label>
-                                                <label>
-                                                    Status
-                                                    <select
-                                                        value={editForm.status}
-                                                        onChange={(e) => setEditForm((prev) => ({ ...prev, status: e.target.value }))}
-                                                    >
-                                                        <option value="">—</option>
-                                                        {STATUS_VALUES.map((s) => (
-                                                            <option key={s} value={s}>
-                                                                {formatEnumLabel(s)}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </label>
-                                            </div>
-
-                                            <div className="edit-actions">
-                                                <button type="button" className="btn-outline" onClick={saveEdit} disabled={saving}>
-                                                    {saving ? 'Saving...' : 'Save'}
-                                                </button>
-                                                <button type="button" className="btn-outline" onClick={saveStatus} disabled={statusUpdating}>
-                                                    {statusUpdating ? 'Updating...' : 'Update Status'}
-                                                </button>
-                                                <button type="button" className="btn-outline danger" onClick={cancelEdit} disabled={saving || statusUpdating}>
-                                                    Cancel
-                                                </button>
-                                            </div>
-
-                                            <div className="edit-images">
-                                                <div className="edit-images-header">
-                                                    <p>Images</p>
-                                                    <label className="edit-checkbox">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={setFirstAsMain}
-                                                            onChange={(e) => setSetFirstAsMain(e.target.checked)}
-                                                        />
-                                                        Set first as main
-                                                    </label>
-                                                </div>
-
-                                                <div className="image-grid">
-                                                    {(vehicle.images || []).map((img) => (
-                                                        <div className="image-item" key={img.id}>
-                                                            <img src={img.imageUrl} alt="Vehicle" />
-                                                            <div className="image-actions">
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn-outline"
-                                                                    onClick={() => onSetMainImage(img.id)}
-                                                                    disabled={imagesUpdating}
-                                                                >
-                                                                    {img.isMain ? 'Main' : 'Set Main'}
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    className="btn-outline danger"
-                                                                    onClick={() => onDeleteImage(img.id)}
-                                                                    disabled={imagesUpdating}
-                                                                >
-                                                                    Delete
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-
-                                                <div className="image-add">
-                                                    <textarea
-                                                        rows="3"
-                                                        placeholder="Paste image URLs (one per line)"
-                                                        value={imageUrlsInput}
-                                                        onChange={(e) => setImageUrlsInput(e.target.value)}
-                                                    />
-                                                    <button type="button" className="btn-outline" onClick={onAddImageUrls} disabled={imagesUpdating}>
-                                                        Add URLs
-                                                    </button>
-                                                </div>
-
-                                                <div className="image-upload">
-                                                    <input
-                                                        type="file"
-                                                        multiple
-                                                        onChange={(e) => setUploadFiles(Array.from(e.target.files || []))}
-                                                    />
-                                                    <button type="button" className="btn-outline" onClick={onUploadImages} disabled={imagesUpdating}>
-                                                        Upload Files
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </article>
-                        ))
+                                <FleetAddCard onAdd={() => setShowCreateForm(true)} />
+                            </>
+                        )
                     )}
                 </div>
 
@@ -704,7 +649,7 @@ function CarOwnerFleet() {
                             onClick={() => handlePageChange(currentPage - 1)}
                             disabled={currentPage === 1}
                         >
-                            ← Previous
+                            ← Trước
                         </button>
 
                         {[...Array(totalPages)].map((_, index) => {
@@ -727,7 +672,7 @@ function CarOwnerFleet() {
                             onClick={() => handlePageChange(currentPage + 1)}
                             disabled={currentPage === totalPages}
                         >
-                            Next →
+                            Sau →
                         </button>
                     </div>
                 )}

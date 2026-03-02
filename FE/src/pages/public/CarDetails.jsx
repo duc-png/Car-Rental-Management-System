@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getCarById, getCarsList } from '../../api/cars';
 import { getOwnerById } from '../../api/owners';
@@ -8,139 +8,22 @@ import { toast } from 'sonner';
 import MapModal from '../../components/MapModal';
 import DeliveryLocationModal from '../../components/DeliveryLocationModal';
 import CustomAddressModal from '../../components/CustomAddressModal';
+import {
+    DAY_MS,
+    FALLBACK_CAR,
+    toDateOnly,
+    formatDate,
+    formatDateShort,
+    formatOwnerName,
+    isSameDate,
+    getMonthGrid,
+    formatVndNumber,
+    geocodeAddress,
+    generateQueryVariants,
+    haversineDistanceKm,
+    routeDistanceKm
+} from '../../utils/carDetailsUtils';
 import '../../styles/CarDetails.css';
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-const FALLBACK_CAR = {
-    id: 0,
-    brandName: 'Xe mẫu',
-    modelName: 'Đang cập nhật',
-    carTypeName: 'SUV',
-    licensePlate: 'N/A',
-    color: 'N/A',
-    seatCount: 5,
-    transmission: 'AUTOMATIC',
-    fuelType: 'GASOLINE',
-    pricePerDay: 0,
-    status: 'AVAILABLE',
-    currentKm: 0,
-    city: 'Hồ Chí Minh',
-    district: 'Quận 1',
-    addressDetail: 'Đang cập nhật',
-    ownerName: 'Chưa cập nhật',
-    ownerPhone: 'Chưa cập nhật',
-    ownerEmail: 'Chưa cập nhật',
-    mainImageUrl: '/placeholder.svg',
-    images: []
-};
-
-const toDateOnly = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-const formatDate = (date) => {
-    if (!date) return '';
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}/${month}/${year}`;
-};
-
-const formatDateShort = (date) => {
-    if (!date) return '';
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    return `${day}/${month}`;
-};
-
-const formatOwnerName = (name) => {
-    if (!name || typeof name !== 'string') return 'Chưa cập nhật';
-    return name
-        .trim()
-        .toLowerCase()
-        .split(/\s+/)
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-};
-
-const isSameDate = (a, b) => {
-    if (!a || !b) return false;
-    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-};
-
-const getMonthGrid = (baseMonthDate) => {
-    const year = baseMonthDate.getFullYear();
-    const month = baseMonthDate.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const leadingEmptyCount = (firstDay.getDay() + 6) % 7;
-    const totalDays = lastDay.getDate();
-
-    const cells = [];
-    for (let index = 0; index < leadingEmptyCount; index += 1) {
-        cells.push(null);
-    }
-    for (let day = 1; day <= totalDays; day += 1) {
-        cells.push(new Date(year, month, day));
-    }
-
-    return {
-        title: `Tháng ${month + 1}`,
-        cells
-    };
-};
-
-const formatVndNumber = (value) => {
-    const numeric = Number(value || 0);
-    return Math.round(numeric).toLocaleString('vi-VN');
-};
-
-const formatVndK = (value) => {
-    const numeric = Number(value || 0);
-    if (!Number.isFinite(numeric) || numeric <= 0) return '0K';
-    const inThousands = Math.round(numeric / 1_000);
-    return `${inThousands.toLocaleString('vi-VN')}K`;
-};
-
-const geocodeAddress = async (query, signal) => {
-    const q = (query || '').trim();
-    if (!q) return null;
-
-    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&addressdetails=1&limit=1&countrycodes=vn`;
-    const response = await fetch(url, {
-        signal,
-        headers: {
-            'Accept-Language': 'vi'
-        }
-    });
-
-    if (!response.ok) return null;
-    const data = await response.json();
-    const first = Array.isArray(data) ? data[0] : null;
-    if (!first?.lat || !first?.lon) return null;
-
-    return {
-        lat: Number(first.lat),
-        lon: Number(first.lon),
-        label: first.display_name || q
-    };
-};
-
-const haversineDistanceKm = (a, b) => {
-    if (!a?.lat || !a?.lon || !b?.lat || !b?.lon) return 0;
-    const toRad = (deg) => (deg * Math.PI) / 180;
-    const R = 6371;
-
-    const dLat = toRad(b.lat - a.lat);
-    const dLon = toRad(b.lon - a.lon);
-    const lat1 = toRad(a.lat);
-    const lat2 = toRad(b.lat);
-
-    const sinDLat = Math.sin(dLat / 2);
-    const sinDLon = Math.sin(dLon / 2);
-    const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
-    const c = 2 * Math.asin(Math.min(1, Math.sqrt(h)));
-    return R * c;
-};
 
 export default function CarDetails() {
     const { id } = useParams();
@@ -152,7 +35,7 @@ export default function CarDetails() {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
     const [pickupMode, setPickupMode] = useState('self');
-    const [enableExtraInsurance, setEnableExtraInsurance] = useState(false);
+    const [enableExtraInsurance] = useState(false);
     const [pickupTime, setPickupTime] = useState('21:00');
     const [returnTime, setReturnTime] = useState('20:00');
     const [showSectionNav, setShowSectionNav] = useState(false);
@@ -182,57 +65,14 @@ export default function CarDetails() {
     const [returnDate, setReturnDate] = useState(tomorrow);
     const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
     const currentMonthStart = useMemo(() => new Date(today.getFullYear(), today.getMonth(), 1), [today]);
+    const deliveryEnabled = car?.deliveryEnabled === undefined || car?.deliveryEnabled === null
+        ? true
+        : Boolean(car.deliveryEnabled);
+    const freeDeliveryWithinKm = Math.max(0, Number(car?.freeDeliveryWithinKm ?? 0) || 0);
+    const maxDeliveryDistanceKm = Math.max(0, Number(car?.maxDeliveryDistanceKm ?? 20) || 0);
+    const extraFeePerKm = Math.max(0, Number(car?.extraFeePerKm ?? 10000) || 0);
 
-    useEffect(() => {
-        setPickupMode('self');
-        setIsDeliveryModalOpen(false);
-        setIsCustomAddressModalOpen(false);
-        fetchCarDetails();
-    }, [id]);
-
-    useEffect(() => {
-        if (!car?.id) return;
-        const controller = new AbortController();
-
-        const run = async () => {
-            try {
-                const result = await geocodeAddress([car.addressDetail, car.district, car.city].filter(Boolean).join(', '), controller.signal);
-                if (result) {
-                    setCarCoords({ lat: result.lat, lon: result.lon });
-                    return;
-                }
-
-                const fallback = await geocodeAddress([car.district, car.city].filter(Boolean).join(', '), controller.signal);
-                if (fallback) {
-                    setCarCoords({ lat: fallback.lat, lon: fallback.lon });
-                    return;
-                }
-
-                setCarCoords(null);
-            } catch (error) {
-                if (error?.name === 'AbortError') return;
-                setCarCoords(null);
-            }
-        };
-
-        run();
-        return () => controller.abort();
-    }, [car?.id, car?.addressDetail, car?.district, car?.city]);
-
-    useEffect(() => {
-        if (!carCoords || !deliveryCoords) {
-            setDeliveryDistanceKm(0);
-            setDeliveryFeeVnd(0);
-            return;
-        }
-
-        const rawKm = haversineDistanceKm(carCoords, deliveryCoords);
-        const roundedKm = Math.max(0, Math.round(rawKm));
-        setDeliveryDistanceKm(roundedKm);
-        setDeliveryFeeVnd(roundedKm * 20000);
-    }, [carCoords, deliveryCoords]);
-
-    const fetchCarDetails = async () => {
+    const fetchCarDetails = useCallback(async () => {
         try {
             setLoading(true);
             const vehicles = await getCarsList();
@@ -252,8 +92,7 @@ export default function CarDetails() {
             setOwner(ownerDetail);
             setRelatedCars(vehiclesList.filter(item => item.id !== selectedVehicle.id).slice(0, 4));
             setError(null);
-            // eslint-disable-next-line no-unused-vars
-        } catch (err) {
+        } catch {
             setCar(FALLBACK_CAR);
             setOwner(null);
             setRelatedCars([]);
@@ -261,7 +100,99 @@ export default function CarDetails() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
+
+    useEffect(() => {
+        setPickupMode('self');
+        setIsDeliveryModalOpen(false);
+        setIsCustomAddressModalOpen(false);
+        fetchCarDetails();
+    }, [fetchCarDetails]);
+
+    useEffect(() => {
+        if (!car?.id) return;
+
+        const controller = new AbortController();
+
+        const run = async () => {
+            try {
+                const city = (car.city || car.province || '').trim();
+                const district = (car.district || car.ward || '').trim();
+                const detail = (car.addressDetail || '').trim();
+
+                const variants = generateQueryVariants(detail, district, city);
+
+                let result = null;
+                for (const variant of variants) {
+                    result = await geocodeAddress(variant, controller.signal);
+                    if (result) break;   // dừng ngay khi tìm được
+                }
+
+                if (!result) {
+                    setCarCoords(null);
+                } else {
+                    setCarCoords({ lat: result.lat, lon: result.lon });
+                }
+            } catch (error) {
+                if (error?.name !== 'AbortError') {
+                    setCarCoords(null);
+                }
+            }
+        };
+
+        run();
+        return () => controller.abort();
+    }, [car?.id, car?.addressDetail, car?.district, car?.ward, car?.city, car?.province]);
+
+    useEffect(() => {
+        if (!carCoords || !deliveryCoords) {
+            setDeliveryDistanceKm(0);
+            setDeliveryFeeVnd(0);
+            return;
+        }
+
+        if (!deliveryEnabled) {
+            setDeliveryDistanceKm(0);
+            setDeliveryFeeVnd(0);
+            return;
+        }
+
+        const controller = new AbortController();
+
+        const calculateDistance = async () => {
+            try {
+                const routeKm = await routeDistanceKm(carCoords, deliveryCoords, controller.signal);
+                const rawKm = Number.isFinite(routeKm) ? routeKm : haversineDistanceKm(carCoords, deliveryCoords);
+                const roundedKm = Math.max(0, Math.round(rawKm));
+                const chargeableKm = Math.max(0, roundedKm - freeDeliveryWithinKm);
+
+                setDeliveryDistanceKm(roundedKm);
+                setDeliveryFeeVnd(chargeableKm * extraFeePerKm);
+            } catch (error) {
+                if (error?.name !== 'AbortError') {
+                    const fallbackKm = Math.max(0, Math.round(haversineDistanceKm(carCoords, deliveryCoords)));
+                    const chargeableKm = Math.max(0, fallbackKm - freeDeliveryWithinKm);
+                    setDeliveryDistanceKm(fallbackKm);
+                    setDeliveryFeeVnd(chargeableKm * extraFeePerKm);
+                }
+            }
+        };
+
+        calculateDistance();
+
+        return () => controller.abort();
+    }, [carCoords, deliveryCoords, deliveryEnabled, freeDeliveryWithinKm, extraFeePerKm]);
+
+    useEffect(() => {
+        if (deliveryEnabled) {
+            return;
+        }
+        if (pickupMode === 'delivery') {
+            setPickupMode('self');
+        }
+        setIsDeliveryModalOpen(false);
+        setIsCustomAddressModalOpen(false);
+    }, [deliveryEnabled, pickupMode]);
 
     const images = useMemo(() => {
         if (car?.images?.length) {
@@ -389,7 +320,26 @@ export default function CarDetails() {
     // const statusLabel = statusMap[car.status] || car.status || 'N/A';
     const transmissionLabel = transmissionMap[car.transmission] || car.transmission || 'N/A';
     const fuelLabel = fuelMap[car.fuelType] || car.fuelType || 'N/A';
-    const addressText = [car.addressDetail, car.district, car.city].filter(Boolean).join(', ');
+    const rawFuelConsumption = car?.fuelConsumption
+        ?? car?.fuelEfficiency
+        ?? car?.averageFuelConsumption
+        ?? car?.avgFuelConsumption
+        ?? car?.consumptionPer100Km
+        ?? car?.consumption;
+    const fuelConsumptionLabel = (() => {
+        if (rawFuelConsumption === null || rawFuelConsumption === undefined) return 'N/A';
+        const text = String(rawFuelConsumption).trim();
+        if (!text) return 'N/A';
+        if (/l\s*\/\s*100\s*km/i.test(text)) return text;
+        return `${text}L/100km`;
+    })();
+    // const addressText = [car.addressDetail, car.district, car.city].filter(Boolean).join(', ');
+    const city = car.city || car.province || '';
+    const district = car.district || car.ward || '';
+
+    const addressText = [car.addressDetail, district, city]
+        .filter(Boolean)
+        .join(', ');
     const locationDisplayText = [car.addressDetail, car.district].filter(Boolean).join(', ')
         || [car.district, car.city].filter(Boolean).join(', ')
         || addressText;
@@ -417,8 +367,6 @@ export default function CarDetails() {
     const defaultContact = 'Chưa cập nhật';
     const ownerName = owner?.fullName || car.ownerName;
     const displayOwnerName = formatOwnerName(ownerName);
-    const ownerPhone = owner?.phone || car.ownerPhone;
-    const ownerEmail = owner?.email || car.ownerEmail;
     const ownerRating = Number(owner?.avgRating ?? 5).toFixed(1);
     const ownerTrips = Number(owner?.totalTrips ?? 0);
     const ownerReviews = Number(owner?.totalReviews ?? 0);
@@ -426,6 +374,11 @@ export default function CarDetails() {
     const ownerResponseRate = owner?.isVerified ? '90%' : '80%';
     const ownerResponseTime = owner?.isVerified ? '5 phút' : '15 phút';
     const ownerApprovalRate = owner?.isVerified ? '88%' : '75%';
+    const featureNames = Array.isArray(car?.features)
+        ? car.features
+            .map((feature) => String(feature?.name || '').trim())
+            .filter(Boolean)
+        : [];
     // const statusClass = (car.status || '').toLowerCase().replace('_', '-');
 
     const monthOne = getMonthGrid(calendarMonth);
@@ -546,7 +499,7 @@ export default function CarDetails() {
 
                 <div className="detail-main-layout">
                     <div className="detail-main-column">
-                        <section className="detail-gallery-card">
+                        <section className="detail-gallery-card" ref={specsRef}>
                             <div className="main-image-wrap">
                                 <img
                                     src={currentImage}
@@ -572,109 +525,138 @@ export default function CarDetails() {
                                     </button>
                                 ))}
                             </div>
-                        </section>
-
-                        <section className="car-title-block">
-                            <h1>{car.brandName} {car.modelName}</h1>
-                            <p>{car.carTypeName || 'N/A'} • {addressText || 'Chưa cập nhật địa chỉ'}</p>
-                            <div className="stats-inline">
-                                <span>⚙️ {transmissionLabel}</span>
-                                <span>⛽ {fuelLabel}</span>
-                                <span>👥 {car.seatCount || 'N/A'} chỗ</span>
-                                <span>🏷️ {car.licensePlate || 'N/A'}</span>
-                            </div>
-                        </section>
-
-                        <section ref={specsRef} className="detail-block">
-                            <h3>Đặc điểm</h3>
-                            <div className="spec-grid">
-                                <div><span>Truyền động</span><b>{transmissionLabel}</b></div>
-                                <div><span>Số ghế</span><b>{car.seatCount || 'N/A'} chỗ</b></div>
-                                <div><span>Nhiên liệu</span><b>{fuelLabel}</b></div>
-                                <div><span>Số km</span><b>{car.currentKm?.toLocaleString('vi-VN') || 0} km</b></div>
-                            </div>
-                        </section>
-
-                        <section className="detail-block">
-                            <h3>Mô tả</h3>
-                            <p className="paragraph">
-                                Xe được bảo dưỡng định kỳ, vận hành ổn định và phù hợp cho cả chuyến đi ngắn ngày lẫn đường dài.
-                                Nội thất sạch sẽ, điều hòa mát, hỗ trợ nhận xe linh hoạt theo lịch của khách.
-                            </p>
-                        </section>
-
-                        <section className="detail-block">
-                            <h3>Các tiện ích khác</h3>
-                            <div className="chip-list">
-                                <span>Bluetooth</span>
-                                <span>Camera lùi</span>
-                                <span>Camera hành trình</span>
-                                <span>Bản đồ</span>
-                                <span>Cảm biến lốp</span>
-                                <span>USB</span>
-                                <span>ETC</span>
-                                <span>Túi khí an toàn</span>
-                            </div>
-                        </section>
-
-                        <section ref={docsRef} className="detail-block">
-                            <h3>Giấy tờ thuê xe</h3>
-                            <ul className="list-block">
-                                <li>CMND/CCCD hoặc Passport (bản gốc)</li>
-                                <li>GPLX hợp lệ, còn hiệu lực</li>
-                                <li>Đối chiếu thông tin người đặt và người nhận xe</li>
-                            </ul>
-                        </section>
-
-                        <section ref={locationRef} className="detail-block">
-                            <h3>Vị trí xe</h3>
-                            <div
-                                className="location-box location-box-clickable"
-                                role="button"
-                                tabIndex={0}
-                                onClick={() => {
-                                    if (!hasAddress) return;
-                                    setIsMapModalOpen(true);
-                                }}
-                                onKeyDown={(e) => {
-                                    if (!hasAddress) return;
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                        e.preventDefault();
-                                        setIsMapModalOpen(true);
-                                    }
-                                }}
-                            >
-                                <div className="location-box-row">
-                                    <div className="location-box-left">
-                                        <span className="location-pin" aria-hidden="true">
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                                                <circle cx="12" cy="10" r="3"></circle>
+                            <div className="car-title-block">
+                                <div className="car-meta-line">
+                                    <span className="car-type-pill">{car.carTypeName || 'N/A'}</span>
+                                    <span className="car-status-pill">Sẵn sàng</span>
+                                    <span className="car-rating-pill">⭐ {ownerRating} ({ownerTrips} chuyến)</span>
+                                </div>
+                                <h1>{car.brandName} {car.modelName}{car.year ? ` ${car.year}` : ''}</h1>
+                                <p>📍 {addressText || 'Chưa cập nhật địa chỉ'}</p>
+                                <div className="quick-spec-grid">
+                                    <div className="quick-spec-item">
+                                        <span className="quick-spec-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M8 4H4V8M16 4H20V8M8 20H4V16M20 16V20H16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                                <path d="M9 9H15V15H9V9Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                                             </svg>
                                         </span>
-                                        <strong>{locationDisplayText || 'Chưa cập nhật địa chỉ'}</strong>
+                                        <span className="quick-spec-label">TRUYỀN ĐỘNG</span>
+                                        <b>{transmissionLabel}</b>
                                     </div>
+                                    <div className="quick-spec-item">
+                                        <span className="quick-spec-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <circle cx="12" cy="7" r="3" stroke="currentColor" strokeWidth="1.8" />
+                                                <path d="M5 20C5 16.6863 8.13401 14 12 14C15.866 14 19 16.6863 19 20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                                            </svg>
+                                        </span>
+                                        <span className="quick-spec-label">SỐ GHẾ</span>
+                                        <b>{car.seatCount || 'N/A'} chỗ</b>
+                                    </div>
+                                    <div className="quick-spec-item">
+                                        <span className="quick-spec-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M7 7H16L18 10V20H6V8C6 7.44772 6.44772 7 7 7Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                                <path d="M9 12H15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                                                <path d="M10 4H14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                                            </svg>
+                                        </span>
+                                        <span className="quick-spec-label">NHIÊN LIỆU</span>
+                                        <b>{fuelLabel}</b>
+                                    </div>
+                                    <div className="quick-spec-item">
+                                        <span className="quick-spec-icon" aria-hidden="true">
+                                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M4 16C4 11.5817 7.58172 8 12 8C16.4183 8 20 11.5817 20 16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                                                <path d="M12 16L16 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                                                <circle cx="12" cy="16" r="1.5" fill="currentColor" />
+                                            </svg>
+                                        </span>
+                                        <span className="quick-spec-label">MỨC TIÊU THỤ</span>
+                                        <b>{fuelConsumptionLabel}</b>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
 
-                                    {hasAddress && (
-                                        <button
-                                            type="button"
-                                            className="location-map-link"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setIsMapModalOpen(true);
-                                            }}
-                                        >
-                                            <span className="location-map-icon" aria-hidden="true">
+                        <section className="detail-block info-combined-block">
+                            <div className="info-subsection">
+                                <h3>Mô tả</h3>
+                                <p className="paragraph">
+                                    {String(car?.description || '').trim()
+                                        || 'Xe được bảo dưỡng định kỳ, vận hành ổn định và phù hợp cho cả chuyến đi ngắn ngày lẫn đường dài.'}
+                                </p>
+                            </div>
+
+                            <div className="info-subsection">
+                                <h3>Các tiện ích khác</h3>
+                                <div className="chip-list">
+                                    {featureNames.length > 0
+                                        ? featureNames.map((name) => <span key={name}>{name}</span>)
+                                        : <span>Chưa cập nhật</span>}
+                                </div>
+                            </div>
+
+                            <div ref={docsRef} className="info-subsection">
+                                <h3>Giấy tờ thuê xe</h3>
+                                <ul className="list-block">
+                                    <li>CMND/CCCD hoặc Passport (bản gốc)</li>
+                                    <li>GPLX hợp lệ, còn hiệu lực</li>
+                                    <li>Đối chiếu thông tin người đặt và người nhận xe</li>
+                                </ul>
+                            </div>
+
+                            <div ref={locationRef} className="info-subsection">
+                                <h3>Vị trí xe</h3>
+                                <div
+                                    className="location-box location-box-clickable"
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => {
+                                        if (!hasAddress) return;
+                                        setIsMapModalOpen(true);
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (!hasAddress) return;
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            setIsMapModalOpen(true);
+                                        }
+                                    }}
+                                >
+                                    <div className="location-box-row">
+                                        <div className="location-box-left">
+                                            <span className="location-pin" aria-hidden="true">
                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                    <path d="M9 20l-5.447-2.724A2 2 0 0 1 2 15.382V5.618a2 2 0 0 1 1.553-1.894L9 1m0 19l6-3m-6 3V1m6 16l5.447 2.724A2 2 0 0 0 22 18.382V8.618a2 2 0 0 0-1.553-1.894L15 4m0 13V4m0 13l-6 3m6-16l-6-3"></path>
+                                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                                    <circle cx="12" cy="10" r="3"></circle>
                                                 </svg>
                                             </span>
-                                            <span>Xem bản đồ</span>
-                                            <span className="location-map-arrow" aria-hidden="true">›</span>
-                                        </button>
-                                    )}
+                                            <strong>{locationDisplayText || 'Chưa cập nhật địa chỉ'}</strong>
+                                        </div>
+
+                                        {hasAddress && (
+                                            <button
+                                                type="button"
+                                                className="location-map-link"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setIsMapModalOpen(true);
+                                                }}
+                                            >
+                                                <span className="location-map-icon" aria-hidden="true">
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M9 20l-5.447-2.724A2 2 0 0 1 2 15.382V5.618a2 2 0 0 1 1.553-1.894L9 1m0 19l6-3m-6 3V1m6 16l5.447 2.724A2 2 0 0 0 22 18.382V8.618a2 2 0 0 0-1.553-1.894L15 4m0 13V4m0 13l-6 3m6-16l-6-3"></path>
+                                                    </svg>
+                                                </span>
+                                                <span>Xem bản đồ</span>
+                                                <span className="location-map-arrow" aria-hidden="true">›</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                    <p>Địa chỉ cụ thể sẽ được hiển thị sau khi thanh toán giữ chỗ</p>
                                 </div>
-                                <p>Địa chỉ cụ thể sẽ được hiển thị sau khi thanh toán giữ chỗ</p>
                             </div>
                         </section>
 
@@ -683,28 +665,24 @@ export default function CarDetails() {
                             <div className="owner-detail-card">
                                 {ownerPublicId ? (
                                     <Link to={`/owners/${ownerPublicId}`} className="owner-basic owner-link">
-                                        <div className="owner-avatar">{(displayOwnerName || 'A').charAt(0).toUpperCase()}</div>
+                                        <div className="owner-avatar-wrap">
+                                            <div className="owner-avatar">{(displayOwnerName || 'A').charAt(0).toUpperCase()}</div>
+                                            <span className="owner-pro-badge">PRO</span>
+                                        </div>
                                         <div className="owner-profile-main">
                                             <strong>{displayOwnerName || defaultContact}</strong>
-                                            <div className="owner-subline">
-                                                <span>⭐ {ownerRating}</span>
-                                                <span>• {ownerTrips} chuyến</span>
-                                            </div>
-                                            <p>📞 {ownerPhone || defaultContact}</p>
-                                            <p>✉️ {ownerEmail || defaultContact}</p>
+                                            <div className="owner-subline">⭐ {ownerRating} • {ownerTrips} chuyến</div>
                                         </div>
                                     </Link>
                                 ) : (
                                     <div className="owner-basic">
-                                        <div className="owner-avatar">{(displayOwnerName || 'A').charAt(0).toUpperCase()}</div>
+                                        <div className="owner-avatar-wrap">
+                                            <div className="owner-avatar">{(displayOwnerName || 'A').charAt(0).toUpperCase()}</div>
+                                            <span className="owner-pro-badge">PRO</span>
+                                        </div>
                                         <div className="owner-profile-main">
                                             <strong>{displayOwnerName || defaultContact}</strong>
-                                            <div className="owner-subline">
-                                                <span>⭐ {ownerRating}</span>
-                                                <span>• {ownerTrips} chuyến</span>
-                                            </div>
-                                            <p>📞 {ownerPhone || defaultContact}</p>
-                                            <p>✉️ {ownerEmail || defaultContact}</p>
+                                            <div className="owner-subline">⭐ {ownerRating} • {ownerTrips} chuyến</div>
                                         </div>
                                     </div>
                                 )}
@@ -714,7 +692,7 @@ export default function CarDetails() {
                                         <b>{ownerResponseRate}</b>
                                     </div>
                                     <div>
-                                        <span>Phản hồi trong</span>
+                                        <span>Thời gian phản hồi</span>
                                         <b>{ownerResponseTime}</b>
                                     </div>
                                     <div>
@@ -722,49 +700,37 @@ export default function CarDetails() {
                                         <b>{ownerApprovalRate}</b>
                                     </div>
                                 </div>
+                                <button type="button" className="owner-contact-btn">Liên hệ</button>
                             </div>
                             <p className="owner-review-note">⭐ {ownerRating} • {ownerReviews} đánh giá</p>
                         </section>
 
-                        <section className="detail-block">
-                            <h3>Xe tương tự</h3>
-                            <div className="related-grid">
-                                {relatedCars.length === 0 && <p className="paragraph">Chưa có xe tương tự.</p>}
-                                {relatedCars.map(item => (
-                                    <Link to={`/car/${item.id}`} key={item.id} className="related-card">
-                                        <img src={item.mainImageUrl || '/placeholder.svg'} alt={item.modelName || 'Vehicle'} />
-                                        <div>
-                                            <strong>{item.brandName} {item.modelName}</strong>
-                                            <p>{Number(item.pricePerDay || 0).toLocaleString('vi-VN')} ₫/ngày</p>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        </section>
                     </div>
 
                     <aside className="booking-sidebar">
                         <div className="detail-booking-card">
                             <div className="price-head-row">
-                                <span className="old-price">{formatVndK(oldPrice)}</span>
+                                <span className="old-price">{formatVndNumber(pricePerDay)}đ</span>
+                                <span className="per-day">/ ngày</span>
                                 <span className="discount-pill">-{discountPercent}%</span>
                             </div>
 
-                            <div className="price-number">
-                                <span className="price-value">{formatVndK(pricePerDay)}</span>
-                                <small>/ngày</small>
-                            </div>
-
                             <button type="button" className="booking-time-box" onClick={() => setIsTimeModalOpen(true)}>
-                                <div>
-                                    <span>Nhận xe</span>
+                                <div className="booking-time-col">
+                                    <div className="booking-time-top">
+                                        <span>NHẬN XE</span>
+                                        <em>Sửa</em>
+                                    </div>
                                     <b>{formatDate(pickupDate)}</b>
-                                    <em>{pickupTime}</em>
+                                    <small>{pickupTime}</small>
                                 </div>
-                                <div>
-                                    <span>Trả xe</span>
+                                <div className="booking-time-col">
+                                    <div className="booking-time-top">
+                                        <span>TRẢ XE</span>
+                                        <em>Sửa</em>
+                                    </div>
                                     <b>{formatDate(returnDate || pickupDate)}</b>
-                                    <em>{returnTime}</em>
+                                    <small>{returnTime}</small>
                                 </div>
                             </button>
 
@@ -777,6 +743,7 @@ export default function CarDetails() {
                                         checked={pickupMode === 'self'}
                                         onChange={() => setPickupMode('self')}
                                     />
+                                    <span className="pickup-radio-icon" aria-hidden="true" />
                                     <div>
                                         <span>Tôi tự đến lấy xe</span>
                                         <b>{addressText || 'Chưa cập nhật địa chỉ'}</b>
@@ -784,25 +751,75 @@ export default function CarDetails() {
                                     <strong>Miễn phí</strong>
                                 </label>
 
-                                <label
-                                    className={`pickup-option ${pickupMode === 'delivery' ? 'active' : ''}`}
-                                    onClick={() => {
-                                        setPickupMode('delivery');
-                                        setIsDeliveryModalOpen(true);
-                                    }}
-                                >
-                                    <input
-                                        type="radio"
-                                        name="pickupMode"
-                                        checked={pickupMode === 'delivery'}
-                                        onChange={() => setPickupMode('delivery')}
-                                    />
-                                    <div>
-                                        <span>Tôi muốn được giao xe tận nơi</span>
-                                        <b>{deliveryAddressLabel || car.city || 'Nội thành'}</b>
+                                {deliveryEnabled ? (
+                                    <label
+                                        className={`pickup-option ${pickupMode === 'delivery' ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setPickupMode('delivery');
+                                            setIsDeliveryModalOpen(true);
+                                        }}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="pickupMode"
+                                            checked={pickupMode === 'delivery'}
+                                            onChange={() => setPickupMode('delivery')}
+                                        />
+                                        <span className="pickup-radio-icon" aria-hidden="true" />
+                                        <div>
+                                            <span>Giao xe tận nơi</span>
+                                            <b>{deliveryAddressLabel || `Phạm vi tối đa ${maxDeliveryDistanceKm}km`}</b>
+                                        </div>
+                                        <strong>{extraFeePerKm > 0 ? `${formatVndNumber(extraFeePerKm)}đ/km` : 'Miễn phí'}</strong>
+                                    </label>
+                                ) : (
+                                    <div className="pickup-option pickup-option-disabled" role="status" aria-live="polite">
+                                        <span className="pickup-radio-icon" aria-hidden="true" />
+                                        <div>
+                                            <span>Tôi muốn được giao xe tận nơi</span>
+                                            <b>Rất tiếc, chủ xe không hỗ trợ giao xe tận nơi</b>
+                                        </div>
                                     </div>
-                                    <strong>Miễn phí</strong>
-                                </label>
+                                )}
+                            </div>
+
+                            <div className="fee-breakdown">
+                                <div className="fee-row">
+                                    <span>Đơn giá thuê</span>
+                                    <b>{formatVndNumber(pricePerDay)} /ngày</b>
+                                </div>
+
+                                <div className="fee-row">
+                                    <span>Bảo hiểm thuê xe</span>
+                                    <b>{formatVndNumber(insuranceFeePerDay)} /ngày</b>
+                                </div>
+
+                                <div className="fee-row">
+                                    <span>Phí dịch vụ</span>
+                                    <b>{formatVndNumber(bookingFeePerDay)} /ngày</b>
+                                </div>
+
+                                <div className="fee-row total">
+                                    <span>Tổng cộng</span>
+                                    <b>
+                                        {formatVndNumber(subtotalPrice)} x {selectedDays} ngày
+                                    </b>
+                                </div>
+
+                                <div className="fee-row discount">
+                                    <span>Giảm giá</span>
+                                    <b>-{formatVndNumber(promoDiscount)}</b>
+                                </div>
+
+                                <div className="promo-code">
+                                    <span>Mã khuyến mãi</span>
+                                    <button type="button">Áp dụng</button>
+                                </div>
+                            </div>
+
+                            <div className="booking-final-total">
+                                <span>Thành tiền</span>
+                                <b>{formatVndNumber(totalPrice)}đ</b>
                             </div>
 
                             <button
@@ -836,6 +853,46 @@ export default function CarDetails() {
                         </div>
                     </aside>
                 </div>
+
+                <section className="detail-block related-block related-block-full">
+                    <h3>Xe tương tự</h3>
+                    <div className="related-grid">
+                        {relatedCars.length === 0 && <p className="paragraph">Chưa có xe tương tự.</p>}
+                        {relatedCars.map(item => (
+                            <Link to={`/car/${item.id}`} key={item.id} className="related-card">
+                                <img src={item.images[0]?.imageUrl || '/placeholder.svg'} alt={item.modelName || 'Vehicle'} />
+                                <div className="related-card-content">
+                                    <span className="related-type">{item.carTypeName || 'Sedan'}</span>
+                                    <strong>{item.brandName} {item.modelName}</strong>
+                                    <p className="related-meta">
+                                        <span className="related-meta-item">
+                                            <span className="related-meta-icon" aria-hidden="true">
+                                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M14.5 4H9.5V6.3L7.6 7.4L5.6 6.5L3.1 11L5.1 12.1V14.3L3.1 15.4L5.6 19.9L7.6 19L9.5 20.1V22H14.5V20.1L16.4 19L18.4 19.9L20.9 15.4L18.9 14.3V12.1L20.9 11L18.4 6.5L16.4 7.4L14.5 6.3V4Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                                                    <circle cx="12" cy="13" r="2.5" stroke="currentColor" strokeWidth="1.7" />
+                                                </svg>
+                                            </span>
+                                            {transmissionMap[item.transmission] || item.transmission || 'Auto'}
+                                        </span>
+                                        <span className="related-meta-item">
+                                            <span className="related-meta-icon" aria-hidden="true">
+                                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M12 3C12 3 6.5 9.2 6.5 13.2C6.5 16.5 8.9 19 12 19C15.1 19 17.5 16.5 17.5 13.2C17.5 9.2 12 3 12 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                                                    <path d="M9.8 13.4C9.8 12.5 10.3 11.6 11.2 10.6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                                                </svg>
+                                            </span>
+                                            {fuelMap[item.fuelType] || item.fuelType || 'Xăng'}
+                                        </span>
+                                    </p>
+                                    <div className="related-footer">
+                                        <p>{Number(item.pricePerDay || 0).toLocaleString('vi-VN')}đ <small>/ngày</small></p>
+                                        <span className="related-arrow">→</span>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </section>
             </div>
 
             {isTimeModalOpen && (
@@ -966,7 +1023,14 @@ export default function CarDetails() {
                 destinationLabel={deliveryAddressLabel}
                 totalFee={deliveryFeeVnd}
                 distanceKm={deliveryDistanceKm}
+                maxDistanceKm={maxDeliveryDistanceKm}
+                freeWithinKm={freeDeliveryWithinKm}
+                feePerKmVnd={extraFeePerKm}
                 onOpenCustomAddress={() => setIsCustomAddressModalOpen(true)}
+                onApply={() => {
+                    setIsDeliveryModalOpen(false);
+                    setIsCustomAddressModalOpen(false);
+                }}
             />
 
             <CustomAddressModal
