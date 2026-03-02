@@ -1,0 +1,148 @@
+.admin-layout-page {
+    min-height: 100vh;
+    background: #f5f7fb;
+    color: #1f2933;
+}
+
+.admin-layout-shell {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 24px;
+    padding: 32px 32px 48px;
+}
+
+.admin-layout-sidebar {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 24px 20px;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    position: sticky;
+    top: 24px;
+    height: fit-content;
+}
+
+.admin-layout-brand-block {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.admin-layout-brand-icon {
+    width: 44px;
+    height: 44px;
+    background: #0f172a;
+    color: #ffffff;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+}
+
+.admin-layout-brand-title {
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.admin-layout-brand-subtitle {
+    font-size: 0.78rem;
+    color: #6b7280;
+}
+
+.admin-layout-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.admin-layout-nav-section {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9aa3af;
+    margin-bottom: 4px;
+}
+
+.admin-layout-nav-item {
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: transparent;
+    border: none;
+    text-align: left;
+    font-weight: 500;
+    color: #374151;
+    transition: all 0.2s ease;
+    display: flex;
+    width: 100%;
+    text-decoration: none;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.admin-layout-nav-item:hover,
+.admin-layout-nav-item.active {
+    background: #eef2ff;
+    color: #1e1b4b;
+}
+
+.admin-layout-nav-logout {
+    color: #ef4444;
+}
+
+.admin-layout-nav-logout:hover {
+    background: rgba(239, 68, 68, 0.08);
+    color: #ef4444;
+}
+
+.admin-layout-profile {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 14px;
+    background: #f8fafc;
+    min-width: 0;
+}
+
+.admin-layout-profile-avatar {
+    width: 40px;
+    height: 40px;
+    background: #e2e8f0;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    color: #475569;
+}
+
+.admin-layout-profile-name {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-layout-profile-email {
+    font-size: 0.75rem;
+    color: #64748b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-layout-profile-meta {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.admin-layout-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}

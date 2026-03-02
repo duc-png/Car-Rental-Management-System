@@ -17,7 +17,8 @@ import {
     formatVndNumber,
     geocodeAddress,
     generateQueryVariants,
-    haversineDistanceKm
+    haversineDistanceKm,
+    routeDistanceKm
 } from '../../utils/carDetailsUtils';
 import '../../styles/CarDetails.css';
 
@@ -57,6 +58,12 @@ export default function CarDetails() {
     const [returnDate, setReturnDate] = useState(tomorrow);
     const [calendarMonth, setCalendarMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
     const currentMonthStart = useMemo(() => new Date(today.getFullYear(), today.getMonth(), 1), [today]);
+    const deliveryEnabled = car?.deliveryEnabled === undefined || car?.deliveryEnabled === null
+        ? true
+        : Boolean(car.deliveryEnabled);
+    const freeDeliveryWithinKm = Math.max(0, Number(car?.freeDeliveryWithinKm ?? 0) || 0);
+    const maxDeliveryDistanceKm = Math.max(0, Number(car?.maxDeliveryDistanceKm ?? 20) || 0);
+    const extraFeePerKm = Math.max(0, Number(car?.extraFeePerKm ?? 10000) || 0);
 
     const fetchCarDetails = useCallback(async () => {
         try {
@@ -114,14 +121,8 @@ export default function CarDetails() {
                     if (result) break;   // dừng ngay khi tìm được
                 }
 
-                // Nếu vẫn không được → dùng tọa độ trung tâm thành phố (rất gần đúng)
                 if (!result) {
-                    const fallbackCoords = city.toLowerCase().includes('hà nội') || city.toLowerCase().includes('ha noi')
-                        ? { lat: 21.0285, lon: 105.8048 }   // trung tâm Hà Nội
-                        : { lat: 10.7769, lon: 106.7009 };  // trung tâm TP.HCM
-
-                    setCarCoords(fallbackCoords);
-                    console.warn(`Geocode fail cho "${detail}, ${district}, ${city}" → dùng tọa độ trung tâm`);
+                    setCarCoords(null);
                 } else {
                     setCarCoords({ lat: result.lat, lon: result.lon });
                 }
@@ -143,11 +144,48 @@ export default function CarDetails() {
             return;
         }
 
-        const rawKm = haversineDistanceKm(carCoords, deliveryCoords);
-        const roundedKm = Math.max(0, Math.round(rawKm));
-        setDeliveryDistanceKm(roundedKm);
-        setDeliveryFeeVnd(roundedKm * 20000);
-    }, [carCoords, deliveryCoords]);
+        if (!deliveryEnabled) {
+            setDeliveryDistanceKm(0);
+            setDeliveryFeeVnd(0);
+            return;
+        }
+
+        const controller = new AbortController();
+
+        const calculateDistance = async () => {
+            try {
+                const routeKm = await routeDistanceKm(carCoords, deliveryCoords, controller.signal);
+                const rawKm = Number.isFinite(routeKm) ? routeKm : haversineDistanceKm(carCoords, deliveryCoords);
+                const roundedKm = Math.max(0, Math.round(rawKm));
+                const chargeableKm = Math.max(0, roundedKm - freeDeliveryWithinKm);
+
+                setDeliveryDistanceKm(roundedKm);
+                setDeliveryFeeVnd(chargeableKm * extraFeePerKm);
+            } catch (error) {
+                if (error?.name !== 'AbortError') {
+                    const fallbackKm = Math.max(0, Math.round(haversineDistanceKm(carCoords, deliveryCoords)));
+                    const chargeableKm = Math.max(0, fallbackKm - freeDeliveryWithinKm);
+                    setDeliveryDistanceKm(fallbackKm);
+                    setDeliveryFeeVnd(chargeableKm * extraFeePerKm);
+                }
+            }
+        };
+
+        calculateDistance();
+
+        return () => controller.abort();
+    }, [carCoords, deliveryCoords, deliveryEnabled, freeDeliveryWithinKm, extraFeePerKm]);
+
+    useEffect(() => {
+        if (deliveryEnabled) {
+            return;
+        }
+        if (pickupMode === 'delivery') {
+            setPickupMode('self');
+        }
+        setIsDeliveryModalOpen(false);
+        setIsCustomAddressModalOpen(false);
+    }, [deliveryEnabled, pickupMode]);
 
     const images = useMemo(() => {
         if (car?.images?.length) {
@@ -669,26 +707,36 @@ export default function CarDetails() {
                                     <strong>Miễn phí</strong>
                                 </label>
 
-                                <label
-                                    className={`pickup-option ${pickupMode === 'delivery' ? 'active' : ''}`}
-                                    onClick={() => {
-                                        setPickupMode('delivery');
-                                        setIsDeliveryModalOpen(true);
-                                    }}
-                                >
-                                    <input
-                                        type="radio"
-                                        name="pickupMode"
-                                        checked={pickupMode === 'delivery'}
-                                        onChange={() => setPickupMode('delivery')}
-                                    />
-                                    <span className="pickup-radio-icon" aria-hidden="true" />
-                                    <div>
-                                        <span>Giao xe tận nơi</span>
-                                        <b>{deliveryAddressLabel || 'Phạm vi tối đa 5km'}</b>
+                                {deliveryEnabled ? (
+                                    <label
+                                        className={`pickup-option ${pickupMode === 'delivery' ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setPickupMode('delivery');
+                                            setIsDeliveryModalOpen(true);
+                                        }}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name="pickupMode"
+                                            checked={pickupMode === 'delivery'}
+                                            onChange={() => setPickupMode('delivery')}
+                                        />
+                                        <span className="pickup-radio-icon" aria-hidden="true" />
+                                        <div>
+                                            <span>Giao xe tận nơi</span>
+                                            <b>{deliveryAddressLabel || `Phạm vi tối đa ${maxDeliveryDistanceKm}km`}</b>
+                                        </div>
+                                        <strong>{extraFeePerKm > 0 ? `${formatVndNumber(extraFeePerKm)}đ/km` : 'Miễn phí'}</strong>
+                                    </label>
+                                ) : (
+                                    <div className="pickup-option pickup-option-disabled" role="status" aria-live="polite">
+                                        <span className="pickup-radio-icon" aria-hidden="true" />
+                                        <div>
+                                            <span>Tôi muốn được giao xe tận nơi</span>
+                                            <b>Rất tiếc, chủ xe không hỗ trợ giao xe tận nơi</b>
+                                        </div>
                                     </div>
-                                    <strong>Miễn phí</strong>
-                                </label>
+                                )}
                             </div>
 
                             <div className="fee-breakdown">
@@ -902,7 +950,14 @@ export default function CarDetails() {
                 destinationLabel={deliveryAddressLabel}
                 totalFee={deliveryFeeVnd}
                 distanceKm={deliveryDistanceKm}
+                maxDistanceKm={maxDeliveryDistanceKm}
+                freeWithinKm={freeDeliveryWithinKm}
+                feePerKmVnd={extraFeePerKm}
                 onOpenCustomAddress={() => setIsCustomAddressModalOpen(true)}
+                onApply={() => {
+                    setIsDeliveryModalOpen(false);
+                    setIsCustomAddressModalOpen(false);
+                }}
             />
 
             <CustomAddressModal

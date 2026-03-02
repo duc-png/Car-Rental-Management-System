@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useAuth } from '../../hooks/useAuth'
 import { createCustomer, getCustomers, updateCustomer, updateCustomerStatus } from '../../api/customers'
+import DashboardNotificationBell from '../../components/DashboardNotificationBell'
 import '../../styles/Customers.css'
 
 const emptyForm = {
@@ -137,29 +138,32 @@ export default function AdminCustomers() {
         <div className="customers-page" style={{ background: 'transparent' }}>
             <header className="customers-header">
                 <div>
-                    <h1>Customer Management</h1>
-                    <p>Manage your customer database</p>
+                    <h1>Quản lý khách hàng</h1>
+                    <p>Quản lý danh sách khách hàng trên hệ thống</p>
                 </div>
-                <button className="btn-primary" onClick={openCreateModal}>
-                    + Add Customer
-                </button>
+                <div className="customers-header-actions">
+                    <DashboardNotificationBell />
+                    <button className="btn-primary" onClick={openCreateModal}>
+                        + Thêm khách hàng
+                    </button>
+                </div>
             </header>
 
             <div className="stats-grid">
                 <div className="stat-card">
-                    <p>Total Customers</p>
+                    <p>Tổng khách hàng</p>
                     <h3>{stats.totalCustomers}</h3>
                 </div>
                 <div className="stat-card">
-                    <p>Active Customers</p>
+                    <p>Khách hàng đang hoạt động</p>
                     <h3>{stats.activeCustomers}</h3>
                 </div>
                 <div className="stat-card">
-                    <p>Total Bookings</p>
+                    <p>Tổng lượt đặt xe</p>
                     <h3>{stats.totalBookings}</h3>
                 </div>
                 <div className="stat-card">
-                    <p>Avg. Bookings/Customer</p>
+                    <p>TB lượt đặt/khách</p>
                     <h3>{stats.avgBookings}</h3>
                 </div>
             </div>
@@ -167,13 +171,13 @@ export default function AdminCustomers() {
             <div className="customers-table-card">
                 <div className="table-header">
                     <div>
-                        <h2>All Customers</h2>
-                        <p>Complete customer directory</p>
+                        <h2>Danh sách khách hàng</h2>
+                        <p>Toàn bộ hồ sơ khách hàng</p>
                     </div>
                     <div className="search-box">
                         <input
                             type="text"
-                            placeholder="Search by name, email, or phone..."
+                            placeholder="Tìm theo tên, email hoặc số điện thoại..."
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
                         />
@@ -189,12 +193,12 @@ export default function AdminCustomers() {
                         <table className="customers-table">
                             <thead>
                                 <tr>
-                                    <th>Customer</th>
-                                    <th>Contact</th>
-                                    <th>License</th>
-                                    <th>Revenue</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th>Khách hàng</th>
+                                    <th>Liên hệ</th>
+                                    <th>Bằng lái</th>
+                                    <th>Doanh thu</th>
+                                    <th>Trạng thái</th>
+                                    <th>Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -206,7 +210,7 @@ export default function AdminCustomers() {
                                                 <div>
                                                     <p className="customer-name">{customer.fullName || '—'}</p>
                                                     <p className="customer-email">{customer.email || '—'}</p>
-                                                    <p className="customer-meta">Joined: {formatDate(customer.createdAt)}</p>
+                                                    <p className="customer-meta">Tham gia: {formatDate(customer.createdAt)}</p>
                                                 </div>
                                             </div>
                                         </td>
@@ -219,18 +223,18 @@ export default function AdminCustomers() {
                                         </td>
                                         <td>
                                             <p className="price">{formatCurrency(customer.totalRevenue)}</p>
-                                            <p className="muted">Bookings: {customer.totalBookings || 0}</p>
+                                            <p className="muted">Lượt đặt: {customer.totalBookings || 0}</p>
                                         </td>
                                         <td>
                                             <span className={`status-pill ${customer.isActive ? 'active' : 'inactive'}`}>
-                                                {customer.isActive ? 'Active' : 'Inactive'}
+                                                {customer.isActive ? 'Hoạt động' : 'Tạm khóa'}
                                             </span>
                                         </td>
                                         <td>
                                             <div className="actions">
-                                                <button className="btn-outline" onClick={() => openEditModal(customer)}>Edit</button>
+                                                <button className="btn-outline" onClick={() => openEditModal(customer)}>Sửa</button>
                                                 <button className="btn-outline" onClick={() => handleToggleStatus(customer)}>
-                                                    {customer.isActive ? 'Disable' : 'Enable'}
+                                                    {customer.isActive ? 'Khóa' : 'Mở khóa'}
                                                 </button>
                                             </div>
                                         </td>
@@ -249,15 +253,15 @@ export default function AdminCustomers() {
                     <div className="modal-card">
                         <div className="modal-header">
                             <div>
-                                <h2>{editingCustomer ? 'Edit Customer' : 'Add Customer'}</h2>
-                                <p>Fill in customer details below</p>
+                                <h2>{editingCustomer ? 'Chỉnh sửa khách hàng' : 'Thêm khách hàng'}</h2>
+                                <p>Nhập thông tin khách hàng bên dưới</p>
                             </div>
-                            <button className="btn-outline" onClick={closeModal} disabled={submitting}>Close</button>
+                            <button className="btn-outline" onClick={closeModal} disabled={submitting}>Đóng</button>
                         </div>
                         <form className="modal-form" onSubmit={handleSubmit}>
                             <div className="form-grid">
                                 <label>
-                                    Full Name
+                                    Họ và tên
                                     <input name="fullName" value={form.fullName} onChange={handleChange} required />
                                 </label>
                                 <label>
@@ -265,23 +269,23 @@ export default function AdminCustomers() {
                                     <input type="email" name="email" value={form.email} onChange={handleChange} required />
                                 </label>
                                 <label>
-                                    Phone
+                                    Số điện thoại
                                     <input name="phone" value={form.phone} onChange={handleChange} />
                                 </label>
                                 <label>
-                                    License Number
+                                    Số bằng lái
                                     <input name="licenseNumber" value={form.licenseNumber} onChange={handleChange} />
                                 </label>
                                 <label className="full-width">
-                                    Address
+                                    Địa chỉ
                                     <input name="address" value={form.address} onChange={handleChange} />
                                 </label>
                             </div>
                             <div className="modal-actions">
                                 <button className="btn-primary" type="submit" disabled={submitting}>
-                                    {submitting ? 'Saving...' : 'Save'}
+                                    {submitting ? 'Đang lưu...' : 'Lưu'}
                                 </button>
-                                <button className="btn-outline" type="button" onClick={closeModal} disabled={submitting}>Cancel</button>
+                                <button className="btn-outline" type="button" onClick={closeModal} disabled={submitting}>Hủy</button>
                             </div>
                         </form>
                     </div>

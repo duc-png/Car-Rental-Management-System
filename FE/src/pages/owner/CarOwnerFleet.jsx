@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import '../../styles/CarOwnerFleet.css'
 import FleetSidebar from '../../components/owner/fleet/FleetSidebar'
+import DashboardNotificationBell from '../../components/DashboardNotificationBell'
 import FleetOverview from '../../components/owner/fleet/FleetOverview'
 import FleetFilters from '../../components/owner/fleet/FleetFilters'
 import FleetListTable from '../../components/owner/fleet/FleetListTable'
@@ -11,6 +12,7 @@ import FleetCreateModal from '../../components/owner/fleet/FleetCreateModal'
 
 import { createVehicleModel, listVehicleModels } from '../../api/vehicleModels'
 import { listBrands } from '../../api/brands'
+import { listVehicleFeatures } from '../../api/vehicleFeatures'
 
 import {
     createOwnerVehicle,
@@ -47,8 +49,7 @@ function CarOwnerFleet() {
     const [status, setStatus] = useState(ALL_STATUS_LABEL)
     const [currentPage, setCurrentPage] = useState(1)
 
-    const [viewMode, setViewMode] = useState('grid')
-
+    const [viewMode, setViewMode] = useState('list')
     const [vehicles, setVehicles] = useState([])
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
@@ -64,19 +65,21 @@ function CarOwnerFleet() {
     const [showCreateForm, setShowCreateForm] = useState(false)
     const [creating, setCreating] = useState(false)
     const [createForm, setCreateForm] = useState(createEmptyVehicleForm)
+    const [featureCatalog, setFeatureCatalog] = useState([])
+    const [selectedFeatureIds, setSelectedFeatureIds] = useState([])
 
     const [createBrandName, setCreateBrandName] = useState('')
     const [createModelName, setCreateModelName] = useState('')
     const [createTypeName, setCreateTypeName] = useState('')
     const [createUploadFiles, setCreateUploadFiles] = useState([])
-    const [createSetFirstAsMain, setCreateSetFirstAsMain] = useState(true)
 
     const closeCreateModal = useCallback(() => {
         setCreateForm(createEmptyVehicleForm())
         setCreateBrandName('')
         setCreateModelName('')
+        setCreateTypeName('')
         setCreateUploadFiles([])
-        setCreateSetFirstAsMain(true)
+        setSelectedFeatureIds([])
         setShowCreateForm(false)
     }, [])
 
@@ -203,6 +206,28 @@ function CarOwnerFleet() {
         }
     }, [])
 
+    useEffect(() => {
+        let cancelled = false
+
+        const loadFeatures = async () => {
+            try {
+                const data = await listVehicleFeatures()
+                if (!cancelled) {
+                    setFeatureCatalog(Array.isArray(data) ? data : [])
+                }
+            } catch {
+                if (!cancelled) {
+                    setFeatureCatalog([])
+                }
+            }
+        }
+
+        loadFeatures()
+        return () => {
+            cancelled = true
+        }
+    }, [])
+
     const ITEMS_PER_PAGE = 8
 
     const stats = useMemo(() => {
@@ -285,7 +310,16 @@ function CarOwnerFleet() {
         setCreateModelName('')
         setCreateTypeName('')
         setCreateUploadFiles([])
-        setCreateSetFirstAsMain(true)
+        setSelectedFeatureIds([])
+    }
+
+    const onToggleCreateFeature = (featureId) => {
+        setSelectedFeatureIds((prev) => {
+            if (prev.includes(featureId)) {
+                return prev.filter((item) => item !== featureId)
+            }
+            return [...prev, featureId]
+        })
     }
 
     const carTypeOptions = useMemo(() => {
@@ -371,6 +405,11 @@ function CarOwnerFleet() {
             }
         }
 
+        if (!createUploadFiles.length) {
+            setError('Vui lòng thêm ít nhất 1 ảnh xe trước khi tạo.')
+            return
+        }
+
         setCreating(true)
         setError('')
         try {
@@ -423,6 +462,7 @@ function CarOwnerFleet() {
                 fuelConsumption: String(createForm.fuelConsumption || '').trim() ? Number(createForm.fuelConsumption) : null,
                 description: String(createForm.description || '').trim() || null,
                 currentKm: Number(createForm.currentKm),
+                featureIds: selectedFeatureIds,
                 locationId: null,
                 location: {
                     province: String(createForm.province || '').trim(),
@@ -438,7 +478,7 @@ function CarOwnerFleet() {
             }
 
             if (created?.id && createUploadFiles.length > 0) {
-                await uploadVehicleImages(created.id, ownerId, createUploadFiles, { setFirstAsMain: createSetFirstAsMain })
+                await uploadVehicleImages(created.id, ownerId, createUploadFiles)
                 const detail = await getVehicleDetail(created.id)
                 if (detail) {
                     setVehicles((prev) => prev.map((v) => (v.id === detail.id ? detail : v)))
@@ -504,6 +544,7 @@ function CarOwnerFleet() {
                         <p>Quản lý danh sách xe của bạn</p>
                     </div>
                     <div className="fleet-header-actions">
+                        <DashboardNotificationBell />
                         <button className="add-vehicle" onClick={() => setShowCreateForm(true)}>
                             + Thêm xe mới
                         </button>
@@ -548,9 +589,11 @@ function CarOwnerFleet() {
                     transmissionValues={TRANSMISSION_VALUES}
                     fuelValues={FUEL_VALUES}
                     formatEnumLabel={formatEnumLabel}
+                    featureCatalog={featureCatalog}
+                    selectedFeatureIds={selectedFeatureIds}
+                    onToggleCreateFeature={onToggleCreateFeature}
+                    createUploadFiles={createUploadFiles}
                     setCreateUploadFiles={setCreateUploadFiles}
-                    createSetFirstAsMain={createSetFirstAsMain}
-                    setCreateSetFirstAsMain={setCreateSetFirstAsMain}
                     creating={creating}
                     onCreate={createVehicle}
                 />

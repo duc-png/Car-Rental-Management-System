@@ -6,6 +6,7 @@ import {
     cancelOwnerRegistration,
     getOwnerRegistrationDetailForAdmin
 } from '../../api/adminOwnerRegistrations'
+import DashboardNotificationBell from '../../components/DashboardNotificationBell'
 import '../../styles/AdminOwnerRegistrationDetails.css'
 
 const statusBucket = (status) => {
@@ -17,9 +18,9 @@ const statusBucket = (status) => {
 
 const statusLabel = (status) => {
     const value = String(status || '')
-    if (value === 'PENDING') return 'Pending Review'
-    if (value === 'CANCELLED') return 'Cancelled'
-    if (value === 'APPROVED') return 'Approved'
+    if (value === 'PENDING') return 'Chờ duyệt'
+    if (value === 'CANCELLED') return 'Đã hủy'
+    if (value === 'APPROVED') return 'Đã duyệt'
     return value || '—'
 }
 
@@ -77,7 +78,7 @@ const formatDateTime = (value) => {
 
 const registrationTitle = (item) => {
     const combined = `${item?.brandName || ''} ${item?.modelName || ''}`.trim()
-    return combined || `Request #${item?.requestId ?? ''}`
+    return combined || `Yêu cầu #${item?.requestId ?? ''}`
 }
 
 export default function AdminOwnerRegistrationDetails() {
@@ -124,16 +125,16 @@ export default function AdminOwnerRegistrationDetails() {
 
     const onApprove = async () => {
         if (!data?.requestId || actionLoading) return
-        const ok = window.confirm('Approve this owner registration?')
+        const ok = window.confirm('Duyệt đăng ký chủ xe này?')
         if (!ok) return
 
         setActionLoading(true)
         try {
             const updated = await approveOwnerRegistration(data.requestId, note.trim() || undefined)
             if (updated) setData(updated)
-            toast.success('Approved')
+            toast.success('Đã duyệt yêu cầu')
         } catch (e) {
-            toast.error(e.message || 'Cannot approve')
+            toast.error(e.message || 'Không thể duyệt yêu cầu')
         } finally {
             setActionLoading(false)
         }
@@ -141,16 +142,16 @@ export default function AdminOwnerRegistrationDetails() {
 
     const onCancel = async () => {
         if (!data?.requestId || actionLoading) return
-        const ok = window.confirm('Cancel this request?')
+        const ok = window.confirm('Hủy yêu cầu này?')
         if (!ok) return
 
         setActionLoading(true)
         try {
             const updated = await cancelOwnerRegistration(data.requestId, note.trim() || undefined)
             if (updated) setData(updated)
-            toast.success('Cancelled')
+            toast.success('Đã hủy yêu cầu')
         } catch (e) {
-            toast.error(e.message || 'Cannot cancel')
+            toast.error(e.message || 'Không thể hủy yêu cầu')
         } finally {
             setActionLoading(false)
         }
@@ -160,27 +161,28 @@ export default function AdminOwnerRegistrationDetails() {
         <div className="owner-reg-details-page">
             <div className="owner-reg-details-header">
                 <div className="owner-reg-breadcrumb">
-                    <Link to="/admin/owner-registrations">Owner Registrations</Link>
+                    <Link to="/admin/owner-registrations">Đăng ký chủ xe</Link>
                     <span className="sep">›</span>
-                    <span>Request Details</span>
+                    <span>Chi tiết yêu cầu</span>
                     <span className="sep">›</span>
                     <span className="current">{data ? registrationTitle(data) : '—'}</span>
                 </div>
 
                 <div className="owner-reg-header-actions">
+                    <DashboardNotificationBell />
                     <span className={`owner-reg-status status-${bucket}`}>{statusLabel(data?.status)}</span>
-                    <button type="button" className="owner-reg-more" aria-label="More">
+                    <button type="button" className="owner-reg-more" aria-label="Thêm">
                         <span aria-hidden="true">⋯</span>
                     </button>
                 </div>
             </div>
 
             {loading ? (
-                <div className="owner-reg-loading">Loading...</div>
+                <div className="owner-reg-loading">Đang tải...</div>
             ) : error ? (
                 <div className="owner-reg-error">{error}</div>
             ) : !data ? (
-                <div className="owner-reg-error">Request not found.</div>
+                <div className="owner-reg-error">Không tìm thấy yêu cầu.</div>
             ) : (
                 <div className="owner-reg-details-grid">
                     <div className="owner-reg-left">
@@ -189,7 +191,7 @@ export default function AdminOwnerRegistrationDetails() {
                                 {selectedImage ? (
                                     <img src={selectedImage} alt={registrationTitle(data)} />
                                 ) : (
-                                    <div className="owner-reg-empty-media" aria-label="No image">
+                                    <div className="owner-reg-empty-media" aria-label="Không có ảnh">
                                         <svg width="44" height="44" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                             <path d="M4 7C4 5.89543 4.89543 5 6 5H18C19.1046 5 20 5.89543 20 7V17C20 18.1046 19.1046 19 18 19H6C4.89543 19 4 18.1046 4 17V7Z" stroke="currentColor" strokeWidth="2" />
                                             <path d="M8 11C8.55228 11 9 10.5523 9 10C9 9.44772 8.55228 9 8 9C7.44772 9 7 9.44772 7 10C7 10.5523 7.44772 11 8 11Z" fill="currentColor" />
@@ -206,7 +208,7 @@ export default function AdminOwnerRegistrationDetails() {
                                         type="button"
                                         className={`thumb ${url === selectedImage ? 'active' : ''}`}
                                         onClick={() => setSelectedImage(url)}
-                                        aria-label="Select image"
+                                        aria-label="Chọn ảnh"
                                     >
                                         <img src={url} alt="Thumbnail" loading="lazy" />
                                     </button>
@@ -235,57 +237,57 @@ export default function AdminOwnerRegistrationDetails() {
                         </div>
 
                         <div className="owner-reg-card">
-                            <div className="owner-reg-card-title">Vehicle Specifications</div>
+                            <div className="owner-reg-card-title">Thông số xe</div>
                             <div className="owner-reg-spec-table">
                                 <div className="spec-cell">
-                                    <div className="spec-label">Brand</div>
+                                    <div className="spec-label">Hãng xe</div>
                                     <div className="spec-value">{data.brandName || '—'}</div>
                                 </div>
                                 <div className="spec-cell">
-                                    <div className="spec-label">Model</div>
+                                    <div className="spec-label">Mẫu xe</div>
                                     <div className="spec-value">{data.modelName || '—'}</div>
                                 </div>
                                 <div className="spec-cell">
-                                    <div className="spec-label">Year</div>
+                                    <div className="spec-label">Năm sản xuất</div>
                                     <div className="spec-value">{data.manufacturingYear ?? '—'}</div>
                                 </div>
                                 <div className="spec-cell">
-                                    <div className="spec-label">Fuel type</div>
+                                    <div className="spec-label">Nhiên liệu</div>
                                     <div className="spec-value">{formatFuelTypeVi(data.fuelType)}</div>
                                 </div>
                                 <div className="spec-cell">
-                                    <div className="spec-label">Transmission</div>
+                                    <div className="spec-label">Hộp số</div>
                                     <div className="spec-value">{formatTransmissionVi(data.transmission)}</div>
                                 </div>
                                 <div className="spec-cell">
-                                    <div className="spec-label">Seats</div>
+                                    <div className="spec-label">Số chỗ</div>
                                     <div className="spec-value">{formatSeats(data.seatCount)}</div>
                                 </div>
                                 <div className="spec-cell">
-                                    <div className="spec-label">Fuel consumption</div>
+                                    <div className="spec-label">Mức tiêu thụ</div>
                                     <div className="spec-value">{formatFuelConsumption(data.fuelConsumption)}</div>
                                 </div>
                                 <div className="spec-cell">
-                                    <div className="spec-label">License plate</div>
+                                    <div className="spec-label">Biển số</div>
                                     <div className="spec-value">{data.licensePlate || '—'}</div>
                                 </div>
                             </div>
                         </div>
 
                         <div className="owner-reg-card">
-                            <div className="owner-reg-card-title">Owner Description</div>
+                            <div className="owner-reg-card-title">Mô tả từ chủ xe</div>
                             <div className="owner-reg-desc">
-                                {data.description?.trim() ? data.description : 'Not provided.'}
+                                {data.description?.trim() ? data.description : 'Chưa có mô tả.'}
                             </div>
                         </div>
                     </div>
 
                     <div className="owner-reg-right">
                         <div className="owner-reg-card">
-                            <div className="owner-reg-card-title">Applicant</div>
+                            <div className="owner-reg-card-title">Người đăng ký</div>
                             <div className="owner-reg-applicant">
                                 <div className="line">
-                                    <span className="label">Full name</span>
+                                    <span className="label">Họ và tên</span>
                                     <span className="value">{data.fullName || '—'}</span>
                                 </div>
                                 <div className="line">
@@ -293,40 +295,40 @@ export default function AdminOwnerRegistrationDetails() {
                                     <span className="value">{data.email || '—'}</span>
                                 </div>
                                 <div className="line">
-                                    <span className="label">Phone</span>
+                                    <span className="label">Số điện thoại</span>
                                     <span className="value">{data.phone || '—'}</span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="owner-reg-card">
-                            <div className="owner-reg-card-title">Request Info</div>
+                            <div className="owner-reg-card-title">Thông tin yêu cầu</div>
                             <div className="owner-reg-applicant">
                                 <div className="line">
-                                    <span className="label">Submitted</span>
+                                    <span className="label">Ngày gửi</span>
                                     <span className="value">{formatDateTime(data.createdAt)}</span>
                                 </div>
                                 <div className="line">
-                                    <span className="label">Reviewed</span>
+                                    <span className="label">Ngày xử lý</span>
                                     <span className="value">{formatDateTime(data.reviewedAt)}</span>
                                 </div>
                                 <div className="line">
-                                    <span className="label">Reviewer</span>
+                                    <span className="label">Người xử lý</span>
                                     <span className="value">{data.reviewedByName || '—'}</span>
                                 </div>
                                 <div className="line">
-                                    <span className="label">Admin note</span>
+                                    <span className="label">Ghi chú admin</span>
                                     <span className="value">{data.adminNote || '—'}</span>
                                 </div>
                             </div>
                         </div>
 
                         <div className="owner-reg-card">
-                            <div className="owner-reg-card-title">Reviewer Action</div>
-                            <div className="owner-reg-reviewer-sub">Admin note</div>
+                            <div className="owner-reg-card-title">Xử lý của quản trị viên</div>
+                            <div className="owner-reg-reviewer-sub">Ghi chú admin</div>
                             <textarea
                                 className="owner-reg-textarea"
-                                placeholder="Enter approval/cancel note..."
+                                placeholder="Nhập ghi chú duyệt/hủy..."
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
                                 rows={4}
@@ -338,7 +340,7 @@ export default function AdminOwnerRegistrationDetails() {
                                 onClick={onApprove}
                                 disabled={!canAct || actionLoading}
                             >
-                                Approve
+                                Duyệt
                             </button>
 
                             <button
@@ -347,7 +349,7 @@ export default function AdminOwnerRegistrationDetails() {
                                 onClick={onCancel}
                                 disabled={!canAct || actionLoading}
                             >
-                                Cancel
+                                Hủy
                             </button>
 
                             <button
@@ -355,7 +357,7 @@ export default function AdminOwnerRegistrationDetails() {
                                 className="owner-reg-back"
                                 onClick={() => navigate('/admin/owner-registrations')}
                             >
-                                Back to list
+                                Quay lại danh sách
                             </button>
                         </div>
                     </div>

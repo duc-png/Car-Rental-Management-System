@@ -80,6 +80,19 @@ public class VehicleEntity {
     @Column(name = "fuel_level")
     private Integer fuelLevel; // 0-100 (%)
 
+    @Column(name = "delivery_enabled")
+    @Builder.Default
+    private Boolean deliveryEnabled = Boolean.TRUE;
+
+    @Column(name = "free_delivery_within_km")
+    private Integer freeDeliveryWithinKm;
+
+    @Column(name = "max_delivery_distance_km")
+    private Integer maxDeliveryDistanceKm;
+
+    @Column(name = "extra_fee_per_km", precision = 12, scale = 2)
+    private BigDecimal extraFeePerKm;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id")
     private LocationEntity location;

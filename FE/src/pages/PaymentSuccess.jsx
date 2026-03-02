@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
+import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/MyBookings.css'; // Reuse styles for consistent look
 
 function PaymentSuccess() {
     const { id } = useParams();
-    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [countdown, setCountdown] = useState(5);
 

@@ -132,6 +132,12 @@
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
 }
 
+.customers-header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .customers-header h1 {
     font-size: 1.6rem;
 }

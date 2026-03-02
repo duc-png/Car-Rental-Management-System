@@ -1,7 +1,8 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
+import { CarFront, LayoutDashboard, LogOut, UserCheck, Users } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
-import '../../styles/AdminShell.css'
+import '../../styles/AdminLayout.css'
 
 export default function AdminLayout() {
     const navigate = useNavigate()
@@ -30,81 +31,68 @@ export default function AdminLayout() {
     const initials = String(displayName).slice(0, 2).toUpperCase()
 
     return (
-        <div className="admin-page">
-            <div className="admin-shell">
-                <aside className="admin-sidebar">
-                    <NavLink to="/" className="brand-block">
-                        <div className="brand-icon">C</div>
+        <div className="admin-layout-page">
+            <div className="admin-layout-shell">
+                <aside className="admin-layout-sidebar">
+                    <NavLink to="/" className="admin-layout-brand-block">
+                        <div className="admin-layout-brand-icon">C</div>
                         <div>
-                            <p className="brand-title">CarRental Pro</p>
-                            <p className="brand-subtitle">Admin Dashboard</p>
+                            <p className="admin-layout-brand-title">CarRental Pro</p>
+                            <p className="admin-layout-brand-subtitle">Bảng điều khiển quản trị</p>
                         </div>
                     </NavLink>
 
-                    <nav className="admin-nav">
-                        <p className="nav-section">Navigation</p>
+                    <nav className="admin-layout-nav">
+                        <p className="admin-layout-nav-section">Điều hướng</p>
                         <NavLink
                             to="/admin/dashboard"
-                            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                            className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
                             state={{ from: location.pathname }}
                         >
-                            Dashboard
+                            <LayoutDashboard size={18} strokeWidth={2.2} aria-hidden="true" />
+                            <span>Tổng quan</span>
                         </NavLink>
                         <NavLink
                             to="/admin/vehicles"
-                            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                            className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
                         >
-                            Vehicles
+                            <CarFront size={18} strokeWidth={2.2} aria-hidden="true" />
+                            <span>Xe</span>
                         </NavLink>
                         <NavLink
                             to="/admin/owner-registrations"
-                            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                            className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
                         >
-                            Owner Registrations
+                            <UserCheck size={18} strokeWidth={2.2} aria-hidden="true" />
+                            <span>Đăng ký chủ xe</span>
                         </NavLink>
                         <NavLink
                             to="/admin/customers"
-                            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+                            className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
                         >
-                            Customers
+                            <Users size={18} strokeWidth={2.2} aria-hidden="true" />
+                            <span>Khách hàng</span>
                         </NavLink>
                     </nav>
 
-                    <nav className="admin-nav">
-                        <p className="nav-section">System</p>
-                        <button type="button" className="nav-item admin-nav-logout" onClick={handleLogout}>
-                            <span className="admin-nav-logout-icon" aria-hidden="true">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path
-                                        d="M10 17L5 12L10 7"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                    <path
-                                        d="M5 12H19"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                </svg>
-                            </span>
+                    <nav className="admin-layout-nav">
+                        <p className="admin-layout-nav-section">Hệ thống</p>
+                        <button type="button" className="admin-layout-nav-item admin-layout-nav-logout" onClick={handleLogout}>
+                            <LogOut size={18} strokeWidth={2.2} aria-hidden="true" />
                             Đăng xuất
                         </button>
                     </nav>
 
-                    <div className="admin-profile">
-                        <div className="profile-avatar">{initials}</div>
-                        <div className="profile-meta">
-                            <p className="profile-name">{displayName}</p>
-                            <p className="profile-email">{user?.email || 'admin@carrental.com'}</p>
+                    <div className="admin-layout-profile">
+                        <div className="admin-layout-profile-avatar">{initials}</div>
+                        <div className="admin-layout-profile-meta">
+                            <p className="admin-layout-profile-name">{displayName}</p>
+                            <p className="admin-layout-profile-email">{user?.email || 'admin@carrental.com'}</p>
                         </div>
                     </div>
                 </aside>
 
-                <section className="admin-content">
+                <section className="admin-layout-content">
                     <Outlet />
                 </section>
             </div>

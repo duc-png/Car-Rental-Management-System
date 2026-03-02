@@ -1,5 +1,5 @@
 // src/pages/owner/OwnerVehicleEdit.jsx
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import '../../styles/OwnerVehicleEdit.css';
@@ -19,8 +19,6 @@ import {
     setMainVehicleImage,
     deleteVehicleImage,
 } from '../../api/ownerVehicles';
-import { listVehicleModels, createVehicleModel } from '../../api/vehicleModels';
-import { listBrands } from '../../api/brands';
 import { listVehicleFeatures } from '../../api/vehicleFeatures';
 import { FUEL_VALUES, formatEnumLabel, TRANSMISSION_VALUES } from '../../utils/ownerFleetUtils';
 
@@ -50,13 +48,13 @@ export default function OwnerVehicleEdit() {
         province: '',
         ward: '',
         addressDetail: '',
+        deliveryEnabled: true,
+        freeDeliveryWithinKm: 0,
+        maxDeliveryDistanceKm: 20,
+        extraFeePerKm: 10000,
         status: '',
     });
 
-    const [vehicleModels, setVehicleModels] = useState([]);
-    const [modelsLoading, setModelsLoading] = useState(false);
-
-    const [brands, setBrands] = useState([]);
     const [featureCatalog, setFeatureCatalog] = useState([]);
     const [selectedFeatureIds, setSelectedFeatureIds] = useState([]);
 
@@ -64,7 +62,6 @@ export default function OwnerVehicleEdit() {
     const [brandName, setBrandName] = useState('');
     const [modelName, setModelName] = useState('');
     const [typeName, setTypeName] = useState('');
-    const [isCustomModel, setIsCustomModel] = useState(false);
     const [saving, setSaving] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -111,6 +108,12 @@ export default function OwnerVehicleEdit() {
                     province: data.city ?? '',
                     ward: data.district ?? '',
                     addressDetail: data.addressDetail ?? '',
+                    deliveryEnabled: data.deliveryEnabled === undefined || data.deliveryEnabled === null
+                        ? true
+                        : Boolean(data.deliveryEnabled),
+                    freeDeliveryWithinKm: data.freeDeliveryWithinKm ?? 0,
+                    maxDeliveryDistanceKm: data.maxDeliveryDistanceKm ?? 20,
+                    extraFeePerKm: data.extraFeePerKm ?? 10000,
                     status: data.status || '',
                 });
             }
@@ -120,28 +123,6 @@ export default function OwnerVehicleEdit() {
             setLoading(false);
         }
     }, [id]);
-
-    const loadBrands = useCallback(async () => {
-        try {
-            const data = await listBrands();
-            setBrands(Array.isArray(data) ? data : []);
-        } catch (err) {
-            console.error('Error loading brands:', err);
-            setBrands([]);
-        }
-    }, []);
-
-    const loadModels = useCallback(async () => {
-        try {
-            setModelsLoading(true);
-            const data = await listVehicleModels();
-            setVehicleModels(data || []);
-        } catch (err) {
-            console.error('Error loading models:', err);
-        } finally {
-            setModelsLoading(false);
-        }
-    }, []);
 
     const loadFeatureCatalog = useCallback(async () => {
         try {
@@ -158,10 +139,8 @@ export default function OwnerVehicleEdit() {
     }, [loadVehicle]);
 
     useEffect(() => {
-        loadBrands();
-        loadModels();
         loadFeatureCatalog();
-    }, [loadBrands, loadModels, loadFeatureCatalog]);
+    }, [loadFeatureCatalog]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -177,36 +156,6 @@ export default function OwnerVehicleEdit() {
         });
     };
 
-    const brandOptions = useMemo(() => {
-        const fromBrands = brands.map((b) => b?.name?.trim()).filter(Boolean);
-        const fromModels = vehicleModels.map((m) => m?.brandName?.trim()).filter(Boolean);
-        const merged = fromBrands.length > 0 ? fromBrands : fromModels;
-        return Array.from(new Set(merged)).sort((a, b) => a.localeCompare(b));
-    }, [brands, vehicleModels]);
-
-    const modelOptionsForBrand = useMemo(() => {
-        if (!brandName.trim()) return [];
-        return vehicleModels
-            .filter((m) => String(m?.brandName || '').trim() === String(brandName).trim())
-            .sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || '')));
-    }, [vehicleModels, brandName]);
-
-    const selectedExistingModel = useMemo(() => {
-        const typed = String(modelName || '').trim();
-        if (!typed) return null;
-        return modelOptionsForBrand.find((m) => String(m?.name || '').trim().toLowerCase() === typed.toLowerCase()) || null;
-    }, [modelName, modelOptionsForBrand]);
-
-    // Tự động điền loại xe nếu chọn được model có sẵn
-    useEffect(() => {
-        if (selectedExistingModel) {
-            const typeFromModel = String(selectedExistingModel?.typeName || selectedExistingModel?.carTypeName || '').trim();
-            if (typeFromModel && typeFromModel.toLowerCase() !== 'unknown') {
-                setTypeName(typeFromModel);
-            }
-        }
-    }, [selectedExistingModel]);
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!ownerId) {
@@ -214,74 +163,14 @@ export default function OwnerVehicleEdit() {
             return;
         }
 
-        if (!brandName.trim()) {
-            setError('Vui lòng chọn hoặc nhập hãng xe.');
-            return;
-        }
-
-        if (!modelName.trim()) {
-            setError('Vui lòng nhập mẫu xe.');
-            return;
-        }
-
-        const existingTypeKnown = selectedExistingModel &&
-            String(selectedExistingModel.typeName || '').trim().toLowerCase() !== 'unknown';
-        if (!existingTypeKnown && !typeName.trim()) {
-            setError('Vui lòng nhập loại xe (SUV, Sedan, Hatchback...).');
-            return;
-        }
-
         setSaving(true);
         setError('');
 
         try {
-            let modelId = selectedExistingModel?.id ? Number(selectedExistingModel.id) : null;
-
-            // Nếu model không tồn tại → tạo mới (giống modal thêm xe)
-            if (!modelId) {
-                const newModel = await createVehicleModel({
-                    brandName: brandName.trim(),
-                    modelName: modelName.trim(),
-                    typeName: typeName.trim() || null,
-                });
-
-                if (!newModel?.id) {
-                    throw new Error('Không thể tạo mẫu xe mới');
-                }
-
-                modelId = Number(newModel.id);
-
-                // Cập nhật danh sách models để lần sau load lại không cần refresh trang
-                setVehicleModels((prev) => {
-                    const exists = prev.some((m) => m.id === newModel.id);
-                    return exists ? prev : [...prev, newModel];
-                });
-            }
-
-            // Nếu model cũ có type unknown nhưng giờ nhập type → update type
-            const shouldUpdateType = modelId &&
-                selectedExistingModel &&
-                String(selectedExistingModel.typeName || '').trim().toLowerCase() === 'unknown' &&
-                typeName.trim();
-
-            if (shouldUpdateType) {
-                await createVehicleModel({
-                    brandName: brandName.trim(),
-                    modelName: modelName.trim(),
-                    typeName: typeName.trim(),
-                });
-                // Không cần reload models ở đây vì chỉ update type, không ảnh hưởng lớn
-            }
-
             const payload = {
-                modelId,
-                licensePlate: form.licensePlate?.trim() || vehicle?.licensePlate || null,
                 color: form.color?.trim() || vehicle?.color || null,
-                seatCount: form.seatCount ? Number(form.seatCount) : vehicle?.seatCount,
                 transmission: form.transmission || vehicle?.transmission || null,
-                fuelType: form.fuelType || vehicle?.fuelType || null,
                 pricePerDay: form.pricePerDay ? Number(form.pricePerDay) : vehicle?.pricePerDay,
-                year: form.year ? Number(form.year) : (vehicle?.year || null),
                 fuelConsumption: form.fuelConsumption ? Number(form.fuelConsumption) : (vehicle?.fuelConsumption || null),
                 description: form.description?.trim() || vehicle?.description || null,
                 currentKm: form.currentKm ? Number(form.currentKm) : vehicle?.currentKm,
@@ -290,7 +179,16 @@ export default function OwnerVehicleEdit() {
                     ward: form.ward?.trim() || vehicle?.location?.ward || null,
                     addressDetail: form.addressDetail?.trim() || vehicle?.location?.addressDetail || null,
                 },
-                status: form.status || vehicle?.status || null,
+                deliveryEnabled: Boolean(form.deliveryEnabled),
+                freeDeliveryWithinKm: form.deliveryEnabled
+                    ? Math.max(0, Number(form.freeDeliveryWithinKm || 0))
+                    : null,
+                maxDeliveryDistanceKm: form.deliveryEnabled
+                    ? Math.max(0, Number(form.maxDeliveryDistanceKm || 0))
+                    : null,
+                extraFeePerKm: form.deliveryEnabled
+                    ? Math.max(0, Number(form.extraFeePerKm || 0))
+                    : null,
                 featureIds: selectedFeatureIds,
             };
 
@@ -418,20 +316,13 @@ export default function OwnerVehicleEdit() {
                 ) : (
                     <form onSubmit={handleSubmit}>
                         <OwnerVehicleTypeSection
-                            modelsLoading={modelsLoading}
                             brandName={brandName}
-                            setBrandName={setBrandName}
-                            setModelName={setModelName}
-                            setTypeName={setTypeName}
-                            brandOptions={brandOptions}
-                            isCustomModel={isCustomModel}
-                            setIsCustomModel={setIsCustomModel}
                             modelName={modelName}
-                            modelOptionsForBrand={modelOptionsForBrand}
                             typeName={typeName}
+                            immutable
                         />
 
-                        <OwnerVehicleBasicSection form={form} handleChange={handleChange} />
+                        <OwnerVehicleBasicSection form={form} handleChange={handleChange} immutable />
 
                         <OwnerVehicleSpecsSection
                             form={form}
@@ -439,6 +330,7 @@ export default function OwnerVehicleEdit() {
                             transmissionValues={TRANSMISSION_VALUES}
                             fuelValues={FUEL_VALUES}
                             formatEnumLabel={formatEnumLabel}
+                            immutable
                         />
 
                         <OwnerVehicleFeaturesSection
@@ -450,6 +342,7 @@ export default function OwnerVehicleEdit() {
                         <OwnerVehicleLocationSection
                             form={form}
                             handleChange={handleChange}
+                            setForm={setForm}
                             statusValues={STATUS_VALUES}
                             formatEnumLabel={formatEnumLabel}
                         />

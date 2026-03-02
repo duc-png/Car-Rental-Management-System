@@ -29,6 +29,7 @@ import com.example.car_management.repository.VehicleModelRepository;
 import com.example.car_management.repository.VehicleRepository;
 import com.example.car_management.service.OwnerRegistrationNotificationService;
 import com.example.car_management.service.OwnerRegistrationService;
+import com.example.car_management.service.NotificationService;
 import com.example.car_management.service.cloud.CloudinaryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -60,6 +61,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
     private final PasswordEncoder passwordEncoder;
     private final CloudinaryService cloudinaryService;
     private final OwnerRegistrationNotificationService ownerRegistrationNotificationService;
+    private final NotificationService notificationService;
 
     private static final int MAX_IMAGES = 5;
     private static final BigDecimal DEFAULT_PRICE_PER_DAY = new BigDecimal("1.00");
@@ -130,6 +132,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
 
         OwnerRegistration saved = ownerRegistrationRepository.save(entity);
         saveImages(saved, images);
+        notificationService.notifyAdminsOwnerRegistrationSubmitted(saved);
         return toResponse(saved);
     }
 
@@ -181,6 +184,8 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
         UserEntity savedOwner = userRepository.save(owner);
 
         VehicleModelEntity model = resolveOrCreateModel(entity.getBrandName(), entity.getModelName());
+        boolean deliveryEnabled = entity.getDeliveryEnabled() == null
+                || Boolean.TRUE.equals(entity.getDeliveryEnabled());
         VehicleEntity vehicle = VehicleEntity.builder()
                 .owner(savedOwner)
                 .model(model)
@@ -194,6 +199,19 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
                 .year(entity.getManufacturingYear())
                 .fuelConsumption(entity.getFuelConsumption() != null ? entity.getFuelConsumption().floatValue() : null)
                 .currentKm(0)
+                .deliveryEnabled(deliveryEnabled)
+                .freeDeliveryWithinKm(deliveryEnabled
+                        ? (entity.getFreeDeliveryWithinKm() == null ? 0 : Math.max(0, entity.getFreeDeliveryWithinKm()))
+                        : null)
+                .maxDeliveryDistanceKm(deliveryEnabled
+                        ? (entity.getMaxDeliveryDistanceKm() == null ? 20
+                                : Math.max(0, entity.getMaxDeliveryDistanceKm()))
+                        : null)
+                .extraFeePerKm(deliveryEnabled
+                        ? (entity.getExtraFeePerKm() == null || entity.getExtraFeePerKm().compareTo(BigDecimal.ZERO) < 0
+                                ? new BigDecimal("10000")
+                                : entity.getExtraFeePerKm())
+                        : null)
                 .location(resolveLocationFromRegistrationAddress(entity.getAddressDetail()))
                 .color(null)
                 .features(entity.getFeatures() == null ? new java.util.LinkedHashSet<>()
@@ -211,6 +229,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
 
         OwnerRegistration savedRegistration = ownerRegistrationRepository.save(entity);
         ownerRegistrationNotificationService.sendApprovedEmail(savedRegistration);
+        notificationService.notifyOwnerVehicleApproved(savedVehicle);
         return toResponse(savedRegistration);
     }
 

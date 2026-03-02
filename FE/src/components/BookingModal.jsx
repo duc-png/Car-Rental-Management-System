@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { DayPicker } from 'react-day-picker';
-import { isWithinInterval, parseISO, startOfDay, endOfDay } from 'date-fns';
 import 'react-day-picker/dist/style.css';
 import '../styles/BookingModal.css';
 

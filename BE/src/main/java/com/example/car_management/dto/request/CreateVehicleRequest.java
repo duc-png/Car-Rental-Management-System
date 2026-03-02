@@ -51,6 +51,18 @@ public class CreateVehicleRequest {
     @Min(0)
     private Integer currentKm;
 
+    @Builder.Default
+    private Boolean deliveryEnabled = Boolean.TRUE;
+
+    @Min(0)
+    private Integer freeDeliveryWithinKm;
+
+    @Min(0)
+    private Integer maxDeliveryDistanceKm;
+
+    @DecimalMin(value = "0.0", inclusive = true)
+    private BigDecimal extraFeePerKm;
+
     private Integer locationId;
 
     @Valid

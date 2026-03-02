@@ -1,4 +1,4 @@
-export default function OwnerVehicleBasicSection({ form, handleChange }) {
+export default function OwnerVehicleBasicSection({ form, handleChange, immutable = false }) {
     return (
         <div className="edit-card">
             <div className="card-header">
@@ -8,7 +8,7 @@ export default function OwnerVehicleBasicSection({ form, handleChange }) {
             <div className="form-grid two-col">
                 <label>
                     Biển số
-                    <input name="licensePlate" value={form.licensePlate} onChange={handleChange} required />
+                    <input name="licensePlate" value={form.licensePlate} onChange={handleChange} required disabled={immutable} readOnly={immutable} />
                 </label>
                 <label>
                     Màu sắc
@@ -16,7 +16,7 @@ export default function OwnerVehicleBasicSection({ form, handleChange }) {
                 </label>
                 <label>
                     Số chỗ
-                    <input type="number" name="seatCount" value={form.seatCount} onChange={handleChange} required />
+                    <input type="number" name="seatCount" value={form.seatCount} onChange={handleChange} required disabled={immutable} readOnly={immutable} />
                 </label>
             </div>
         </div>

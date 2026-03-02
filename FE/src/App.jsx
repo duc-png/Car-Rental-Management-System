@@ -26,8 +26,32 @@ import AdminVehicles from './pages/admin/AdminVehicles'
 import AdminVehicleRequestDetails from './pages/admin/AdminVehicleRequestDetails'
 import AdminOwnerRegistrations from './pages/admin/AdminOwnerRegistrations'
 import AdminOwnerRegistrationDetails from './pages/admin/AdminOwnerRegistrationDetails'
+import { useAuth } from './hooks/useAuth'
 import './styles/App.css'
 import './index.css'
+
+function hasAdminRole(user) {
+  const scope = String(user?.role || user?.scope || '')
+  return scope.includes('ROLE_ADMIN') || scope.includes('ADMIN')
+}
+
+function AdminRoute({ children }) {
+  const { user, isAuthenticated, loading } = useAuth()
+
+  if (loading) {
+    return null
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (!hasAdminRole(user)) {
+    return <Navigate to="/" replace />
+  }
+
+  return children
+}
 
 function AppLayout() {
   const location = useLocation()
@@ -57,7 +81,7 @@ function AppLayout() {
           <Route path="/owner/fleet" element={<CarOwnerFleet />} />
           <Route path="/owner/vehicles/:id" element={<OwnerVehicleDetails />} />
           <Route path="/owner/vehicles/:id/edit" element={<OwnerVehicleEdit />} />
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="vehicles" element={<AdminVehicles />} />

@@ -1,3 +1,5 @@
+import { useEffect, useMemo } from 'react'
+
 function FleetCreateModal({
     open,
     onClose,
@@ -18,12 +20,39 @@ function FleetCreateModal({
     transmissionValues,
     fuelValues,
     formatEnumLabel,
+    featureCatalog,
+    selectedFeatureIds,
+    onToggleCreateFeature,
+    createUploadFiles,
     setCreateUploadFiles,
-    createSetFirstAsMain,
-    setCreateSetFirstAsMain,
     creating,
     onCreate,
 }) {
+    const previewItems = useMemo(() => {
+        if (!open) return []
+        return (Array.isArray(createUploadFiles) ? createUploadFiles : []).map((file, index) => ({
+            key: `${file?.name || 'file'}-${file?.size || 0}-${file?.lastModified || index}-${index}`,
+            url: URL.createObjectURL(file),
+            name: file?.name || `Ảnh ${index + 1}`,
+            index,
+        }))
+    }, [open, createUploadFiles])
+
+    useEffect(() => {
+        return () => {
+            previewItems.forEach((item) => {
+                URL.revokeObjectURL(item.url)
+            })
+        }
+    }, [previewItems])
+
+    const removeUploadAt = (indexToRemove) => {
+        setCreateUploadFiles((prev) => {
+            const current = Array.isArray(prev) ? prev : []
+            return current.filter((_, index) => index !== indexToRemove)
+        })
+    }
+
     if (!open) return null
 
     return (
@@ -239,27 +268,72 @@ function FleetCreateModal({
                             />
                         </label>
 
-                        <label>
-                            Ảnh xe
-                            <input
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                onChange={(event) => {
-                                    const files = Array.from(event.target.files || [])
-                                    setCreateUploadFiles(files)
-                                }}
-                            />
-                        </label>
+                        <div className="fleet-create-image-block" style={{ gridColumn: '1 / -1' }}>
+                            <label className="fleet-create-image-upload">
+                                Ảnh xe
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    onChange={(event) => {
+                                        const files = Array.from(event.target.files || [])
+                                        setCreateUploadFiles((prev) => {
+                                            const current = Array.isArray(prev) ? prev : []
+                                            return [...current, ...files]
+                                        })
+                                        event.target.value = ''
+                                    }}
+                                />
+                            </label>
 
-                        <label>
-                            <span style={{ display: 'block' }}>Đặt ảnh đầu tiên làm ảnh chính</span>
-                            <input
-                                type="checkbox"
-                                checked={createSetFirstAsMain}
-                                onChange={(event) => setCreateSetFirstAsMain(event.target.checked)}
-                            />
-                        </label>
+                            <div className="fleet-create-image-preview fleet-create-image-preview--inline">
+                                <div className="fleet-create-image-preview-head">
+                                    <span>Ảnh đã chọn ({previewItems.length})</span>
+                                    <small>Bấm vào ảnh để bỏ ảnh</small>
+                                </div>
+                                {previewItems.length === 0 ? (
+                                    <p className="fleet-create-image-empty">Chưa có ảnh nào được chọn.</p>
+                                ) : (
+                                    <div className="fleet-create-image-list">
+                                        {previewItems.map((item) => (
+                                            <button
+                                                key={item.key}
+                                                type="button"
+                                                className="fleet-create-image-item"
+                                                onClick={() => removeUploadAt(item.index)}
+                                                title={`Bỏ ảnh: ${item.name}`}
+                                            >
+                                                <img src={item.url} alt={item.name} />
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="fleet-create-feature-block" style={{ gridColumn: '1 / -1' }}>
+                            <span className="fleet-create-feature-title">Tính năng xe</span>
+                            {featureCatalog.length === 0 ? (
+                                <p className="fleet-create-feature-empty">Không có dữ liệu tính năng.</p>
+                            ) : (
+                                <div className="fleet-create-feature-list">
+                                    {featureCatalog.map((feature) => {
+                                        const featureId = Number(feature?.id)
+                                        if (!Number.isInteger(featureId)) return null
+                                        return (
+                                            <label key={featureId} className="fleet-create-feature-item">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedFeatureIds.includes(featureId)}
+                                                    onChange={() => onToggleCreateFeature(featureId)}
+                                                />
+                                                <span>{feature?.name || `Tính năng #${featureId}`}</span>
+                                            </label>
+                                        )
+                                    })}
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div className="fleet-create-actions">
                         <button

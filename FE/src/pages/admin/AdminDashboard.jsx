@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
+import { CarFront, UserCheck, Users } from 'lucide-react'
 import { toast } from 'sonner'
 import { listOwnerRegistrationsForAdmin } from '../../api/adminOwnerRegistrations'
 import { listAllVehicles } from '../../api/adminVehicles'
 import { getCustomers } from '../../api/customers'
 import { useAuth } from '../../hooks/useAuth'
+import DashboardNotificationBell from '../../components/DashboardNotificationBell'
+import '../../styles/AdminDashboard.css'
 
 export default function AdminDashboard() {
     const { token } = useAuth()
@@ -55,31 +58,55 @@ export default function AdminDashboard() {
         }
     }, [pendingOwnerRegs, pendingVehicles, customers])
 
+    const statCards = [
+        {
+            key: 'ownerRegs',
+            label: 'Đăng ký chủ xe chờ duyệt',
+            value: stats.pendingOwnerRegs,
+            icon: UserCheck
+        },
+        {
+            key: 'vehicles',
+            label: 'Xe chờ duyệt',
+            value: stats.pendingVehicles,
+            icon: CarFront
+        },
+        {
+            key: 'customers',
+            label: 'Tổng khách hàng',
+            value: stats.customers,
+            icon: Users
+        }
+    ]
+
     return (
         <>
-            <header className="admin-header">
+            <header className="admin-dashboard-header">
                 <div>
-                    <h1>Admin Dashboard</h1>
-                    <p>Overview of approvals and customers</p>
+                    <h1>Tổng quan quản trị</h1>
+                    <p>Theo dõi nhanh yêu cầu duyệt và số lượng khách hàng</p>
                 </div>
+                <DashboardNotificationBell />
             </header>
 
             {loading ? (
-                <div className="admin-card">Đang tải dữ liệu...</div>
+                <div className="admin-dashboard-card">Đang tải dữ liệu...</div>
             ) : (
-                <div className="stats-grid">
-                    <div className="stat-card">
-                        <p>Owner registrations (pending)</p>
-                        <h3>{stats.pendingOwnerRegs}</h3>
-                    </div>
-                    <div className="stat-card">
-                        <p>Vehicles (pending approval)</p>
-                        <h3>{stats.pendingVehicles}</h3>
-                    </div>
-                    <div className="stat-card">
-                        <p>Total customers</p>
-                        <h3>{stats.customers}</h3>
-                    </div>
+                <div className="admin-dashboard-stats-grid">
+                    {statCards.map((item) => {
+                        const Icon = item.icon
+                        return (
+                            <div key={item.key} className="admin-dashboard-stat-card">
+                                <div className="admin-dashboard-stat-icon" aria-hidden="true">
+                                    <Icon size={20} strokeWidth={2.2} />
+                                </div>
+                                <div>
+                                    <p>{item.label}</p>
+                                    <h3>{item.value}</h3>
+                                </div>
+                            </div>
+                        )
+                    })}
                 </div>
             )}
         </>

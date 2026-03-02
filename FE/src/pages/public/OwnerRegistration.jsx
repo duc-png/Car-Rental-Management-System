@@ -573,11 +573,13 @@ function OwnerRegistration() {
                             </div>
                         </div>
 
-                        <div className="form-section">
-                            <h2>Thông tin xe</h2>
+                        <div className="form-section owner-vehicle-license-section">
+                            <h2>Biển số xe</h2>
+                            <small className="owner-warning-text">
+                                Lưu ý: Biển số xe không thể thay đổi sau khi đăng ký.
+                            </small>
                             <div className="form-grid">
                                 <label>
-                                    Biển số xe
                                     <input
                                         type="text"
                                         value={formData.vehicle.licensePlate}
@@ -586,6 +588,15 @@ function OwnerRegistration() {
                                         required
                                     />
                                 </label>
+                            </div>
+                        </div>
+
+                        <div className="form-section">
+                            <h2>Thông tin cơ bản</h2>
+                            <small className="owner-warning-text">
+                                Lưu ý: Các thông tin cơ bản sẽ không thể thay đổi sau khi đăng ký.
+                            </small>
+                            <div className="form-grid">
                                 <label>
                                     Hãng xe
                                     <select
@@ -681,20 +692,23 @@ function OwnerRegistration() {
                                         <option value="ELECTRIC">Điện</option>
                                     </select>
                                 </label>
-                                <label>
-                                    Mức tiêu thụ (L/100km)
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        min="0"
-                                        value={formData.vehicle.fuelConsumption}
-                                        onChange={(event) => updateVehicle('fuelConsumption', event.target.value)}
-                                        placeholder="Ví Dụ: 6.8"
-                                    />
-                                </label>
                             </div>
-                            <label className="full-width">
-                                Mô tả xe
+
+                            <div className="owner-fuel-consumption-section">
+                                <h3>Mức tiêu thụ nhiên liệu</h3>
+                                <p>Số lít nhiên liệu cho quãng đường 100km.</p>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    value={formData.vehicle.fuelConsumption}
+                                    onChange={(event) => updateVehicle('fuelConsumption', event.target.value)}
+                                    placeholder="Ví Dụ: 6.8"
+                                />
+                            </div>
+
+                            <label className="full-width owner-description-field">
+                                <span>Mô tả xe</span>
                                 <textarea
                                     rows="4"
                                     value={formData.vehicle.description}

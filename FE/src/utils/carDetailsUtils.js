@@ -89,11 +89,29 @@ export const formatVndK = (value) => {
     return `${inThousands.toLocaleString('vi-VN')}K`;
 };
 
+const normalizeAddressText = (value) => String(value || '').trim().replace(/\s+/g, ' ');
+
+const scoreGeocodeCandidate = (candidate, query) => {
+    const name = String(candidate?.display_name || '').toLowerCase();
+    const countryCode = String(candidate?.address?.country_code || '').toLowerCase();
+    const normalizedQuery = String(query || '').toLowerCase();
+    const tokens = normalizedQuery.split(',').map((part) => part.trim()).filter(Boolean);
+
+    let score = Number(candidate?.importance || 0);
+    if (countryCode === 'vn') score += 0.2;
+    for (const token of tokens) {
+        if (token && name.includes(token)) {
+            score += 0.08;
+        }
+    }
+    return score;
+};
+
 export const geocodeAddress = async (query, signal) => {
-    const q = (query || '').trim();
+    const q = normalizeAddressText(query);
     if (!q) return null;
 
-    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&addressdetails=1&limit=1&countrycodes=vn`;
+    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(q)}&addressdetails=1&limit=5&countrycodes=vn`;
 
     try {
         const response = await fetch(url, {
@@ -103,13 +121,16 @@ export const geocodeAddress = async (query, signal) => {
         if (!response.ok) return null;
 
         const data = await response.json();
-        const first = Array.isArray(data) ? data[0] : null;
+        const candidates = Array.isArray(data) ? data : [];
+        const best = candidates
+            .filter((item) => item?.lat && item?.lon)
+            .sort((left, right) => scoreGeocodeCandidate(right, q) - scoreGeocodeCandidate(left, q))[0];
 
-        if (first?.lat && first?.lon) {
+        if (best?.lat && best?.lon) {
             return {
-                lat: Number(first.lat),
-                lon: Number(first.lon),
-                label: first.display_name || q
+                lat: Number(best.lat),
+                lon: Number(best.lon),
+                label: best.display_name || q
             };
         }
     } catch (err) {
@@ -181,4 +202,43 @@ export const haversineDistanceKm = (a, b) => {
     const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
     const c = 2 * Math.asin(Math.min(1, Math.sqrt(h)));
     return R * c;
+};
+
+export const reverseGeocode = async (lat, lon, signal) => {
+    if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lon))) return null;
+
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&zoom=18&addressdetails=1`;
+
+    try {
+        const response = await fetch(url, {
+            signal,
+            headers: { 'Accept-Language': 'vi,en;q=0.9' }
+        });
+
+        if (!response.ok) return null;
+        const data = await response.json();
+        return data?.display_name || null;
+    } catch (err) {
+        if (err?.name === 'AbortError') throw err;
+        return null;
+    }
+};
+
+export const routeDistanceKm = async (origin, destination, signal) => {
+    if (!origin?.lat || !origin?.lon || !destination?.lat || !destination?.lon) return null;
+
+    const url = `https://router.project-osrm.org/route/v1/driving/${origin.lon},${origin.lat};${destination.lon},${destination.lat}?overview=false`;
+
+    try {
+        const response = await fetch(url, { signal });
+        if (!response.ok) return null;
+
+        const data = await response.json();
+        const distanceMeters = data?.routes?.[0]?.distance;
+        if (!Number.isFinite(Number(distanceMeters))) return null;
+        return Number(distanceMeters) / 1000;
+    } catch (err) {
+        if (err?.name === 'AbortError') throw err;
+        return null;
+    }
 };

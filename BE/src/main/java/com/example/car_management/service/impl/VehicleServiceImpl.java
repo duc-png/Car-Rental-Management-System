@@ -9,6 +9,7 @@ import com.example.car_management.exception.AppException;
 import com.example.car_management.exception.ErrorCode;
 import com.example.car_management.mapper.VehicleMapper;
 import com.example.car_management.repository.*;
+import com.example.car_management.service.NotificationService;
 import com.example.car_management.service.VehicleService;
 import com.example.car_management.service.cloud.CloudinaryService;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.Instant;
 import java.util.Arrays;
@@ -34,6 +36,7 @@ public class VehicleServiceImpl implements VehicleService {
     private final VehicleFeatureRepository vehicleFeatureRepository;
     private final BookingRepository bookingRepository;
     private final CloudinaryService cloudinaryService;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -65,11 +68,18 @@ public class VehicleServiceImpl implements VehicleService {
                 .year(req.getYear())
                 .fuelConsumption(req.getFuelConsumption())
                 .currentKm(req.getCurrentKm() == null ? 0 : req.getCurrentKm())
+                .deliveryEnabled(resolveDeliveryEnabled(req.getDeliveryEnabled()))
+                .freeDeliveryWithinKm(normalizeDeliveryDistance(req.getFreeDeliveryWithinKm()))
+                .maxDeliveryDistanceKm(normalizeDeliveryDistance(req.getMaxDeliveryDistanceKm()))
+                .extraFeePerKm(normalizeExtraFee(req.getExtraFeePerKm()))
                 .location(location)
                 .features(resolveFeatures(req.getFeatureIds()))
                 .build();
 
+        applyDeliveryRules(v);
+
         VehicleEntity saved = vehicleRepository.save(v);
+        notificationService.notifyAdminsVehicleSubmitted(saved);
         return VehicleMapper.toResponse(saved);
     }
 
@@ -107,42 +117,35 @@ public class VehicleServiceImpl implements VehicleService {
 
         assertOwner(v, ownerId);
 
-        if (req.getLicensePlate() != null && !v.getLicensePlate().equals(req.getLicensePlate())
-                && vehicleRepository.existsByLicensePlate(req.getLicensePlate())) {
-            throw new AppException(ErrorCode.LICENSE_PLATE_EXISTED);
-        }
+        assertImmutableFields(req, v);
 
-        if (req.getModelId() != null) {
-            VehicleModelEntity model = vehicleModelRepository.findByIdWithBrandAndType(req.getModelId())
-                    .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
-            v.setModel(model);
-        }
-
-        if (req.getLicensePlate() != null)
-            v.setLicensePlate(req.getLicensePlate());
         if (req.getColor() != null)
             v.setColor(req.getColor());
-        if (req.getSeatCount() != null)
-            v.setSeatCount(req.getSeatCount());
         if (req.getTransmission() != null)
             v.setTransmission(req.getTransmission());
-        if (req.getFuelType() != null)
-            v.setFuelType(req.getFuelType());
         if (req.getPricePerDay() != null)
             v.setPricePerDay(req.getPricePerDay());
         if (req.getDescription() != null)
             v.setDescription(req.getDescription().trim());
-        if (req.getYear() != null)
-            v.setYear(req.getYear());
         if (req.getFuelConsumption() != null)
             v.setFuelConsumption(req.getFuelConsumption());
         if (req.getCurrentKm() != null)
             v.setCurrentKm(req.getCurrentKm());
+        if (req.getDeliveryEnabled() != null)
+            v.setDeliveryEnabled(resolveDeliveryEnabled(req.getDeliveryEnabled()));
+        if (req.getFreeDeliveryWithinKm() != null)
+            v.setFreeDeliveryWithinKm(normalizeDeliveryDistance(req.getFreeDeliveryWithinKm()));
+        if (req.getMaxDeliveryDistanceKm() != null)
+            v.setMaxDeliveryDistanceKm(normalizeDeliveryDistance(req.getMaxDeliveryDistanceKm()));
+        if (req.getExtraFeePerKm() != null)
+            v.setExtraFeePerKm(normalizeExtraFee(req.getExtraFeePerKm()));
         if (req.getStatus() != null) {
             throw new AppException(ErrorCode.VEHICLE_APPROVAL_REQUIRED);
         }
         if (req.getFeatureIds() != null)
             v.setFeatures(resolveFeatures(req.getFeatureIds()));
+
+        applyDeliveryRules(v);
 
         // Update location chỉ nếu có locationId hoặc location data được gửi
         boolean hasLocationIdOrData = req.getLocationId() != null
@@ -157,6 +160,33 @@ public class VehicleServiceImpl implements VehicleService {
         // chỉ load images để map response, KHÔNG set vào entity
         List<VehicleImageEntity> imgs = vehicleImageRepository.findByVehicle_Id(saved.getId());
         return VehicleMapper.toResponse(saved, imgs);
+    }
+
+    private void assertImmutableFields(UpdateVehicleRequest req, VehicleEntity vehicle) {
+        if (req.getModelId() != null && vehicle.getModel() != null
+                && !req.getModelId().equals(vehicle.getModel().getId())) {
+            throw new AppException(ErrorCode.VEHICLE_IMMUTABLE_FIELDS);
+        }
+
+        if (req.getLicensePlate() != null) {
+            String currentPlate = vehicle.getLicensePlate() == null ? "" : vehicle.getLicensePlate().trim();
+            String requestedPlate = req.getLicensePlate().trim();
+            if (!requestedPlate.equalsIgnoreCase(currentPlate)) {
+                throw new AppException(ErrorCode.VEHICLE_IMMUTABLE_FIELDS);
+            }
+        }
+
+        if (req.getSeatCount() != null && !req.getSeatCount().equals(vehicle.getSeatCount())) {
+            throw new AppException(ErrorCode.VEHICLE_IMMUTABLE_FIELDS);
+        }
+
+        if (req.getFuelType() != null && req.getFuelType() != vehicle.getFuelType()) {
+            throw new AppException(ErrorCode.VEHICLE_IMMUTABLE_FIELDS);
+        }
+
+        if (req.getYear() != null && !req.getYear().equals(vehicle.getYear())) {
+            throw new AppException(ErrorCode.VEHICLE_IMMUTABLE_FIELDS);
+        }
     }
 
     private java.util.Set<VehicleFeatureEntity> resolveFeatures(List<Integer> featureIds) {
@@ -235,6 +265,47 @@ public class VehicleServiceImpl implements VehicleService {
         if (plate == null)
             return null;
         return plate.trim().toUpperCase(); // tùy rule, nhưng trim là bắt buộc
+    }
+
+    private Boolean resolveDeliveryEnabled(Boolean deliveryEnabled) {
+        return deliveryEnabled == null ? Boolean.TRUE : deliveryEnabled;
+    }
+
+    private Integer normalizeDeliveryDistance(Integer km) {
+        if (km == null) {
+            return null;
+        }
+        return Math.max(0, km);
+    }
+
+    private BigDecimal normalizeExtraFee(BigDecimal fee) {
+        if (fee == null) {
+            return null;
+        }
+        return fee.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : fee;
+    }
+
+    private void applyDeliveryRules(VehicleEntity vehicle) {
+        if (!Boolean.TRUE.equals(vehicle.getDeliveryEnabled())) {
+            vehicle.setFreeDeliveryWithinKm(null);
+            vehicle.setMaxDeliveryDistanceKm(null);
+            vehicle.setExtraFeePerKm(null);
+            return;
+        }
+
+        if (vehicle.getFreeDeliveryWithinKm() == null) {
+            vehicle.setFreeDeliveryWithinKm(0);
+        }
+        if (vehicle.getMaxDeliveryDistanceKm() == null) {
+            vehicle.setMaxDeliveryDistanceKm(20);
+        }
+        if (vehicle.getExtraFeePerKm() == null) {
+            vehicle.setExtraFeePerKm(new BigDecimal("10000"));
+        }
+
+        if (vehicle.getFreeDeliveryWithinKm() > vehicle.getMaxDeliveryDistanceKm()) {
+            vehicle.setFreeDeliveryWithinKm(vehicle.getMaxDeliveryDistanceKm());
+        }
     }
 
     @Override
@@ -504,6 +575,7 @@ public class VehicleServiceImpl implements VehicleService {
 
         v.setStatus(com.example.car_management.entity.enums.VehicleStatus.AVAILABLE);
         v.setReviewedAt(Instant.now());
+        notificationService.notifyOwnerVehicleApproved(v);
         return VehicleMapper.toResponse(v, imgs);
     }
 
@@ -523,6 +595,7 @@ public class VehicleServiceImpl implements VehicleService {
         // BE chưa có field lưu "reason"; chỉ set trạng thái.
         v.setStatus(com.example.car_management.entity.enums.VehicleStatus.REJECTED);
         v.setReviewedAt(Instant.now());
+        notificationService.notifyOwnerVehicleRejected(v, reason);
 
         return VehicleMapper.toResponse(v, imgs);
     }

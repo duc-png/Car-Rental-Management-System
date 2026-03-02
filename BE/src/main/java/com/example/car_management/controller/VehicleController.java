@@ -134,7 +134,7 @@ public class VehicleController {
 
         // ADMIN duyệt
         @PatchMapping("/{id}/approve")
-        @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_ADMIN')")
+        @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ADMIN')")
         public ResponseEntity<ApiResponse<VehicleResponse>> approve(@PathVariable Integer id) {
                 VehicleResponse data = vehicleService.approveVehicle(id);
                 return ResponseEntity.ok(ApiResponse.<VehicleResponse>builder()
@@ -143,7 +143,7 @@ public class VehicleController {
 
         // ADMIN từ chối
         @PatchMapping("/{id}/reject")
-        @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_ADMIN')")
+        @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ADMIN')")
         public ResponseEntity<ApiResponse<VehicleResponse>> reject(
                         @PathVariable Integer id,
                         @RequestParam(required = false) String reason) {
@@ -160,4 +160,3 @@ public class VehicleController {
         }
 
 }
-
