@@ -24,12 +24,22 @@ const getDisplayName = (user) => {
   return firstValid || 'User'
 }
 
+const isOwner = (user) => {
+  const scope = String(user?.role || user?.scope || '')
+  return scope.includes('EXPERT') || scope.includes('OWNER')
+}
+
 function Navbar({ sticky = true }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
   const { theme, toggleTheme } = useTheme()
   const { isAuthenticated, user, logout } = useAuth()
   const displayName = getDisplayName(user)
 
+  const closeMenus = () => {
+    setIsMobileMenuOpen(false)
+    setIsUserMenuOpen(false)
+  }
 
   return (
     <nav className={`navbar ${sticky ? '' : 'non-sticky'}`.trim()}>
@@ -75,10 +85,32 @@ function Navbar({ sticky = true }) {
 
           {isAuthenticated ? (
             <div className="nav-user-menu">
-              <span className="user-name">Hi, {displayName}</span>
-              <button onClick={logout} className="btn-logout">
-                Logout
+              <button
+                className="user-name"
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              >
+                Hi, {displayName} ▾
               </button>
+
+              {isUserMenuOpen && (
+                <div className="user-dropdown">
+                  <Link to="/my-bookings" className="dropdown-item" onClick={closeMenus}>
+                    🚗 Đặt xe của tôi
+                  </Link>
+                  {isOwner(user) && (
+                    <Link to="/manage-rentals" className="dropdown-item" onClick={closeMenus}>
+                      📋 Quản lý cho thuê
+                    </Link>
+                  )}
+                  <hr className="dropdown-divider" />
+                  <button
+                    className="dropdown-item dropdown-logout"
+                    onClick={() => { logout(); closeMenus(); }}
+                  >
+                    🚪 Đăng xuất
+                  </button>
+                </div>
+              )}
             </div>
           ) : (
             <>
@@ -97,3 +129,4 @@ function Navbar({ sticky = true }) {
 }
 
 export default Navbar
+
