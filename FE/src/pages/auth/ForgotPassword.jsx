@@ -46,7 +46,7 @@ function ForgotPassword() {
 
                         <h1 className="success-title">Check Your Email</h1>
                         <p className="success-message">
-                            We've sent a password reset link to <strong>{email}</strong>
+                            We&apos;ve sent a password reset link to <strong>{email}</strong>
                         </p>
                         <p className="success-description">
                             Please check your inbox and click on the link to reset your password.
@@ -67,7 +67,7 @@ function ForgotPassword() {
 
                         <div className="auth-footer">
                             <p>
-                                Didn't receive the email?{' '}
+                                Didn&apos;t receive the email?{' '}
                                 <button
                                     className="inline-link resend-link"
                                     onClick={(e) => {
@@ -101,7 +101,7 @@ function ForgotPassword() {
                             <img src="/favicon.svg" alt="CarRental Logo" />
                         </div>
                         <h1>Forgot Password?</h1>
-                        <p>No worries, we'll send you reset instructions</p>
+                        <p>No worries, we&apos;ll send you reset instructions</p>
                     </div>
 
                     <form className="auth-form" onSubmit={handleSubmit}>

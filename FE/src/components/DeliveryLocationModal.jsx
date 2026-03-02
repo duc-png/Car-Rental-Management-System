@@ -16,7 +16,11 @@ function DeliveryLocationModal({
     destinationLabel,
     totalFee,
     distanceKm,
-    onOpenCustomAddress
+    maxDistanceKm,
+    freeWithinKm,
+    feePerKmVnd,
+    onOpenCustomAddress,
+    onApply
 }) {
     const mapContainerRef = useRef(null)
     const mapRef = useRef(null)
@@ -25,8 +29,12 @@ function DeliveryLocationModal({
 
     const canRenderMap = Boolean(carCoords?.lat && carCoords?.lon)
     const distanceValue = Number(distanceKm)
+    const maxDistanceValue = Math.max(0, Number(maxDistanceKm ?? 20) || 0)
+    const freeWithinValue = Math.max(0, Number(freeWithinKm ?? 0) || 0)
+    const feePerKmValue = Math.max(0, Number(feePerKmVnd ?? 10000) || 0)
     const hasDestination = Boolean(destinationCoords?.lat && destinationCoords?.lon)
-    const isOverLimit = hasDestination && Number.isFinite(distanceValue) && distanceValue > 7
+    const isOverLimit = hasDestination && Number.isFinite(distanceValue) && distanceValue > maxDistanceValue
+    const canApply = hasDestination && !isOverLimit
 
     const distanceLabel = useMemo(() => {
         const d = distanceValue
@@ -195,10 +203,16 @@ function DeliveryLocationModal({
                         <button
                             type="button"
                             className="delivery-primary"
-                            onClick={onOpenCustomAddress}
+                            onClick={() => {
+                                if (canApply) {
+                                    onApply?.()
+                                    return
+                                }
+                                onOpenCustomAddress()
+                            }}
                             disabled={isOverLimit}
                         >
-                            Thay đổi
+                            {canApply ? 'Áp dụng' : 'Thay đổi'}
                         </button>
                     </div>
                 </div>
@@ -208,11 +222,15 @@ function DeliveryLocationModal({
                     <div className="delivery-footer-rows">
                         <div>
                             <span>Dịch vụ giao nhận xe tận nơi</span>
-                            <b>trong vòng 7km</b>
+                            <b>trong vòng {maxDistanceValue}km</b>
                         </div>
                         <div>
-                            <span>Phí giao nhận xe (2 chiều)</span>
-                            <b>20.000đ/km</b>
+                            <span>Miễn phí giao nhận</span>
+                            <b>{freeWithinValue}km đầu tiên</b>
+                        </div>
+                        <div>
+                            <span>Phí giao nhận xe</span>
+                            <b>{formatVndNumber(feePerKmValue)}đ/km</b>
                         </div>
                     </div>
                 </div>

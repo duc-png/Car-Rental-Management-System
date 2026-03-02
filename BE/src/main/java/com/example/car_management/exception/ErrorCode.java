@@ -36,6 +36,7 @@ public enum ErrorCode {
     VEHICLE_FEATURE_NOT_FOUND(2013, "Vehicle feature not found", HttpStatus.NOT_FOUND),
     IMAGE_UPLOAD_FAILED(2014, "Invalid image file or upload failed", HttpStatus.BAD_REQUEST),
     VEHICLE_APPROVAL_REQUIRED(2015, "Vehicle is pending admin approval", HttpStatus.BAD_REQUEST),
+    VEHICLE_IMMUTABLE_FIELDS(2016, "Core vehicle information cannot be changed after creation", HttpStatus.BAD_REQUEST),
 
     // ===== Booking =====
     BOOKING_NOT_FOUND(3001, "Booking not found", HttpStatus.NOT_FOUND),

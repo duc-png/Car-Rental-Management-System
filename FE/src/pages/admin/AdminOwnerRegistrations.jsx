@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { listOwnerRegistrationsForAdmin } from '../../api/adminOwnerRegistrations'
+import DashboardNotificationBell from '../../components/DashboardNotificationBell'
 import '../../styles/AdminOwnerRegistrations.css'
 
 const STATUS_OPTIONS = [
-    { value: 'ALL', label: 'All' },
-    { value: 'PENDING', label: 'Pending' },
-    { value: 'APPROVED', label: 'Approved' },
-    { value: 'CANCELLED', label: 'Cancelled' },
+    { value: 'ALL', label: 'Tất cả' },
+    { value: 'PENDING', label: 'Chờ duyệt' },
+    { value: 'APPROVED', label: 'Đã duyệt' },
+    { value: 'CANCELLED', label: 'Đã hủy' },
 ]
 
 const SORT_OPTIONS = [
-    { value: 'NEWEST', label: 'Newest' },
-    { value: 'OLDEST', label: 'Oldest' },
+    { value: 'NEWEST', label: 'Mới nhất' },
+    { value: 'OLDEST', label: 'Cũ nhất' },
 ]
 
 const formatDateShort = (value) => {
@@ -72,10 +73,10 @@ const statusBucket = (statusValue) => {
 
 const statusLabel = (statusValue) => {
     const value = String(statusValue || '')
-    if (value === 'ALL') return 'All'
-    if (value === 'PENDING') return 'Pending'
-    if (value === 'CANCELLED') return 'Cancelled'
-    if (value === 'APPROVED') return 'Approved'
+    if (value === 'ALL') return 'Tất cả'
+    if (value === 'PENDING') return 'Chờ duyệt'
+    if (value === 'CANCELLED') return 'Đã hủy'
+    if (value === 'APPROVED') return 'Đã duyệt'
     return value || '—'
 }
 
@@ -87,7 +88,7 @@ const registrationTitle = (item) => {
 
 const registrationSubtitle = (item) => {
     const parts = []
-    if (item?.seatCount != null) parts.push(`${item.seatCount} Seats`)
+    if (item?.seatCount != null) parts.push(`${item.seatCount} chỗ`)
     if (item?.licensePlate) parts.push(item.licensePlate)
     return parts.length ? parts.join(' • ') : '—'
 }
@@ -98,7 +99,7 @@ const formatFuelConsumption = (value) => {
 }
 
 export default function AdminOwnerRegistrations() {
-    const [status, setStatus] = useState('PENDING')
+    const [status, setStatus] = useState('ALL')
     const [sortKey, setSortKey] = useState('NEWEST')
     const [items, setItems] = useState([])
     const [pendingStats, setPendingStats] = useState({ pending: 0, newToday: 0 })
@@ -190,8 +191,11 @@ export default function AdminOwnerRegistrations() {
     return (
         <>
             <div className="owner-reg-page-header">
-                <h1>Owner Registration Requests</h1>
-                <p>Review and approve applications for new car owners on the platform.</p>
+                <div>
+                    <h1>Yêu cầu đăng ký chủ xe</h1>
+                    <p>Rà soát và xử lý hồ sơ chủ xe mới trên nền tảng.</p>
+                </div>
+                <DashboardNotificationBell />
             </div>
 
             <div className="owner-reg-stats">
@@ -204,9 +208,9 @@ export default function AdminOwnerRegistrations() {
                                 <path d="M9 21H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                             </svg>
                         </div>
-                        <span className="owner-reg-stat-badge">Active Queue</span>
+                        <span className="owner-reg-stat-badge">Hàng chờ xử lý</span>
                     </div>
-                    <div className="owner-reg-stat-label">Pending applications</div>
+                    <div className="owner-reg-stat-label">Hồ sơ chờ duyệt</div>
                     <div className="owner-reg-stat-value">{pendingStats.pending}</div>
                 </div>
 
@@ -220,9 +224,9 @@ export default function AdminOwnerRegistrations() {
                                 <path d="M5 6H19C20.1046 6 21 6.89543 21 8V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V8C3 6.89543 3.89543 6 5 6Z" stroke="currentColor" strokeWidth="2" />
                             </svg>
                         </div>
-                        <span className="owner-reg-stat-badge">+{pendingStats.newToday} today</span>
+                        <span className="owner-reg-stat-badge">+{pendingStats.newToday} hôm nay</span>
                     </div>
-                    <div className="owner-reg-stat-label">New today</div>
+                    <div className="owner-reg-stat-label">Mới hôm nay</div>
                     <div className="owner-reg-stat-value">{pendingStats.newToday}</div>
                 </div>
 
@@ -234,9 +238,9 @@ export default function AdminOwnerRegistrations() {
                                 <path d="M12 13C14.2091 13 16 11.2091 16 9C16 6.79086 14.2091 5 12 5C9.79086 5 8 6.79086 8 9C8 11.2091 9.79086 13 12 13Z" stroke="currentColor" strokeWidth="2" />
                             </svg>
                         </div>
-                        <span className="owner-reg-stat-badge">Total growth</span>
+                        <span className="owner-reg-stat-badge">Tổng quan</span>
                     </div>
-                    <div className="owner-reg-stat-label">Total owners</div>
+                    <div className="owner-reg-stat-label">Tổng chủ xe</div>
                     <div className="owner-reg-stat-value">—</div>
                 </div>
             </div>
@@ -245,7 +249,7 @@ export default function AdminOwnerRegistrations() {
 
             <div className="owner-reg-card">
                 <div className="owner-reg-card-head">
-                    <div className="owner-reg-card-title">Owner Registration</div>
+                    <div className="owner-reg-card-title">Đăng ký chủ xe</div>
                     <div className="owner-reg-controls">
                         <select
                             value={status}
@@ -262,7 +266,7 @@ export default function AdminOwnerRegistrations() {
                             className="owner-reg-select"
                         >
                             {SORT_OPTIONS.map((opt) => (
-                                <option key={opt.value} value={opt.value}>Sort: {opt.label}</option>
+                                <option key={opt.value} value={opt.value}>Sắp xếp: {opt.label}</option>
                             ))}
                         </select>
                     </div>
@@ -286,13 +290,13 @@ export default function AdminOwnerRegistrations() {
                             </colgroup>
                             <thead>
                                 <tr>
-                                    <th>No</th>
-                                    <th>Owner</th>
-                                    <th>Vehicle info</th>
-                                    <th>Specs</th>
-                                    <th>Submitted</th>
-                                    <th>Status</th>
-                                    <th className="actions">Actions</th>
+                                    <th>STT</th>
+                                    <th>Chủ xe</th>
+                                    <th>Thông tin xe</th>
+                                    <th>Thông số</th>
+                                    <th>Ngày gửi</th>
+                                    <th>Trạng thái</th>
+                                    <th className="actions">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -346,7 +350,7 @@ export default function AdminOwnerRegistrations() {
                                                     to={`/admin/owner-registrations/${item.requestId}`}
                                                     className="owner-reg-view"
                                                     aria-label="View details"
-                                                    title="View details"
+                                                    title="Xem chi tiết"
                                                 >
                                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                                         <path d="M2 12C4.5 7 8 5 12 5C16 5 19.5 7 22 12C19.5 17 16 19 12 19C8 19 4.5 17 2 12Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
@@ -362,7 +366,7 @@ export default function AdminOwnerRegistrations() {
 
                         <div className="owner-reg-footer">
                             <div className="owner-reg-range">
-                                Showing {(currentPage - 1) * PAGE_SIZE + 1} to {Math.min(currentPage * PAGE_SIZE, sorted.length)} of {sorted.length} requests
+                                Hiển thị {(currentPage - 1) * PAGE_SIZE + 1} đến {Math.min(currentPage * PAGE_SIZE, sorted.length)} trên tổng {sorted.length} yêu cầu
                             </div>
                             <div className="owner-reg-pagination">
                                 <button
@@ -370,7 +374,7 @@ export default function AdminOwnerRegistrations() {
                                     className="page-btn"
                                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                                     disabled={currentPage === 1}
-                                    aria-label="Previous page"
+                                    aria-label="Trang trước"
                                 >
                                     ‹
                                 </button>
@@ -392,7 +396,7 @@ export default function AdminOwnerRegistrations() {
                                     className="page-btn"
                                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                                     disabled={currentPage === totalPages}
-                                    aria-label="Next page"
+                                    aria-label="Trang sau"
                                 >
                                     ›
                                 </button>

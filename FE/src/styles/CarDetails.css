@@ -937,6 +937,18 @@
     white-space: nowrap;
 }
 
+.pickup-option-disabled {
+    cursor: not-allowed;
+    grid-template-columns: 24px minmax(0, 1fr);
+    background: #e5e7eb;
+    border-color: #d1d5db;
+}
+
+.pickup-option-disabled .pickup-radio-icon {
+    border-color: #d1d5db;
+    background: #f3f4f6;
+}
+
 .btn-primary.full-width {
     width: 100%;
     margin-top: 14px;

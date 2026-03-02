@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { approveVehicle, listAllVehicles, rejectVehicle } from '../../api/adminVehicles'
 import { getOwnerById } from '../../api/owners'
+import DashboardNotificationBell from '../../components/DashboardNotificationBell'
 import '../../styles/AdminVehicles.css'
 
 const APPROVED_STATUSES = new Set(['AVAILABLE', 'RENTED', 'MAINTENANCE'])
@@ -18,7 +19,7 @@ const formatPrice = (value) => {
 
 const vehicleName = (vehicle) => {
     const combined = `${vehicle?.brandName || ''} ${vehicle?.modelName || ''}`.trim()
-    return combined || `Vehicle #${vehicle?.id ?? ''}`
+    return combined || `Xe #${vehicle?.id ?? ''}`
 }
 
 const vehicleSubtitle = (vehicle) => {
@@ -45,9 +46,9 @@ const statusBucket = (status) => {
 
 const statusLabel = (status) => {
     const bucket = statusBucket(status)
-    if (bucket === 'pending') return 'Pending'
-    if (bucket === 'rejected') return 'Rejected'
-    return 'Approved'
+    if (bucket === 'pending') return 'Chờ duyệt'
+    if (bucket === 'rejected') return 'Đã từ chối'
+    return 'Đã duyệt'
 }
 
 const pickVehicleImage = (vehicle) => {
@@ -235,10 +236,12 @@ export default function AdminVehicles() {
         <>
             <div className="approval-header">
                 <div>
-                    <h1>Vehicle Approval</h1>
-                    <p>Review and manage vehicle approval requests from car owners.</p>
+                    <h1>Duyệt xe</h1>
+                    <p>Rà soát và xử lý yêu cầu duyệt xe từ chủ xe.</p>
                 </div>
-                {/* <button className="btn-outline" onClick={load} disabled={loading}>Refresh</button> */}
+                <div className="approval-header-actions">
+                    <DashboardNotificationBell />
+                </div>
             </div>
 
             <div className="approval-stats">
@@ -253,7 +256,7 @@ export default function AdminVehicles() {
                         </div>
                         <span className="approval-stat-badge">+{percentOfTotal(stats.pendingRequests)}%</span>
                     </div>
-                    <div className="approval-stat-label">Pending requests</div>
+                    <div className="approval-stat-label">Yêu cầu chờ duyệt</div>
                     <div className="approval-stat-value">{stats.pendingRequests}</div>
                 </div>
 
@@ -266,7 +269,7 @@ export default function AdminVehicles() {
                         </div>
                         <span className="approval-stat-badge">+{percentOfTotal(stats.approvedVehicles)}%</span>
                     </div>
-                    <div className="approval-stat-label">Approved vehicles</div>
+                    <div className="approval-stat-label">Xe đã duyệt</div>
                     <div className="approval-stat-value">{stats.approvedVehicles}</div>
                 </div>
 
@@ -280,7 +283,7 @@ export default function AdminVehicles() {
                         </div>
                         <span className="approval-stat-badge">-{percentOfTotal(stats.rejectedRequests)}%</span>
                     </div>
-                    <div className="approval-stat-label">Rejected requests</div>
+                    <div className="approval-stat-label">Yêu cầu bị từ chối</div>
                     <div className="approval-stat-value">{stats.rejectedRequests}</div>
                 </div>
 
@@ -295,7 +298,7 @@ export default function AdminVehicles() {
                         </div>
                         <span className="approval-stat-badge">+{stats.total ? 100 : 0}%</span>
                     </div>
-                    <div className="approval-stat-label">Total requests</div>
+                    <div className="approval-stat-label">Tổng yêu cầu</div>
                     <div className="approval-stat-value">{stats.total}</div>
                 </div>
             </div>
@@ -312,27 +315,27 @@ export default function AdminVehicles() {
                         <input
                             value={query}
                             onChange={(event) => setQuery(event.target.value)}
-                            placeholder="Quick search..."
+                            placeholder="Tìm nhanh..."
                         />
                     </div>
 
                     <div className="filter-group">
                         <select className="approval-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-                            <option value="ALL">Status: All</option>
-                            <option value="PENDING">Status: Pending</option>
-                            <option value="APPROVED">Status: Approved</option>
-                            <option value="REJECTED">Status: Rejected</option>
+                            <option value="ALL">Trạng thái: Tất cả</option>
+                            <option value="PENDING">Trạng thái: Chờ duyệt</option>
+                            <option value="APPROVED">Trạng thái: Đã duyệt</option>
+                            <option value="REJECTED">Trạng thái: Đã từ chối</option>
                         </select>
                         <select className="approval-select" value={dateRange} onChange={(e) => setDateRange(e.target.value)}>
-                            <option value="LAST_30">Last 30 Days</option>
-                            <option value="LAST_7">Last 7 Days</option>
-                            <option value="ALL_TIME">All Time</option>
+                            <option value="LAST_30">30 ngày gần đây</option>
+                            <option value="LAST_7">7 ngày gần đây</option>
+                            <option value="ALL_TIME">Toàn thời gian</option>
                         </select>
                         <select className="approval-select" value={sortKey} onChange={(e) => setSortKey(e.target.value)}>
-                            <option value="LATEST">Sort: Latest</option>
-                            <option value="OLDEST">Sort: Oldest</option>
-                            <option value="PRICE_HIGH">Sort: Price High</option>
-                            <option value="PRICE_LOW">Sort: Price Low</option>
+                            <option value="LATEST">Sắp xếp: Mới nhất</option>
+                            <option value="OLDEST">Sắp xếp: Cũ nhất</option>
+                            <option value="PRICE_HIGH">Sắp xếp: Giá cao</option>
+                            <option value="PRICE_LOW">Sắp xếp: Giá thấp</option>
                         </select>
                     </div>
                 </div>
@@ -350,20 +353,20 @@ export default function AdminVehicles() {
                         <table className="approval-table">
                             <thead>
                                 <tr>
-                                    <th>Vehicle</th>
-                                    <th>Owner</th>
-                                    <th>Location</th>
-                                    <th>Price/Day</th>
-                                    <th>Date Submitted</th>
-                                    <th>Status</th>
-                                    <th style={{ textAlign: 'right' }}>Actions</th>
+                                    <th>Xe</th>
+                                    <th>Chủ xe</th>
+                                    <th>Địa điểm</th>
+                                    <th>Giá/ngày</th>
+                                    <th>Ngày gửi</th>
+                                    <th>Trạng thái</th>
+                                    <th style={{ textAlign: 'right' }}>Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {paginated.map((vehicle) => {
                                     const imageUrl = pickVehicleImage(vehicle)
                                     const owner = vehicle?.ownerId ? ownersById[vehicle.ownerId] : null
-                                    const ownerName = owner?.fullName || (vehicle?.ownerId ? `Owner #${vehicle.ownerId}` : '—')
+                                    const ownerName = owner?.fullName || (vehicle?.ownerId ? `Chủ xe #${vehicle.ownerId}` : '—')
                                     const ownerEmail = owner?.email || ''
                                     const bucket = statusBucket(vehicle?.status)
                                     const canAct = String(vehicle?.status) === 'PENDING_APPROVAL'
@@ -409,7 +412,7 @@ export default function AdminVehicles() {
                                                                 type="button"
                                                                 className="action-icon success"
                                                                 onClick={() => onApprove(vehicle.id)}
-                                                                aria-label="Approve"
+                                                                aria-label="Duyệt"
                                                             >
                                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                                                     <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -419,7 +422,7 @@ export default function AdminVehicles() {
                                                                 type="button"
                                                                 className="action-icon danger"
                                                                 onClick={() => onReject(vehicle.id)}
-                                                                aria-label="Reject"
+                                                                aria-label="Từ chối"
                                                             >
                                                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                                                     <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -431,8 +434,8 @@ export default function AdminVehicles() {
                                                     <Link
                                                         to={`/admin/vehicles/${vehicle.id}`}
                                                         className="action-icon"
-                                                        aria-label="View"
-                                                        title="View"
+                                                        aria-label="Xem"
+                                                        title="Xem"
                                                     >
                                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                                             <path d="M2 12C4.5 7 8 5 12 5C16 5 19.5 7 22 12C19.5 17 16 19 12 19C8 19 4.5 17 2 12Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
@@ -451,7 +454,7 @@ export default function AdminVehicles() {
 
                 {!loading && filtered.length > 0 && (
                     <div className="approval-footer">
-                        <p>Showing {showRange} to {endRange} of {filtered.length} requests</p>
+                        <p>Hiển thị {showRange} đến {endRange} trên tổng {filtered.length} yêu cầu</p>
                         <div className="pagination">
                             <button className="page-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>
                                 ‹

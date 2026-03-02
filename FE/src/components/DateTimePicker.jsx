@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import '../styles/DateTimePicker.css'
 
 function DateTimePicker({ isOpen, onClose, onConfirm, initialPickup, initialReturn, rentalType: initialRentalType }) {
@@ -45,10 +45,6 @@ function DateTimePicker({ isOpen, onClose, onConfirm, initialPickup, initialRetu
 
     const handleNextMonth = () => {
         setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))
-    }
-
-    const handlePrevMonth = () => {
-        setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))
     }
 
     const calculateRentalDuration = () => {

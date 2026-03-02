@@ -15,6 +15,11 @@
     color: #64748b;
 }
 
+.approval-header-actions {
+    display: inline-flex;
+    align-items: center;
+}
+
 .approval-stats {
     margin-top: 18px;
     display: grid;

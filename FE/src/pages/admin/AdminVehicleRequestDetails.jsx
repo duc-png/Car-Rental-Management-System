@@ -3,13 +3,14 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { approveVehicle, getVehicleById, rejectVehicle } from '../../api/adminVehicles'
 import { getOwnerById } from '../../api/owners'
+import DashboardNotificationBell from '../../components/DashboardNotificationBell'
 import '../../styles/AdminVehicleRequestDetails.css'
 
 const APPROVED_STATUSES = new Set(['AVAILABLE', 'RENTED', 'MAINTENANCE'])
 
 const vehicleName = (vehicle) => {
     const combined = `${vehicle?.brandName || ''} ${vehicle?.modelName || ''}`.trim()
-    return combined || `Vehicle #${vehicle?.id ?? ''}`
+    return combined || `Xe #${vehicle?.id ?? ''}`
 }
 
 const statusBucket = (status) => {
@@ -22,9 +23,9 @@ const statusBucket = (status) => {
 
 const statusLabel = (status) => {
     const bucket = statusBucket(status)
-    if (bucket === 'pending') return 'Pending Review'
-    if (bucket === 'rejected') return 'Rejected'
-    return 'Approved'
+    if (bucket === 'pending') return 'Chờ duyệt'
+    if (bucket === 'rejected') return 'Đã từ chối'
+    return 'Đã duyệt'
 }
 
 const formatEnum = (value) => {
@@ -40,7 +41,28 @@ const formatSeats = (value) => {
     if (value == null) return '—'
     const seats = Number(value)
     if (!Number.isFinite(seats)) return String(value)
-    return `${seats} Adults`
+    return `${seats} chỗ`
+}
+
+const formatPrice = (value) => {
+    if (value == null) return '—'
+    const amount = Number(value)
+    if (!Number.isFinite(amount)) return String(value)
+    return `${amount.toLocaleString('vi-VN')}đ/ngày`
+}
+
+const formatFuelConsumption = (value) => {
+    if (value == null) return '—'
+    const consumption = Number(value)
+    if (!Number.isFinite(consumption)) return String(value)
+    return `${consumption} L/100km`
+}
+
+const formatKm = (value) => {
+    if (value == null) return '—'
+    const km = Number(value)
+    if (!Number.isFinite(km)) return String(value)
+    return `${km.toLocaleString('vi-VN')} km`
 }
 
 const initialsFrom = (value) => {
@@ -110,23 +132,23 @@ export default function AdminVehicleRequestDetails() {
     const bucket = statusBucket(vehicle?.status)
     const canAct = String(vehicle?.status) === 'PENDING_APPROVAL'
 
-    const ownerName = owner?.fullName || (vehicle?.ownerId ? `Owner #${vehicle.ownerId}` : '—')
+    const ownerName = owner?.fullName || (vehicle?.ownerId ? `Chủ xe #${vehicle.ownerId}` : '—')
     const ownerEmail = owner?.email || '—'
     const ownerPhone = owner?.phone || '—'
     const ownerLocation = [vehicle?.city, vehicle?.district].filter(Boolean).join(', ') || '—'
 
     const onApprove = async () => {
         if (!vehicle?.id || actionLoading) return
-        const ok = window.confirm('Approve this vehicle?')
+        const ok = window.confirm('Duyệt xe này?')
         if (!ok) return
 
         setActionLoading(true)
         try {
             const updated = await approveVehicle(vehicle.id)
             if (updated) setVehicle(updated)
-            toast.success('Approved')
+            toast.success('Đã duyệt xe')
         } catch (e) {
-            toast.error(e.message || 'Cannot approve')
+            toast.error(e.message || 'Không thể duyệt xe')
         } finally {
             setActionLoading(false)
         }
@@ -134,16 +156,16 @@ export default function AdminVehicleRequestDetails() {
 
     const onReject = async () => {
         if (!vehicle?.id || actionLoading) return
-        const ok = window.confirm('Reject this request?')
+        const ok = window.confirm('Từ chối yêu cầu này?')
         if (!ok) return
 
         setActionLoading(true)
         try {
             const updated = await rejectVehicle(vehicle.id, reviewComment.trim() || undefined)
             if (updated) setVehicle(updated)
-            toast.success('Rejected')
+            toast.success('Đã từ chối yêu cầu')
         } catch (e) {
-            toast.error(e.message || 'Cannot reject')
+            toast.error(e.message || 'Không thể từ chối yêu cầu')
         } finally {
             setActionLoading(false)
         }
@@ -153,27 +175,28 @@ export default function AdminVehicleRequestDetails() {
         <div className="request-details-page">
             <div className="request-details-header">
                 <div className="request-breadcrumb">
-                    <Link to="/admin/vehicles">Vehicle Approval</Link>
+                    <Link to="/admin/vehicles">Duyệt xe</Link>
                     <span className="sep">›</span>
-                    <span>Request Details</span>
+                    <span>Chi tiết yêu cầu</span>
                     <span className="sep">›</span>
                     <span className="current">{vehicle ? vehicleName(vehicle) : '—'}</span>
                 </div>
 
                 <div className="request-header-actions">
+                    <DashboardNotificationBell />
                     <span className={`request-status status-${bucket}`}>{statusLabel(vehicle?.status)}</span>
-                    <button type="button" className="request-more" aria-label="More">
+                    <button type="button" className="request-more" aria-label="Thêm">
                         <span aria-hidden="true">⋯</span>
                     </button>
                 </div>
             </div>
 
             {loading ? (
-                <div className="request-loading">Loading...</div>
+                <div className="request-loading">Đang tải...</div>
             ) : error ? (
                 <div className="request-error">{error}</div>
             ) : !vehicle ? (
-                <div className="request-error">Vehicle not found.</div>
+                <div className="request-error">Không tìm thấy xe.</div>
             ) : (
                 <div className="request-details-grid">
                     <div className="request-left">
@@ -188,7 +211,7 @@ export default function AdminVehicleRequestDetails() {
                                         type="button"
                                         className={`thumb ${img.imageUrl === selectedImage ? 'active' : ''}`}
                                         onClick={() => setSelectedImage(img.imageUrl)}
-                                        aria-label="Select image"
+                                        aria-label="Chọn ảnh"
                                     >
                                         <img src={img.imageUrl} alt="Thumbnail" loading="lazy" />
                                     </button>
@@ -217,54 +240,74 @@ export default function AdminVehicleRequestDetails() {
                         </div>
 
                         <div className="request-card">
-                            <div className="request-card-title">Vehicle Specifications</div>
+                            <div className="request-card-title">Thông số xe</div>
                             <div className="spec-table">
                                 <div className="spec-cell">
-                                    <div className="spec-label">Brand</div>
+                                    <div className="spec-label">Hãng xe</div>
                                     <div className="spec-value">{vehicle.brandName || '—'}</div>
                                 </div>
                                 <div className="spec-cell">
-                                    <div className="spec-label">Model</div>
+                                    <div className="spec-label">Mẫu xe</div>
                                     <div className="spec-value">{vehicle.modelName || '—'}</div>
                                 </div>
                                 <div className="spec-cell">
-                                    <div className="spec-label">Year</div>
-                                    <div className="spec-value">—</div>
+                                    <div className="spec-label">Loại xe</div>
+                                    <div className="spec-value">{vehicle.carTypeName || '—'}</div>
                                 </div>
                                 <div className="spec-cell">
-                                    <div className="spec-label">Fuel type</div>
+                                    <div className="spec-label">Năm sản xuất</div>
+                                    <div className="spec-value">{vehicle.year || '—'}</div>
+                                </div>
+                                <div className="spec-cell">
+                                    <div className="spec-label">Nhiên liệu</div>
                                     <div className="spec-value">{formatEnum(vehicle.fuelType)}</div>
                                 </div>
                                 <div className="spec-cell">
-                                    <div className="spec-label">Transmission</div>
+                                    <div className="spec-label">Hộp số</div>
                                     <div className="spec-value">{formatEnum(vehicle.transmission)}</div>
                                 </div>
                                 <div className="spec-cell">
-                                    <div className="spec-label">Seats</div>
+                                    <div className="spec-label">Số chỗ</div>
                                     <div className="spec-value">{formatSeats(vehicle.seatCount)}</div>
                                 </div>
                                 <div className="spec-cell">
-                                    <div className="spec-label">VIN</div>
-                                    <div className="spec-value">—</div>
+                                    <div className="spec-label">Mức tiêu thụ</div>
+                                    <div className="spec-value">{formatFuelConsumption(vehicle.fuelConsumption)}</div>
                                 </div>
                                 <div className="spec-cell">
-                                    <div className="spec-label">License plate</div>
+                                    <div className="spec-label">Biển số</div>
                                     <div className="spec-value">{vehicle.licensePlate || '—'}</div>
+                                </div>
+                                <div className="spec-cell">
+                                    <div className="spec-label">Số km hiện tại</div>
+                                    <div className="spec-value">{formatKm(vehicle.currentKm)}</div>
+                                </div>
+                                <div className="spec-cell">
+                                    <div className="spec-label">Giá thuê</div>
+                                    <div className="spec-value">{formatPrice(vehicle.pricePerDay)}</div>
                                 </div>
                             </div>
                         </div>
 
                         <div className="request-card">
-                            <div className="request-card-title">Features &amp; Description</div>
+                            <div className="request-card-title">Tiện ích &amp; mô tả</div>
                             <div className="feature-block">
-                                <div className="feature-subtitle">Amenities</div>
+                                <div className="feature-subtitle">Tiện nghi</div>
                                 <div className="amenities-row">
-                                    <div className="amenities-empty">—</div>
+                                    {(Array.isArray(vehicle.features) ? vehicle.features : []).length === 0 ? (
+                                        <div className="amenities-empty">Không có dữ liệu tính năng.</div>
+                                    ) : (
+                                        (Array.isArray(vehicle.features) ? vehicle.features : []).map((feature) => (
+                                            <span key={feature.id || feature.name} className="amenity-pill">
+                                                <span>{feature?.name || 'Tính năng'}</span>
+                                            </span>
+                                        ))
+                                    )}
                                 </div>
                             </div>
                             <div className="feature-block">
-                                <div className="feature-subtitle">Owner Description</div>
-                                <div className="feature-description">Not provided.</div>
+                                <div className="feature-subtitle">Mô tả từ chủ xe</div>
+                                <div className="feature-description">{vehicle?.description || 'Chưa có mô tả.'}</div>
                             </div>
                         </div>
                     </div>
@@ -276,9 +319,9 @@ export default function AdminVehicleRequestDetails() {
                                 <div className="owner-meta">
                                     <div className="owner-name">
                                         {ownerName}
-                                        {owner?.isVerified ? <span className="owner-verified" title="Verified">✓</span> : null}
+                                        {owner?.isVerified ? <span className="owner-verified" title="Đã xác thực">✓</span> : null}
                                     </div>
-                                    <div className="owner-sub">Member since: —</div>
+                                    <div className="owner-sub">Tham gia từ: —</div>
                                 </div>
                             </div>
 
@@ -298,16 +341,16 @@ export default function AdminVehicleRequestDetails() {
                             </div>
 
                             <Link className="owner-profile-btn" to={vehicle?.ownerId ? `/owners/${vehicle.ownerId}` : '/owners/0'}>
-                                View Full Profile
+                                Xem hồ sơ đầy đủ
                             </Link>
                         </div>
 
                         <div className="request-card">
-                            <div className="request-card-title">Reviewer Action</div>
-                            <div className="reviewer-sub">Reviewer comments</div>
+                            <div className="request-card-title">Xử lý của quản trị viên</div>
+                            <div className="reviewer-sub">Ghi chú xử lý</div>
                             <textarea
                                 className="reviewer-textarea"
-                                placeholder="Enter reason for approval or rejection..."
+                                placeholder="Nhập lý do duyệt hoặc từ chối..."
                                 value={reviewComment}
                                 onChange={(e) => setReviewComment(e.target.value)}
                                 rows={4}
@@ -319,7 +362,7 @@ export default function AdminVehicleRequestDetails() {
                                 onClick={onApprove}
                                 disabled={!canAct || actionLoading}
                             >
-                                Approve Vehicle
+                                Duyệt xe
                             </button>
                             <button
                                 type="button"
@@ -327,17 +370,17 @@ export default function AdminVehicleRequestDetails() {
                                 onClick={onReject}
                                 disabled={!canAct || actionLoading}
                             >
-                                Reject Request
+                                Từ chối yêu cầu
                             </button>
 
-                            <div className="reviewer-hint">This action will be logged and the owner will be notified via email.</div>
+                            <div className="reviewer-hint">Thao tác này sẽ được ghi log và chủ xe sẽ nhận thông báo qua email.</div>
 
                             <button
                                 type="button"
                                 className="reviewer-back"
                                 onClick={() => navigate('/admin/vehicles')}
                             >
-                                Back to list
+                                Quay lại danh sách
                             </button>
                         </div>
                     </div>

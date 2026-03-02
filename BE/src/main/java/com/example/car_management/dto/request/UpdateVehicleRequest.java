@@ -46,6 +46,17 @@ public class UpdateVehicleRequest {
     @Min(0)
     private Integer currentKm;
 
+    private Boolean deliveryEnabled;
+
+    @Min(0)
+    private Integer freeDeliveryWithinKm;
+
+    @Min(0)
+    private Integer maxDeliveryDistanceKm;
+
+    @DecimalMin(value = "0.0", inclusive = true)
+    private BigDecimal extraFeePerKm;
+
     private Integer locationId;
 
     @Valid

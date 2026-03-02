@@ -254,6 +254,12 @@ body {
     color: var(--fleet-muted);
 }
 
+.field-immutable-note {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 6px 0 14px;
+}
+
 /* ==========================================
    Edit cards
 ========================================== */
@@ -381,6 +387,29 @@ body {
     outline: none;
     border-color: #2563eb;
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.owner-edit-delivery-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f9fafb;
+}
+
+.owner-edit-delivery-toggle input[type='checkbox'] {
+    width: 18px;
+    height: 18px;
+}
+
+.owner-edit-delivery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
 }
 
 select.status-available {
@@ -596,5 +625,9 @@ select.status-available {
 
     .action-bar button {
         width: 100%;
+    }
+
+    .owner-edit-delivery-grid {
+        grid-template-columns: 1fr;
     }
 }

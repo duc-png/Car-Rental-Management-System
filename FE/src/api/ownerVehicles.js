@@ -29,7 +29,7 @@ const withAuthHeaders = (headers = {}) => {
     };
 };
 
-const requestJson = async (url, options = {}, { auth = false } = {}) => {
+const requestJson = async (url, options = {}) => {
     const response = await fetch(url, options);
     const data = await parseJson(response);
     if (!response.ok) {
@@ -62,7 +62,7 @@ export const createOwnerVehicle = async (payload) => {
             'Content-Type': 'application/json'
         }),
         body: JSON.stringify(payload)
-    }, { auth: true });
+    });
     return data || null;
 };
 
@@ -75,7 +75,7 @@ export const updateOwnerVehicle = async (vehicleId, ownerId, payload) => {
             ...withAuthHeaders()
         },
         body: JSON.stringify(payload)
-    }, { auth: true });
+    });
     return data || null;
 };
 
@@ -88,7 +88,7 @@ export const updateOwnerVehicleStatus = async (vehicleId, ownerId, status) => {
             ...withAuthHeaders()
         },
         body: JSON.stringify({ status })
-    }, { auth: true });
+    });
     return data || null;
 };
 
@@ -97,7 +97,7 @@ export const deleteOwnerVehicle = async (vehicleId, ownerId) => {
     await requestJson(`${API_BASE_URL}/vehicles/${vehicleId}?ownerId=${ownerId}`, {
         method: 'DELETE',
         headers: withAuthHeaders()
-    }, { auth: true });
+    });
     return true;
 };
 
@@ -110,7 +110,7 @@ export const addVehicleImagesByUrl = async (vehicleId, ownerId, { imageUrls, set
             ...withAuthHeaders()
         },
         body: JSON.stringify({ imageUrls, setFirstAsMain })
-    }, { auth: true });
+    });
     return data || [];
 };
 
@@ -119,7 +119,7 @@ export const setMainVehicleImage = async (vehicleId, ownerId, imageId) => {
     const data = await requestJson(`${API_BASE_URL}/vehicles/${vehicleId}/images/${imageId}/main?ownerId=${ownerId}`, {
         method: 'PATCH',
         headers: withAuthHeaders()
-    }, { auth: true });
+    });
     return data || [];
 };
 
@@ -128,7 +128,7 @@ export const deleteVehicleImage = async (vehicleId, ownerId, imageId) => {
     await requestJson(`${API_BASE_URL}/vehicles/${vehicleId}/images/${imageId}?ownerId=${ownerId}`, {
         method: 'DELETE',
         headers: withAuthHeaders()
-    }, { auth: true });
+    });
     return true;
 };
 

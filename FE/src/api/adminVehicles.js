@@ -23,6 +23,14 @@ const withAuthHeaders = (headers = {}) => {
     return { ...headers, Authorization: `Bearer ${token}` };
 };
 
+const requireAuthToken = () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        throw new Error('Bạn cần đăng nhập tài khoản admin để duyệt xe.');
+    }
+    return token;
+};
+
 const requestJson = async (url, options) => {
     const response = await fetch(url, options);
     const data = await parseJson(response);
@@ -58,6 +66,7 @@ export const getVehicleById = async (vehicleId) => {
 
 export const approveVehicle = async (vehicleId) => {
     if (!vehicleId) throw new Error('Missing vehicleId');
+    requireAuthToken();
     const data = await requestJson(`${API_BASE_URL}/vehicles/${vehicleId}/approve`, {
         method: 'PATCH',
         headers: withAuthHeaders({ 'Content-Type': 'application/json' })
@@ -68,6 +77,7 @@ export const approveVehicle = async (vehicleId) => {
 
 export const rejectVehicle = async (vehicleId, reason) => {
     if (!vehicleId) throw new Error('Missing vehicleId');
+    requireAuthToken();
     const url = new URL(`${API_BASE_URL}/vehicles/${vehicleId}/reject`);
     if (reason) url.searchParams.set('reason', reason);
 

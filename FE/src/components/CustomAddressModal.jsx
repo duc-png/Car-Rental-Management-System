@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import 'leaflet/dist/leaflet.css'
 import '../styles/CustomAddressModal.css'
+import { geocodeAddress } from '../utils/carDetailsUtils'
 
 function CustomAddressModal({ isOpen, onClose, initialValue, onApply }) {
     const mapContainerRef = useRef(null)
@@ -51,19 +52,9 @@ function CustomAddressModal({ isOpen, onClose, initialValue, onApply }) {
                 setLoading(true)
                 setError(null)
 
-                const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(query)}&addressdetails=1&limit=1&countrycodes=vn`
-                const response = await fetch(url, {
-                    signal: controller.signal,
-                    headers: {
-                        'Accept-Language': 'vi'
-                    }
-                })
+                const result = await geocodeAddress(query, controller.signal)
 
-                if (!response.ok) throw new Error('Failed to fetch location')
-                const data = await response.json()
-                const first = Array.isArray(data) ? data[0] : null
-
-                if (!first?.lat || !first?.lon) {
+                if (!result?.lat || !result?.lon) {
                     setCoords(null)
                     setResolvedLabel('')
                     setError('Không tìm thấy địa chỉ phù hợp')
@@ -71,10 +62,10 @@ function CustomAddressModal({ isOpen, onClose, initialValue, onApply }) {
                 }
 
                 setCoords({
-                    lat: Number(first.lat),
-                    lon: Number(first.lon)
+                    lat: Number(result.lat),
+                    lon: Number(result.lon)
                 })
-                setResolvedLabel(first.display_name || query)
+                setResolvedLabel(result.label || query)
             } catch (err) {
                 if (err?.name === 'AbortError') return
                 setCoords(null)

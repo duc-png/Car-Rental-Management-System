@@ -41,6 +41,11 @@ public class VehicleResponse {
 
     private Integer currentKm;
 
+    private Boolean deliveryEnabled;
+    private Integer freeDeliveryWithinKm;
+    private Integer maxDeliveryDistanceKm;
+    private BigDecimal extraFeePerKm;
+
     private Integer locationId;
     private String city;
     private String district;

@@ -4,6 +4,7 @@ export default function OwnerVehicleSpecsSection({
     transmissionValues,
     fuelValues,
     formatEnumLabel,
+    immutable = false,
 }) {
     return (
         <div className="edit-card">
@@ -23,7 +24,7 @@ export default function OwnerVehicleSpecsSection({
                 </label>
                 <label>
                     Nhiên liệu
-                    <select name="fuelType" value={form.fuelType} onChange={handleChange}>
+                    <select name="fuelType" value={form.fuelType} onChange={handleChange} disabled={immutable}>
                         <option value="">—</option>
                         {fuelValues.map((v) => (
                             <option key={v} value={v}>{formatEnumLabel(v)}</option>
@@ -36,7 +37,7 @@ export default function OwnerVehicleSpecsSection({
                 </label>
                 <label>
                     Năm sản xuất
-                    <input type="number" name="year" value={form.year} onChange={handleChange} />
+                    <input type="number" name="year" value={form.year} onChange={handleChange} disabled={immutable} readOnly={immutable} />
                 </label>
                 <label>
                     Mức tiêu thụ (L/100km)

@@ -10,7 +10,34 @@ export default function OwnerVehicleTypeSection({
     modelName,
     modelOptionsForBrand,
     typeName,
+    immutable = false,
 }) {
+    if (immutable) {
+        return (
+            <div className="edit-card">
+                <div className="card-header">
+                    <span className="card-icon">🚗</span>
+                    <h2>Loại xe</h2>
+                </div>
+                <p className="field-immutable-note">Hãng xe, mẫu xe và loại xe không thể thay đổi sau khi đã tạo xe.</p>
+                <div className="form-grid three-col">
+                    <label>
+                        Hãng xe
+                        <input type="text" value={brandName || ''} disabled readOnly />
+                    </label>
+                    <label>
+                        Mẫu xe
+                        <input type="text" value={modelName || ''} disabled readOnly />
+                    </label>
+                    <label>
+                        Loại xe
+                        <input type="text" value={typeName || ''} disabled readOnly />
+                    </label>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="edit-card">
             <div className="card-header">
