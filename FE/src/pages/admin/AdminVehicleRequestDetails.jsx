@@ -65,6 +65,13 @@ const formatKm = (value) => {
     return `${km.toLocaleString('vi-VN')} km`
 }
 
+const formatJoinDate = (value) => {
+    if (!value) return '—'
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return '—'
+    return date.toLocaleDateString('vi-VN')
+}
+
 const initialsFrom = (value) => {
     if (!value) return '—'
     const text = String(value).trim()
@@ -136,6 +143,7 @@ export default function AdminVehicleRequestDetails() {
     const ownerEmail = owner?.email || '—'
     const ownerPhone = owner?.phone || '—'
     const ownerLocation = [vehicle?.city, vehicle?.district].filter(Boolean).join(', ') || '—'
+    const ownerJoinedAt = formatJoinDate(owner?.joinedAt)
 
     const onApprove = async () => {
         if (!vehicle?.id || actionLoading) return
@@ -321,7 +329,7 @@ export default function AdminVehicleRequestDetails() {
                                         {ownerName}
                                         {owner?.isVerified ? <span className="owner-verified" title="Đã xác thực">✓</span> : null}
                                     </div>
-                                    <div className="owner-sub">Tham gia từ: —</div>
+                                    <div className="owner-sub">Tham gia từ: {ownerJoinedAt}</div>
                                 </div>
                             </div>
 

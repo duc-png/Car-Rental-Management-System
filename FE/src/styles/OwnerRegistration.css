@@ -267,6 +267,31 @@
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
+.image-preview-head {
+    margin-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    color: var(--owner-muted);
+    font-family: 'Work Sans', Arial, sans-serif;
+}
+
+.image-preview-head span {
+    font-weight: 600;
+    color: var(--owner-dark);
+}
+
+.image-preview-head small {
+    font-size: 0.85rem;
+}
+
+.image-preview-empty {
+    margin: 12px 0 0;
+    color: var(--owner-muted);
+    font-size: 0.92rem;
+}
+
 .image-dropzone {
     border: 1px dashed rgba(217, 107, 76, 0.5);
     border-radius: 16px;
@@ -296,6 +321,18 @@
     border: 1px solid var(--owner-border);
     background: #fff;
     animation: fadeUp 0.35s ease;
+}
+
+.image-preview-button {
+    padding: 0;
+    width: 100%;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.image-preview-button:hover {
+    border-color: var(--owner-accent);
+    transform: translateY(-1px);
 }
 
 .image-preview img {

@@ -82,6 +82,7 @@ function AppLayout() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/owner/fleet" element={<CarOwnerFleet />} />
+          <Route path="/owner/fleet/vehicles" element={<CarOwnerFleet />} />
           <Route path="/owner/vehicles/:id" element={<OwnerVehicleDetails />} />
           <Route path="/owner/vehicles/:id/edit" element={<OwnerVehicleEdit />} />
           <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
