@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getCarById, getCarsList } from '../../api/cars';
 import { getOwnerById } from '../../api/owners';
 import { createBooking } from '../../api/bookings';
+import { startConversationByVehicle } from '../../api/chat';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'sonner';
 import MapModal from '../../components/MapModal';
@@ -35,7 +36,7 @@ export default function CarDetails() {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
     const [pickupMode, setPickupMode] = useState('self');
-    const [enableExtraInsurance] = useState(false);
+    const [enableExtraInsurance, setEnableExtraInsurance] = useState(false);
     const [pickupTime, setPickupTime] = useState('21:00');
     const [returnTime, setReturnTime] = useState('20:00');
     const [showSectionNav, setShowSectionNav] = useState(false);
@@ -50,6 +51,7 @@ export default function CarDetails() {
     const [deliveryDistanceKm, setDeliveryDistanceKm] = useState(0);
     const [deliveryFeeVnd, setDeliveryFeeVnd] = useState(0);
     const [bookingLoading, setBookingLoading] = useState(false);
+    const [contactLoading, setContactLoading] = useState(false);
 
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -426,6 +428,34 @@ export default function CarDetails() {
         setIsTimeModalOpen(true);
     };
 
+    const handleContactOwner = async () => {
+        if (!user) {
+            toast.error('Vui lòng đăng nhập để nhắn tin cho chủ xe!');
+            navigate('/login');
+            return;
+        }
+
+        if (!car?.id) {
+            toast.error('Không tìm thấy thông tin xe.');
+            return;
+        }
+
+        if (String(user?.userId) === String(car?.ownerId)) {
+            toast.error('Bạn không thể nhắn tin cho chính xe của mình.');
+            return;
+        }
+
+        try {
+            setContactLoading(true);
+            const conversation = await startConversationByVehicle(car.id);
+            navigate(`/messages?conversationId=${conversation.id}`);
+        } catch (error) {
+            toast.error(error.message || 'Không thể bắt đầu cuộc trò chuyện.');
+        } finally {
+            setContactLoading(false);
+        }
+    };
+
     const applyTimeSelection = async () => {
         if (!returnDate) {
             setReturnDate(new Date(pickupDate.getTime() + DAY_MS));
@@ -700,7 +730,14 @@ export default function CarDetails() {
                                         <b>{ownerApprovalRate}</b>
                                     </div>
                                 </div>
-                                <button type="button" className="owner-contact-btn">Liên hệ</button>
+                                <button
+                                    type="button"
+                                    className="owner-contact-btn"
+                                    onClick={handleContactOwner}
+                                    disabled={contactLoading}
+                                >
+                                    {contactLoading ? 'Đang mở chat...' : 'Liên hệ'}
+                                </button>
                             </div>
                             <p className="owner-review-note">⭐ {ownerRating} • {ownerReviews} đánh giá</p>
                         </section>
