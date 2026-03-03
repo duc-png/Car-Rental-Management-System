@@ -6,8 +6,8 @@ import {
     getUnreadNotificationCount,
     markAllNotificationsAsRead,
     markNotificationAsRead,
-} from '../api/notifications'
-import '../styles/DashboardNotificationBell.css'
+} from '../../api/notifications'
+import '../../styles/DashboardNotificationBell.css'
 
 export default function DashboardNotificationBell({ className = '' }) {
     const navigate = useNavigate()
@@ -89,7 +89,8 @@ export default function DashboardNotificationBell({ className = '' }) {
                     )
                 )
                 setUnreadCount((prev) => Math.max(0, prev - 1))
-            } catch {
+            } catch (error) {
+                console.error('Không thể đánh dấu thông báo đã đọc:', error)
             }
         }
 
@@ -107,7 +108,8 @@ export default function DashboardNotificationBell({ className = '' }) {
             await markAllNotificationsAsRead()
             setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })))
             setUnreadCount(0)
-        } catch {
+        } catch (error) {
+            console.error('Không thể đánh dấu tất cả thông báo đã đọc:', error)
         } finally {
             setMarkingAll(false)
         }
@@ -193,3 +195,4 @@ export default function DashboardNotificationBell({ className = '' }) {
         </div>
     )
 }
+

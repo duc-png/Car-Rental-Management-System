@@ -1,4 +1,4 @@
-import '../styles/TestimonialCard.css'
+import '../../styles/TestimonialCard.css'
 
 function TestimonialCard({ testimonial }) {
   const renderStars = (rating) => {
@@ -27,3 +27,4 @@ function TestimonialCard({ testimonial }) {
 }
 
 export default TestimonialCard
+

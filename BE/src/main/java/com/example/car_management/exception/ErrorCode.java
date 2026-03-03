@@ -49,6 +49,7 @@ public enum ErrorCode {
     // ===== Chat =====
     CHAT_CONVERSATION_NOT_FOUND(4001, "Chat conversation not found", HttpStatus.NOT_FOUND),
     CANNOT_CHAT_OWN_VEHICLE(4002, "You cannot start chat with your own vehicle", HttpStatus.BAD_REQUEST);
+    FULL_PAYMENT_NOT_COMPLETED(3006, "Full payment has not been completed yet", HttpStatus.BAD_REQUEST);
     // ===== Cloudinary / Image =====
     // IMAGE_UPLOAD_FAILED(2007, "Upload image failed", HttpStatus.BAD_REQUEST);
     //

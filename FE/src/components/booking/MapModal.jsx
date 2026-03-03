@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import 'leaflet/dist/leaflet.css'
-import '../styles/MapModal.css'
-import { geocodeAddress, generateQueryVariants } from '../utils/carDetailsUtils'
+import '../../styles/MapModal.css'
+import { generateQueryVariants, resolveBestGeocodeFromVariants } from '../../utils/carDetailsUtils'
 
 function MapModal({ isOpen, onClose, addressText }) {
     const mapContainerRef = useRef(null)
@@ -49,12 +49,8 @@ function MapModal({ isOpen, onClose, addressText }) {
                 const district = parts.length > 1 ? parts[parts.length - 2] : ''
                 const detail = parts.length > 2 ? parts.slice(0, -2).join(', ') : q
                 const variants = generateQueryVariants(detail, district, city)
-
-                let result = null
-                for (const variant of variants) {
-                    result = await geocodeAddress(variant, controller.signal)
-                    if (result) break
-                }
+                const referenceQuery = [detail, district, city].filter(Boolean).join(', ')
+                const result = await resolveBestGeocodeFromVariants(variants, referenceQuery, controller.signal)
 
                 if (!result?.lat || !result?.lon) {
                     setError('Không tìm thấy tọa độ cho địa chỉ này')
@@ -172,3 +168,4 @@ function MapModal({ isOpen, onClose, addressText }) {
 }
 
 export default MapModal
+

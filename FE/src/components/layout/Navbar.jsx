@@ -2,10 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useTheme } from '../contexts/ThemeContext'
-import { useAuth } from '../hooks/useAuth'
-import { getDashboardPathByRole, getDisplayName } from '../utils/authUser'
-import '../styles/Navbar.css'
+import { useTheme } from '../../contexts/ThemeContext'
+import { useAuth } from '../../hooks/useAuth'
+import { getDashboardPathByRole, getDisplayName } from '../../utils/authUser'
+import '../../styles/Navbar.css'
 
 function Navbar({ sticky = true }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -137,3 +137,5 @@ function Navbar({ sticky = true }) {
 }
 
 export default Navbar
+
+

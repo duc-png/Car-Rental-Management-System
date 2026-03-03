@@ -2,9 +2,8 @@ import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'r
 import { Toaster } from 'sonner'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { AuthProvider } from './contexts/AuthContext'
-import Navbar from './components/Navbar'
-import Footer from './components/Footer'
-import ChatWidget from './components/ChatWidget'
+import Navbar from './components/layout/Navbar'
+import Footer from './components/layout/Footer'
 import Home from './pages/public/Home'
 import Cars from './pages/public/Cars'
 import MyBookings from './pages/user/MyBookings'
@@ -18,7 +17,6 @@ import OwnerVehicleEdit from './pages/owner/OwnerVehicleEdit'
 import OwnerPublicProfile from './pages/public/OwnerPublicProfile'
 import OwnerRegistration from './pages/public/OwnerRegistration'
 import ManageRentals from './pages/ManageRentals'
-import ChatInbox from './pages/chat/ChatInbox'
 import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentCancel from './pages/PaymentCancel'
 import AdminLayout from './pages/admin/AdminLayout'
@@ -58,8 +56,9 @@ function AdminRoute({ children }) {
 function AppLayout() {
   const location = useLocation()
   const isOwnerArea = /^\/owner(\/|$)/.test(location.pathname)
+  const isOwnerRentalsArea = /^\/manage-rentals(\/|$)/.test(location.pathname)
   const isAdminArea = /^\/admin(\/|$)/.test(location.pathname)
-  const isOwnerDashboard = isOwnerArea || isAdminArea
+  const isOwnerDashboard = isOwnerArea || isOwnerRentalsArea || isAdminArea
   const isCarDetailsPage = location.pathname.startsWith('/car/') || (location.pathname.startsWith('/cars/') && location.pathname !== '/cars')
 
   return (
@@ -74,7 +73,6 @@ function AppLayout() {
           <Route path="/owners/:ownerId" element={<OwnerPublicProfile />} />
           <Route path="/become-owner" element={<OwnerRegistration />} />
           <Route path="/my-bookings" element={<MyBookings />} />
-          <Route path="/messages" element={<ChatInbox />} />
           <Route path="/manage-rentals" element={<ManageRentals />} />
           <Route path="/booking/:id/payment-success" element={<PaymentSuccess />} />
           <Route path="/booking/:id/payment-cancel" element={<PaymentCancel />} />
@@ -96,7 +94,6 @@ function AppLayout() {
           </Route>
         </Routes>
       </main>
-      <ChatWidget />
       {!isOwnerDashboard && <Footer />}
     </>
   )
@@ -116,3 +113,4 @@ function App() {
 }
 
 export default App
+

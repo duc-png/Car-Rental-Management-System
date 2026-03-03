@@ -1,53 +1,30 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { submitOwnerRegistration } from '../../api/ownerRegistrations';
-import { listBrands } from '../../api/brands';
-import { listVehicleModels } from '../../api/vehicleModels';
-import { listVehicleFeatures } from '../../api/vehicleFeatures';
+import { useVehicleCatalogs } from '../../hooks/useVehicleCatalogs';
+import { generateQueryVariants, resolveBestGeocodeFromVariants } from '../../utils/carDetailsUtils';
+import {
+    ACCEPTED_OWNER_IMAGE_TYPES,
+    createEmptyOwnerRegistrationForm,
+    CUSTOM_MODEL_OPTION,
+    MAX_OWNER_REGISTRATION_IMAGES,
+} from '../../utils/ownerRegistrationUtils';
 import '../../styles/OwnerRegistration.css';
-
-const MAX_IMAGES = 5;
-const CUSTOM_MODEL_OPTION = '__custom_model__';
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-
-const emptyForm = {
-    owner: {
-        email: '',
-        phone: '',
-        fullName: '',
-        password: ''
-    },
-    vehicle: {
-        licensePlate: '',
-        brand: '',
-        model: '',
-        seatCount: '',
-        manufacturingYear: '',
-        transmission: 'AUTOMATIC',
-        fuelType: 'GASOLINE',
-        pricePerDay: '',
-        addressDetail: '',
-        deliveryEnabled: true,
-        freeDeliveryWithinKm: 0,
-        maxDeliveryDistanceKm: 20,
-        extraFeePerKm: 10000,
-        fuelConsumption: '',
-        description: '',
-        featureIds: []
-    }
-};
+import 'leaflet/dist/leaflet.css';
 
 function OwnerRegistration() {
     const navigate = useNavigate();
     const [showForm, setShowForm] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
-    const [formData, setFormData] = useState(emptyForm);
+    const [formData, setFormData] = useState(() => createEmptyOwnerRegistrationForm());
     const [images, setImages] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [featureCatalog, setFeatureCatalog] = useState([]);
-    const [brandCatalog, setBrandCatalog] = useState([]);
-    const [modelCatalog, setModelCatalog] = useState([]);
+    const {
+        featureCatalog,
+        brands: brandCatalog,
+        vehicleModels: modelCatalog,
+    } = useVehicleCatalogs();
     const [customModelName, setCustomModelName] = useState('');
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
     const [provinceOptions, setProvinceOptions] = useState([]);
@@ -56,6 +33,11 @@ function OwnerRegistration() {
     const [selectedWardCode, setSelectedWardCode] = useState('');
     const [streetDetail, setStreetDetail] = useState('');
     const [isAddressLoading, setIsAddressLoading] = useState(false);
+    const [addressMapCoords, setAddressMapCoords] = useState(null);
+    const [addressMapLoading, setAddressMapLoading] = useState(false);
+    const [addressMapError, setAddressMapError] = useState('');
+    const addressMapContainerRef = useRef(null);
+    const addressMapRef = useRef(null);
 
     const previews = useMemo(() => images.map((file) => URL.createObjectURL(file)), [images]);
 
@@ -64,52 +46,6 @@ function OwnerRegistration() {
             previews.forEach((url) => URL.revokeObjectURL(url));
         };
     }, [previews]);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        const loadFeatureCatalog = async () => {
-            try {
-                const data = await listVehicleFeatures();
-                if (!cancelled) {
-                    setFeatureCatalog(Array.isArray(data) ? data : []);
-                }
-            } catch {
-                if (!cancelled) {
-                    setFeatureCatalog([]);
-                }
-            }
-        };
-
-        loadFeatureCatalog();
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        const loadModels = async () => {
-            try {
-                const data = await listVehicleModels();
-                if (!cancelled) {
-                    setModelCatalog(Array.isArray(data) ? data : []);
-                }
-            } catch {
-                if (!cancelled) {
-                    setModelCatalog([]);
-                }
-            }
-        };
-
-        loadModels();
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
 
     const modelOptions = useMemo(() => {
         if (!formData.vehicle.brand) return [];
@@ -129,29 +65,6 @@ function OwnerRegistration() {
 
         return uniqueNames.sort((left, right) => left.localeCompare(right, 'vi'));
     }, [modelCatalog, formData.vehicle.brand]);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        const loadBrands = async () => {
-            try {
-                const data = await listBrands();
-                if (!cancelled) {
-                    setBrandCatalog(Array.isArray(data) ? data : []);
-                }
-            } catch {
-                if (!cancelled) {
-                    setBrandCatalog([]);
-                }
-            }
-        };
-
-        loadBrands();
-
-        return () => {
-            cancelled = true;
-        };
-    }, []);
 
     const updateOwner = (field, value) => {
         setFormData((prev) => ({
@@ -201,6 +114,134 @@ function OwnerRegistration() {
         () => wardOptions.find((item) => String(item.code) === String(selectedWardCode)) || null,
         [wardOptions, selectedWardCode]
     );
+
+    const formatFeeShort = (value) => {
+        const fee = Number(value || 0);
+        if (!Number.isFinite(fee) || fee <= 0) return '0';
+        return `${Math.round(fee / 1000)}K`;
+    };
+
+    const hasSelectedAddress = Boolean(String(formData.vehicle.addressDetail || '').trim());
+
+    useEffect(() => {
+        if (currentStep !== 2) return;
+
+        const addressText = String(formData.vehicle.addressDetail || '').trim();
+        if (!addressText) {
+            setAddressMapCoords(null);
+            setAddressMapError('');
+            setAddressMapLoading(false);
+            return;
+        }
+
+        const controller = new AbortController();
+
+        const resolveAddressCoordinates = async () => {
+            try {
+                setAddressMapLoading(true);
+                setAddressMapError('');
+
+                const parts = addressText.split(',').map((part) => part.trim()).filter(Boolean);
+                const city = parts.length > 0 ? parts[parts.length - 1] : '';
+                const district = parts.length > 1 ? parts[parts.length - 2] : '';
+                const detail = parts.length > 2 ? parts.slice(0, -2).join(', ') : addressText;
+                const variants = generateQueryVariants(detail, district, city);
+                const referenceQuery = [detail, district, city].filter(Boolean).join(', ');
+                const result = await resolveBestGeocodeFromVariants(variants, referenceQuery, controller.signal);
+
+                if (!result?.lat || !result?.lon) {
+                    setAddressMapCoords(null);
+                    setAddressMapError('Không tìm thấy vị trí bản đồ từ địa chỉ đã chọn');
+                    return;
+                }
+
+                setAddressMapCoords({ lat: Number(result.lat), lon: Number(result.lon) });
+                setAddressMapError('');
+            } catch (error) {
+                if (error?.name === 'AbortError') return;
+                setAddressMapCoords(null);
+                setAddressMapError('Không thể tải bản đồ lúc này');
+            } finally {
+                setAddressMapLoading(false);
+            }
+        };
+
+        resolveAddressCoordinates();
+
+        return () => {
+            controller.abort();
+        };
+    }, [currentStep, formData.vehicle.addressDetail]);
+
+    useEffect(() => {
+        if (currentStep !== 2) return;
+        if (!addressMapCoords) return;
+        if (!addressMapContainerRef.current) return;
+
+        let cancelled = false;
+
+        const initInlineMap = async () => {
+            const L = (await import('leaflet')).default;
+            if (cancelled) return;
+
+            if (addressMapRef.current) {
+                addressMapRef.current.remove();
+                addressMapRef.current = null;
+            }
+
+            const center = [addressMapCoords.lat, addressMapCoords.lon];
+            const map = L.map(addressMapContainerRef.current, {
+                zoomControl: true,
+                attributionControl: false
+            }).setView(center, 14);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
+
+            L.circle(center, {
+                radius: 900,
+                color: '#8f8f8f',
+                weight: 1,
+                fillColor: '#8f8f8f',
+                fillOpacity: 0.24
+            }).addTo(map);
+
+            L.circleMarker(center, {
+                radius: 7,
+                color: '#3b82f6',
+                weight: 2,
+                fillColor: '#3b82f6',
+                fillOpacity: 1
+            }).addTo(map);
+
+            addressMapRef.current = map;
+        };
+
+        initInlineMap();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [currentStep, addressMapCoords]);
+
+    useEffect(() => {
+        if (!hasSelectedAddress || currentStep !== 2) {
+            if (addressMapRef.current) {
+                addressMapRef.current.remove();
+                addressMapRef.current = null;
+            }
+            return;
+        }
+    }, [hasSelectedAddress, currentStep]);
+
+    useEffect(() => {
+        return () => {
+            if (!addressMapRef.current) return;
+            addressMapRef.current.remove();
+            addressMapRef.current = null;
+        };
+    }, []);
 
     const loadProvinces = async () => {
         setIsAddressLoading(true);
@@ -351,7 +392,7 @@ function OwnerRegistration() {
             return;
         }
 
-        const invalidFile = files.find((file) => !ACCEPTED_IMAGE_TYPES.includes((file.type || '').toLowerCase()));
+        const invalidFile = files.find((file) => !ACCEPTED_OWNER_IMAGE_TYPES.includes((file.type || '').toLowerCase()));
         if (invalidFile) {
             toast.error('Chỉ hỗ trợ ảnh JPG, PNG hoặc WEBP');
             event.target.value = '';
@@ -361,9 +402,9 @@ function OwnerRegistration() {
         const currentFiles = Array.isArray(images) ? images : [];
         const mergedFiles = [...currentFiles, ...files];
 
-        if (mergedFiles.length > MAX_IMAGES) {
-            toast.error(`Tối đa ${MAX_IMAGES} ảnh`);
-            setImages(mergedFiles.slice(0, MAX_IMAGES));
+        if (mergedFiles.length > MAX_OWNER_REGISTRATION_IMAGES) {
+            toast.error(`Tối đa ${MAX_OWNER_REGISTRATION_IMAGES} ảnh`);
+            setImages(mergedFiles.slice(0, MAX_OWNER_REGISTRATION_IMAGES));
             event.target.value = '';
             return;
         }
@@ -445,7 +486,7 @@ function OwnerRegistration() {
             setIsSubmitting(true);
             await submitOwnerRegistration(payload, images);
             toast.success('Đã gửi yêu cầu, admin sẽ duyệt sớm');
-            setFormData(emptyForm);
+            setFormData(createEmptyOwnerRegistrationForm());
             setImages([]);
             setCurrentStep(1);
             navigate('/');
@@ -746,7 +787,7 @@ function OwnerRegistration() {
                     {currentStep === 2 && <div className="form-section">
                         <h2>Thông tin cho thuê</h2>
                         <div className="form-grid">
-                            <label>
+                            <label className="owner-rental-field-full">
                                 Giá thuê (₫/ngày)
                                 <input
                                     type="number"
@@ -757,7 +798,7 @@ function OwnerRegistration() {
                                     required
                                 />
                             </label>
-                            <label>
+                            <label className="owner-rental-field-full">
                                 Địa chỉ xe
                                 <button
                                     type="button"
@@ -768,14 +809,28 @@ function OwnerRegistration() {
                                     <span className="owner-address-trigger-icon" aria-hidden="true">🗺</span>
                                 </button>
                             </label>
-                            <label className="owner-delivery-field" htmlFor="delivery-enabled">
-                                <span>Giao xe tận nơi</span>
+                        </div>
+
+                        {hasSelectedAddress && (
+                            <div className="owner-address-map-wrap">
+                                {addressMapLoading && <div className="owner-address-map-state">Đang tải bản đồ...</div>}
+                                {!addressMapLoading && addressMapError && (
+                                    <div className="owner-address-map-state owner-address-map-state-error">{addressMapError}</div>
+                                )}
+                                <div className="owner-address-map" ref={addressMapContainerRef} />
+                            </div>
+                        )}
+
+                        <div className="owner-delivery-toggle-row">
+                            <h3>Giao xe tận nơi</h3>
+                            <label className="owner-switch" htmlFor="delivery-enabled">
                                 <input
                                     id="delivery-enabled"
                                     type="checkbox"
                                     checked={formData.vehicle.deliveryEnabled}
                                     onChange={(event) => updateVehicle('deliveryEnabled', event.target.checked)}
                                 />
+                                <span className="owner-switch-slider" aria-hidden="true" />
                             </label>
                         </div>
 
@@ -794,12 +849,13 @@ function OwnerRegistration() {
                                             value={formData.vehicle.maxDeliveryDistanceKm || 20}
                                             onChange={(event) => updateVehicle('maxDeliveryDistanceKm', event.target.value)}
                                         />
+                                        <small>Quãng đường đề xuất: 20km</small>
                                     </div>
 
                                     <div className="owner-range-field">
                                         <div className="owner-range-label-row">
                                             <span>Phí giao nhận xe cho mỗi km</span>
-                                            <b>{Number(formData.vehicle.extraFeePerKm || 10000).toLocaleString('vi-VN')}đ</b>
+                                            <b>{formatFeeShort(formData.vehicle.extraFeePerKm || 10000)}</b>
                                         </div>
                                         <input
                                             type="range"
@@ -809,6 +865,7 @@ function OwnerRegistration() {
                                             value={formData.vehicle.extraFeePerKm || 10000}
                                             onChange={(event) => updateVehicle('extraFeePerKm', event.target.value)}
                                         />
+                                        <small>Phí đề xuất: 10K</small>
                                     </div>
                                 </div>
 
@@ -824,6 +881,7 @@ function OwnerRegistration() {
                                         value={formData.vehicle.freeDeliveryWithinKm || 0}
                                         onChange={(event) => updateVehicle('freeDeliveryWithinKm', event.target.value)}
                                     />
+                                    <small>Quãng đường đề xuất: 0km</small>
                                 </div>
                             </div>
                         )}

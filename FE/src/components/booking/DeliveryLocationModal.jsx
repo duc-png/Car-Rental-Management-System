@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import 'leaflet/dist/leaflet.css'
-import '../styles/DeliveryLocationModal.css'
+import '../../styles/DeliveryLocationModal.css'
 
 function formatVndNumber(value) {
     const numeric = Number(value || 0)
@@ -242,3 +242,4 @@ function DeliveryLocationModal({
 }
 
 export default DeliveryLocationModal
+
