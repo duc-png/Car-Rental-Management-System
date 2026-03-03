@@ -11,17 +11,23 @@ const buildHeaders = (token) => ({
  * @param {number} userId - ID của user
  */
 export const getMyProfile = async (token, userId) => {
-    const response = await fetch(`${API_URL}/api/v1/customers/${userId}`, {
+    const url = `${API_URL}/api/v1/customers/${userId}`
+    console.log('[profile.js] GET', url)
+    const response = await fetch(url, {
         method: 'GET',
         headers: buildHeaders(token)
     })
 
+    console.log('[profile.js] Response status:', response.status)
+
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}))
+        console.error('[profile.js] Error response:', errorData)
         throw new Error(errorData.message || 'Không thể tải thông tin hồ sơ')
     }
 
     const data = await response.json()
+    console.log('[profile.js] Full API response:', data)
     return data.result
 }
 

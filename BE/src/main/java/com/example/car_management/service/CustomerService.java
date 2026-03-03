@@ -49,6 +49,18 @@ public class CustomerService {
                 .toList();
     }
 
+    public CustomerResponse getCustomerById(Integer id) {
+        UserEntity user = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        CustomerBookingSummary summary = bookingRepository.summarizeByCustomerIds(List.of(id))
+                .stream()
+                .findFirst()
+                .orElse(null);
+
+        return toResponse(user, summary);
+    }
+
     public CustomerResponse createCustomer(CreateCustomerRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_EXISTED);

@@ -97,21 +97,23 @@ export default function UserProfile() {
     }, [authLoading, isAuthenticated, navigate]);
 
     useEffect(() => {
-        if (!user?.userId || !token) return;
+        console.log("[UserProfile] Auth state:", { userId: user?.userId, hasToken: !!token, authLoading });
+        if (!user?.userId || !token) {
+            console.warn("[UserProfile] Missing userId or token, skipping fetch. userId:", user?.userId);
+            return;
+        }
 
         const fetchData = async () => {
             setProfileLoading(true);
+
+            // Fetch profile data
             try {
-                const [profile, bookingList] = await Promise.all([
-                    getMyProfile(token, user.userId),
-                    getMyBookings(token)
-                ]);
+                console.log("[UserProfile] Fetching profile for userId:", user.userId);
+                const profile = await getMyProfile(token, user.userId);
+                console.log("[UserProfile] Profile response:", profile);
 
-                const activeRentals = bookingList.filter(
-                    (b: any) => b.status === "ONGOING" || b.status === "CONFIRMED"
-                ).length;
-
-                setUserData({
+                setUserData(prev => ({
+                    ...prev,
                     name: profile.fullName || "",
                     email: profile.email || "",
                     phone: profile.phone || "",
@@ -129,11 +131,10 @@ export default function UserProfile() {
                         verified: !!profile.licenseNumber
                     },
                     stats: {
+                        ...prev.stats,
                         totalRentals: Number(profile.totalBookings) || 0,
-                        activeRentals,
-                        loyaltyPoints: 0
                     }
-                });
+                }));
 
                 setFormData({
                     name: profile.fullName || "",
@@ -143,13 +144,32 @@ export default function UserProfile() {
                     address: profile.address || "",
                     licenseNumber: profile.licenseNumber || ""
                 });
-
-                setBookings(bookingList);
             } catch (err: any) {
+                console.error("[UserProfile] Error fetching profile:", err);
                 toast.error(err.message || "Không thể tải dữ liệu hồ sơ");
-            } finally {
-                setProfileLoading(false);
             }
+
+            // Fetch bookings separately so profile still loads if bookings fail
+            try {
+                const bookingList = await getMyBookings(token);
+                console.log("[UserProfile] Bookings response:", bookingList);
+                const activeRentals = bookingList.filter(
+                    (b: any) => b.status === "ONGOING" || b.status === "CONFIRMED"
+                ).length;
+                setBookings(bookingList);
+                setUserData(prev => ({
+                    ...prev,
+                    stats: {
+                        ...prev.stats,
+                        activeRentals,
+                    }
+                }));
+            } catch (err: any) {
+                console.error("[UserProfile] Error fetching bookings:", err);
+                // Don't show error toast for bookings - profile data is more important
+            }
+
+            setProfileLoading(false);
         };
 
         fetchData();

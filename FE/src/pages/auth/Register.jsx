@@ -82,7 +82,7 @@ function Register() {
                     fullName: formData.fullName,
                     email: formData.email,
                     password: formData.password,
-                    phone: formData.phone,
+                    phone: formData.phone.trim() || null,
                     licenseNumber: '' // Optional
                 })
 
