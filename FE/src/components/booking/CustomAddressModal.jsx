@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import 'leaflet/dist/leaflet.css'
-import '../styles/CustomAddressModal.css'
-import { geocodeAddress } from '../utils/carDetailsUtils'
+import '../../styles/CustomAddressModal.css'
+import { geocodeAddress } from '../../utils/carDetailsUtils'
 
 function CustomAddressModal({ isOpen, onClose, initialValue, onApply }) {
     const mapContainerRef = useRef(null)
@@ -207,3 +207,4 @@ function CustomAddressModal({ isOpen, onClose, initialValue, onApply }) {
 }
 
 export default CustomAddressModal
+

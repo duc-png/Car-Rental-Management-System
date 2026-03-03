@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { approveVehicle, getVehicleById, rejectVehicle } from '../../api/adminVehicles'
 import { getOwnerById } from '../../api/owners'
-import DashboardNotificationBell from '../../components/DashboardNotificationBell'
+import DashboardNotificationBell from '../../components/layout/DashboardNotificationBell'
 import '../../styles/AdminVehicleRequestDetails.css'
 
 const APPROVED_STATUSES = new Set(['AVAILABLE', 'RENTED', 'MAINTENANCE'])
