@@ -44,7 +44,7 @@ public enum ErrorCode {
     INVALID_STATUS_TRANSITION(3003, "Invalid booking status transition", HttpStatus.BAD_REQUEST),
     PAYMENT_ERROR(3004, "Payment processing error", HttpStatus.INTERNAL_SERVER_ERROR),
     DEPOSIT_NOT_PAID(3005, "Deposit has not been paid yet", HttpStatus.BAD_REQUEST),
-    FULL_PAYMENT_NOT_COMPLETED(3006, "Full payment has not been completed yet", HttpStatus.BAD_REQUEST),
+    // FULL_PAYMENT_NOT_COMPLETED(3006, "Full payment has not been completed yet", HttpStatus.BAD_REQUEST),
 
     // ===== Chat =====
     CHAT_CONVERSATION_NOT_FOUND(4001, "Chat conversation not found", HttpStatus.NOT_FOUND),
