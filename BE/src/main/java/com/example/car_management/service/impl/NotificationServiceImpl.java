@@ -5,13 +5,13 @@ import com.example.car_management.entity.NotificationEntity;
 import com.example.car_management.entity.OwnerRegistration;
 import com.example.car_management.entity.UserEntity;
 import com.example.car_management.entity.VehicleEntity;
+import com.example.car_management.entity.enums.UserRole;
 import com.example.car_management.exception.AppException;
 import com.example.car_management.exception.ErrorCode;
 import com.example.car_management.repository.NotificationRepository;
 import com.example.car_management.repository.UserRepository;
 import com.example.car_management.service.NotificationService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -153,7 +153,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     private void createForAdmins(String title, String message, String priority, String deepLink) {
-        List<UserEntity> admins = userRepository.findByRole("ADMIN", Pageable.unpaged()).getContent();
+        List<UserEntity> admins = userRepository.findByRoleId(UserRole.ADMIN);
         for (UserEntity admin : admins) {
             createForUser(admin, title, message, "SYSTEM", priority, deepLink);
         }

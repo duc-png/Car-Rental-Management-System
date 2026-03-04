@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react'
-import '../styles/DateTimePicker.css'
+import '../../styles/DateTimePicker.css'
 
 function DateTimePicker({ isOpen, onClose, onConfirm, initialPickup, initialReturn, rentalType: initialRentalType }) {
     const [rentalType, setRentalType] = useState(initialRentalType || 'day') // 'day' or 'hour'
@@ -216,3 +216,4 @@ function DateTimePicker({ isOpen, onClose, onConfirm, initialPickup, initialRetu
 }
 
 export default DateTimePicker
+

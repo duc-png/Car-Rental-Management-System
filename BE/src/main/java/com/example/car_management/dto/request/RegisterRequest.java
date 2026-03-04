@@ -26,7 +26,8 @@ public class RegisterRequest {
     @Size(min = 6, message = "Password phải ít nhất 6 ký tự")
     private String password;
 
-    // Optional - có thể null hoặc trống
+    @NotBlank(message = "Phone không được để trống")
+    @Size(min = 10, max = 15, message = "Phone không hợp lệ")
     private String phone;
 
     private String licenseNumber; 

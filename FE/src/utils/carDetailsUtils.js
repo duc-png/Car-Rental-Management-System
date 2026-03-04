@@ -89,6 +89,91 @@ export const formatVndK = (value) => {
     return `${inThousands.toLocaleString('vi-VN')}K`;
 };
 
+export const TRANSMISSION_LABELS = {
+    AUTOMATIC: 'Tự động',
+    MANUAL: 'Số sàn',
+};
+
+export const FUEL_LABELS = {
+    GASOLINE: 'Xăng',
+    DIESEL: 'Dầu',
+    ELECTRIC: 'Điện',
+};
+
+export const getTransmissionLabel = (transmission) => TRANSMISSION_LABELS[transmission] || transmission || 'N/A';
+
+export const getFuelLabel = (fuelType) => FUEL_LABELS[fuelType] || fuelType || 'N/A';
+
+export const getFuelConsumptionLabel = (car) => {
+    const rawFuelConsumption = car?.fuelConsumption
+        ?? car?.fuelEfficiency
+        ?? car?.averageFuelConsumption
+        ?? car?.avgFuelConsumption
+        ?? car?.consumptionPer100Km
+        ?? car?.consumption;
+
+    if (rawFuelConsumption === null || rawFuelConsumption === undefined) return 'N/A';
+    const text = String(rawFuelConsumption).trim();
+    if (!text) return 'N/A';
+    if (/l\s*\/\s*100\s*km/i.test(text)) return text;
+    return `${text}L/100km`;
+};
+
+export const buildAddressInfo = (car) => {
+    const city = car?.city || car?.province || '';
+    const district = car?.district || car?.ward || '';
+
+    const addressText = [car?.addressDetail, district, city]
+        .filter(Boolean)
+        .join(', ');
+
+    const locationDisplayText = [car?.addressDetail, car?.district].filter(Boolean).join(', ')
+        || [car?.district, car?.city].filter(Boolean).join(', ')
+        || addressText;
+
+    return {
+        addressText,
+        locationDisplayText,
+        hasAddress: Boolean(addressText),
+    };
+};
+
+export const calculatePricing = ({ pricePerDay, selectedDays, enableExtraInsurance }) => {
+    const normalizedPricePerDay = Number(pricePerDay || 0);
+    const bookingFeePerDay = Math.round(normalizedPricePerDay * 0.08);
+    const insuranceFeePerDay = Math.round(normalizedPricePerDay * 0.03);
+    const extraInsurancePerDay = Math.round(normalizedPricePerDay * 0.02);
+
+    const rentalCost = normalizedPricePerDay * selectedDays;
+    const bookingFee = bookingFeePerDay * selectedDays;
+    const insuranceFee = insuranceFeePerDay * selectedDays;
+    const extraInsuranceFee = enableExtraInsurance ? extraInsurancePerDay * selectedDays : 0;
+
+    const subtotalPrice = rentalCost + bookingFee + insuranceFee + extraInsuranceFee;
+    const promoDiscount = Math.round(normalizedPricePerDay * 0.05) * selectedDays;
+    const totalPrice = Math.max(0, subtotalPrice - promoDiscount);
+
+    const oldPrice = Math.round(normalizedPricePerDay * 1.06);
+    const discountPercent = Math.max(1, Math.round(((oldPrice - normalizedPricePerDay) / oldPrice) * 100));
+
+    return {
+        pricePerDay: normalizedPricePerDay,
+        bookingFeePerDay,
+        insuranceFeePerDay,
+        extraInsurancePerDay,
+        subtotalPrice,
+        promoDiscount,
+        totalPrice,
+        discountPercent,
+    };
+};
+
+export const getOwnerPerformanceStats = (owner) => ({
+    responseRate: owner?.isVerified ? '90%' : '80%',
+    responseTime: owner?.isVerified ? '5 phút' : '15 phút',
+    approvalRate: owner?.isVerified ? '88%' : '75%',
+});
+
 const normalizeAddressText = (value) => String(value || '').trim().replace(/\s+/g, ' ');
 
 const scoreGeocodeCandidate = (candidate, query) => {
@@ -137,6 +222,59 @@ export const geocodeAddress = async (query, signal) => {
         if (err.name === 'AbortError') throw err;
     }
     return null;
+};
+
+const normalizeGeoText = (value) => String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const buildTokenSet = (value) => new Set(
+    normalizeGeoText(value)
+        .split(' ')
+        .filter((token) => token.length >= 2)
+);
+
+const similarityScore = (referenceText, candidateText) => {
+    const refTokens = buildTokenSet(referenceText);
+    const candidateTokens = buildTokenSet(candidateText);
+
+    if (!refTokens.size || !candidateTokens.size) return 0;
+
+    let matches = 0;
+    refTokens.forEach((token) => {
+        if (candidateTokens.has(token)) matches += 1;
+    });
+
+    return matches / refTokens.size;
+};
+
+export const resolveBestGeocodeFromVariants = async (variants, referenceQuery, signal) => {
+    const safeVariants = Array.isArray(variants) ? variants.filter(Boolean) : [];
+    if (safeVariants.length === 0) return null;
+
+    let best = null;
+    let bestScore = -1;
+
+    for (let index = 0; index < safeVariants.length; index += 1) {
+        const variant = safeVariants[index];
+        const result = await geocodeAddress(variant, signal);
+        if (!result) continue;
+
+        const baseScore = similarityScore(referenceQuery || variant, result.label || variant);
+        const indexPenalty = index * 0.01;
+        const score = baseScore - indexPenalty;
+
+        if (!best || score > bestScore) {
+            best = result;
+            bestScore = score;
+        }
+    }
+
+    return best;
 };
 
 export const generateQueryVariants = (detail, district, city) => {

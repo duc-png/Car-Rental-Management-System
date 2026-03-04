@@ -7,7 +7,8 @@ function FleetSidebar({ user, onLogout }) {
     const ownerId = user?.userId || user?.id
     const ownerQuery = ownerId ? `?ownerId=${ownerId}` : ''
 
-    const isFleetRoute = location.pathname.startsWith('/owner/fleet')
+    const isOverviewRoute = location.pathname === '/owner/overview'
+    const isVehiclesRoute = location.pathname.startsWith('/owner/fleet') || location.pathname.startsWith('/owner/vehicles')
     const isRentalRoute = location.pathname.startsWith('/manage-rentals')
 
     const navItems = [
@@ -16,14 +17,14 @@ function FleetSidebar({ user, onLogout }) {
             to: `/owner/fleet${ownerQuery}`,
             icon: LayoutGrid,
             label: 'Tổng quan',
-            active: isFleetRoute,
+            active: isOverviewRoute,
         },
         {
             key: 'vehicles',
-            to: `/owner/fleet${ownerQuery}`,
+            to: `/owner/fleet/vehicles${ownerQuery}`,
             icon: Car,
             label: 'Xe của tôi',
-            active: isFleetRoute,
+            active: isVehiclesRoute,
         },
         {
             key: 'rentals',

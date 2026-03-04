@@ -2,12 +2,11 @@ import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'r
 import { Toaster } from 'sonner'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { AuthProvider } from './contexts/AuthContext'
-import Navbar from './components/Navbar'
-import Footer from './components/Footer'
+import Navbar from './components/layout/Navbar'
+import Footer from './components/layout/Footer'
 import Home from './pages/public/Home'
 import Cars from './pages/public/Cars'
 import MyBookings from './pages/user/MyBookings'
-import UserProfile from './pages/user/UserProfile'
 import CarDetails from './pages/public/CarDetails'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
@@ -74,7 +73,6 @@ function AppLayout() {
           <Route path="/owners/:ownerId" element={<OwnerPublicProfile />} />
           <Route path="/become-owner" element={<OwnerRegistration />} />
           <Route path="/my-bookings" element={<MyBookings />} />
-          <Route path="/profile" element={<UserProfile />} />
           <Route path="/manage-rentals" element={<ManageRentals />} />
           <Route path="/booking/:id/payment-success" element={<PaymentSuccess />} />
           <Route path="/booking/:id/payment-cancel" element={<PaymentCancel />} />
@@ -115,3 +113,4 @@ function App() {
 }
 
 export default App
+

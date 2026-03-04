@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getCarById, getCarsList } from '../../api/cars';
 import { getOwnerById } from '../../api/owners';
-import MapModal from '../../components/MapModal';
-import DeliveryLocationModal from '../../components/DeliveryLocationModal';
-import CustomAddressModal from '../../components/CustomAddressModal';
+import { createBooking } from '../../api/bookings';
+import { useAuth } from '../../hooks/useAuth';
+import { toast } from 'sonner';
+import MapModal from '../../components/booking/MapModal';
+import DeliveryLocationModal from '../../components/booking/DeliveryLocationModal';
+import CustomAddressModal from '../../components/booking/CustomAddressModal';
 import {
     DAY_MS,
     FALLBACK_CAR,
@@ -15,10 +18,18 @@ import {
     isSameDate,
     getMonthGrid,
     formatVndNumber,
-    geocodeAddress,
     generateQueryVariants,
+    resolveBestGeocodeFromVariants,
     haversineDistanceKm,
-    routeDistanceKm
+    routeDistanceKm,
+    getTransmissionLabel,
+    getFuelLabel,
+    getFuelConsumptionLabel,
+    buildAddressInfo,
+    calculatePricing,
+    getOwnerPerformanceStats,
+    TRANSMISSION_LABELS,
+    FUEL_LABELS,
 } from '../../utils/carDetailsUtils';
 import '../../styles/CarDetails.css';
 
@@ -32,7 +43,7 @@ export default function CarDetails() {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
     const [pickupMode, setPickupMode] = useState('self');
-    const [enableExtraInsurance] = useState(false);
+    const [enableExtraInsurance, setEnableExtraInsurance] = useState(false);
     const [pickupTime, setPickupTime] = useState('21:00');
     const [returnTime, setReturnTime] = useState('20:00');
     const [showSectionNav, setShowSectionNav] = useState(false);
@@ -46,6 +57,10 @@ export default function CarDetails() {
     const [deliveryCoords, setDeliveryCoords] = useState(null);
     const [deliveryDistanceKm, setDeliveryDistanceKm] = useState(0);
     const [deliveryFeeVnd, setDeliveryFeeVnd] = useState(0);
+    const [bookingLoading, setBookingLoading] = useState(false);
+
+    const navigate = useNavigate();
+    const { user } = useAuth();
 
     const specsRef = useRef(null);
     const docsRef = useRef(null);
@@ -114,12 +129,8 @@ export default function CarDetails() {
                 const detail = (car.addressDetail || '').trim();
 
                 const variants = generateQueryVariants(detail, district, city);
-
-                let result = null;
-                for (const variant of variants) {
-                    result = await geocodeAddress(variant, controller.signal);
-                    if (result) break;   // dừng ngay khi tìm được
-                }
+                const referenceQuery = [detail, district, city].filter(Boolean).join(', ');
+                const result = await resolveBestGeocodeFromVariants(variants, referenceQuery, controller.signal);
 
                 if (!result) {
                     setCarCoords(null);
@@ -299,64 +310,30 @@ export default function CarDetails() {
     //     PENDING_APPROVAL: 'Chờ duyệt'
     // };
 
-    const transmissionMap = {
-        AUTOMATIC: 'Tự động',
-        MANUAL: 'Số sàn'
-    };
-
-    const fuelMap = {
-        GASOLINE: 'Xăng',
-        DIESEL: 'Dầu',
-        ELECTRIC: 'Điện'
-    };
-
     // const statusLabel = statusMap[car.status] || car.status || 'N/A';
-    const transmissionLabel = transmissionMap[car.transmission] || car.transmission || 'N/A';
-    const fuelLabel = fuelMap[car.fuelType] || car.fuelType || 'N/A';
-    const rawFuelConsumption = car?.fuelConsumption
-        ?? car?.fuelEfficiency
-        ?? car?.averageFuelConsumption
-        ?? car?.avgFuelConsumption
-        ?? car?.consumptionPer100Km
-        ?? car?.consumption;
-    const fuelConsumptionLabel = (() => {
-        if (rawFuelConsumption === null || rawFuelConsumption === undefined) return 'N/A';
-        const text = String(rawFuelConsumption).trim();
-        if (!text) return 'N/A';
-        if (/l\s*\/\s*100\s*km/i.test(text)) return text;
-        return `${text}L/100km`;
-    })();
-    // const addressText = [car.addressDetail, car.district, car.city].filter(Boolean).join(', ');
-    const city = car.city || car.province || '';
-    const district = car.district || car.ward || '';
-
-    const addressText = [car.addressDetail, district, city]
-        .filter(Boolean)
-        .join(', ');
-    const locationDisplayText = [car.addressDetail, car.district].filter(Boolean).join(', ')
-        || [car.district, car.city].filter(Boolean).join(', ')
-        || addressText;
-    const hasAddress = Boolean(addressText);
+    const transmissionLabel = getTransmissionLabel(car.transmission);
+    const fuelLabel = getFuelLabel(car.fuelType);
+    const fuelConsumptionLabel = getFuelConsumptionLabel(car);
+    const { addressText, locationDisplayText, hasAddress } = buildAddressInfo(car);
 
     const selectedDays = (!pickupDate || !returnDate)
         ? 1
         : Math.max(1, Math.round((toDateOnly(returnDate).getTime() - toDateOnly(pickupDate).getTime()) / DAY_MS));
 
-    const pricePerDay = Number(car.pricePerDay || 0);
-    const bookingFeePerDay = Math.round(pricePerDay * 0.08);
-    const insuranceFeePerDay = Math.round(pricePerDay * 0.03);
-    const extraInsurancePerDay = Math.round(pricePerDay * 0.02);
-
-    const rentalCost = pricePerDay * selectedDays;
-    const bookingFee = bookingFeePerDay * selectedDays;
-    const insuranceFee = insuranceFeePerDay * selectedDays;
-    const extraInsuranceFee = enableExtraInsurance ? extraInsurancePerDay * selectedDays : 0;
-    const subtotalPrice = rentalCost + bookingFee + insuranceFee + extraInsuranceFee;
-    const promoDiscount = Math.round(pricePerDay * 0.05) * selectedDays;
-    const totalPrice = Math.max(0, subtotalPrice - promoDiscount);
-
-    const oldPrice = Math.round(pricePerDay * 1.06);
-    const discountPercent = Math.max(1, Math.round(((oldPrice - pricePerDay) / oldPrice) * 100));
+    const {
+        pricePerDay,
+        bookingFeePerDay,
+        insuranceFeePerDay,
+        extraInsurancePerDay,
+        subtotalPrice,
+        promoDiscount,
+        totalPrice,
+        discountPercent,
+    } = calculatePricing({
+        pricePerDay: car.pricePerDay,
+        selectedDays,
+        enableExtraInsurance,
+    });
     const defaultContact = 'Chưa cập nhật';
     const ownerName = owner?.fullName || car.ownerName;
     const displayOwnerName = formatOwnerName(ownerName);
@@ -364,9 +341,10 @@ export default function CarDetails() {
     const ownerTrips = Number(owner?.totalTrips ?? 0);
     const ownerReviews = Number(owner?.totalReviews ?? 0);
     const ownerPublicId = owner?.ownerId || car.ownerId;
-    const ownerResponseRate = owner?.isVerified ? '90%' : '80%';
-    const ownerResponseTime = owner?.isVerified ? '5 phút' : '15 phút';
-    const ownerApprovalRate = owner?.isVerified ? '88%' : '75%';
+    const ownerPerformanceStats = getOwnerPerformanceStats(owner);
+    const ownerResponseRate = ownerPerformanceStats.responseRate;
+    const ownerResponseTime = ownerPerformanceStats.responseTime;
+    const ownerApprovalRate = ownerPerformanceStats.approvalRate;
     const featureNames = Array.isArray(car?.features)
         ? car.features
             .map((feature) => String(feature?.name || '').trim())
@@ -410,11 +388,48 @@ export default function CarDetails() {
         setReturnDate(normalized);
     };
 
-    const applyTimeSelection = () => {
+    const handleBooking = () => {
+        if (!user) {
+            toast.error('Vui lòng đăng nhập để đặt xe!');
+            navigate('/login');
+            return;
+        }
+        setIsTimeModalOpen(true);
+    };
+
+    const applyTimeSelection = async () => {
         if (!returnDate) {
             setReturnDate(new Date(pickupDate.getTime() + DAY_MS));
         }
         setIsTimeModalOpen(false);
+
+        // If booking was triggered from the CHỌN THUÊ button, submit now
+        if (!user) return;
+
+        const resolvedReturn = returnDate || new Date(pickupDate.getTime() + DAY_MS);
+
+        const [pickupHour, pickupMin] = pickupTime.split(':').map(Number);
+        const [returnHour, returnMin] = returnTime.split(':').map(Number);
+
+        const startDt = new Date(pickupDate);
+        startDt.setHours(pickupHour, pickupMin, 0, 0);
+
+        const endDt = new Date(resolvedReturn);
+        endDt.setHours(returnHour, returnMin, 0, 0);
+
+        const pad = (n) => String(n).padStart(2, '0');
+        const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+
+        setBookingLoading(true);
+        try {
+            await createBooking(car.id, fmt(startDt), fmt(endDt));
+            toast.success('Đặt xe thành công! Vui lòng chờ chủ xe duyệt.');
+            navigate('/my-bookings');
+        } catch (err) {
+            toast.error(err.message || 'Đặt xe thất bại. Vui lòng thử lại!');
+        } finally {
+            setBookingLoading(false);
+        }
     };
 
     return (
@@ -508,7 +523,7 @@ export default function CarDetails() {
                                             </svg>
                                         </span>
                                         <span className="quick-spec-label">SỐ GHẾ</span>
-                                        <b>{car.seatCount || 'N/A'} chỗ</b>
+                                        <b>{car.seatCount || 'N/A'} </b>
                                     </div>
                                     <div className="quick-spec-item">
                                         <span className="quick-spec-icon" aria-hidden="true">
@@ -755,6 +770,16 @@ export default function CarDetails() {
                                     <b>{formatVndNumber(bookingFeePerDay)} /ngày</b>
                                 </div>
 
+                                <label className="extra-insurance">
+                                    <input
+                                        type="checkbox"
+                                        checked={enableExtraInsurance}
+                                        onChange={(e) => setEnableExtraInsurance(e.target.checked)}
+                                    />
+                                    <span>Bảo hiểm bổ sung</span>
+                                    <b>{formatVndNumber(enableExtraInsurance ? extraInsurancePerDay : 0)} /ngày</b>
+                                </label>
+
                                 <div className="fee-row total">
                                     <span>Tổng cộng</span>
                                     <b>
@@ -778,7 +803,14 @@ export default function CarDetails() {
                                 <b>{formatVndNumber(totalPrice)}đ</b>
                             </div>
 
-                            <button type="button" className="btn-primary full-width">CHỌN THUÊ</button>
+                            <button
+                                type="button"
+                                className="btn-primary full-width"
+                                onClick={handleBooking}
+                                disabled={bookingLoading}
+                            >
+                                {bookingLoading ? 'Đang đặt xe...' : 'CHỌN THUÊ'}
+                            </button>
                         </div>
                     </aside>
                 </div>
@@ -801,7 +833,7 @@ export default function CarDetails() {
                                                     <circle cx="12" cy="13" r="2.5" stroke="currentColor" strokeWidth="1.7" />
                                                 </svg>
                                             </span>
-                                            {transmissionMap[item.transmission] || item.transmission || 'Auto'}
+                                            {TRANSMISSION_LABELS[item.transmission] || item.transmission || 'Auto'}
                                         </span>
                                         <span className="related-meta-item">
                                             <span className="related-meta-icon" aria-hidden="true">
@@ -810,7 +842,7 @@ export default function CarDetails() {
                                                     <path d="M9.8 13.4C9.8 12.5 10.3 11.6 11.2 10.6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
                                                 </svg>
                                             </span>
-                                            {fuelMap[item.fuelType] || item.fuelType || 'Xăng'}
+                                            {FUEL_LABELS[item.fuelType] || item.fuelType || 'Xăng'}
                                         </span>
                                     </p>
                                     <div className="related-footer">
@@ -927,7 +959,9 @@ export default function CarDetails() {
 
                         <div className="detail-time-modal-footer">
                             <p>{pickupTime}, {formatDateShort(pickupDate)} - {returnTime}, {formatDateShort(returnDate || pickupDate)} • Thuê {selectedDays} ngày</p>
-                            <button type="button" onClick={applyTimeSelection}>Tiếp tục</button>
+                            <button type="button" onClick={applyTimeSelection} disabled={bookingLoading}>
+                                {bookingLoading ? 'Đang đặt xe...' : 'Xác nhận thuê xe'}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -974,3 +1008,4 @@ export default function CarDetails() {
         </div>
     );
 }
+
