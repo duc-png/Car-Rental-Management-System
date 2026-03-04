@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react'
-import '../styles/Home.css'
+import '../../styles/Home.css'
 
 function Newsletter() {
   const [email, setEmail] = useState('')
@@ -32,3 +32,4 @@ function Newsletter() {
 }
 
 export default Newsletter
+

@@ -1,5 +1,5 @@
 import TestimonialCard from './TestimonialCard'
-import '../styles/Home.css'
+import '../../styles/Home.css'
 
 function Testimonials() {
   const testimonials = [
@@ -45,3 +45,4 @@ function Testimonials() {
 }
 
 export default Testimonials
+

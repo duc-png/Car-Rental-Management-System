@@ -1,0 +1,111 @@
+.owner-rentals-page {
+    background: #f3f5f9;
+    color: #111827;
+}
+
+.owner-rentals-page .bookings-list {
+    width: 100%;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0;
+    gap: 14px;
+}
+
+.owner-rentals-page .booking-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: none;
+    grid-template-columns: 180px 1fr auto;
+    gap: 22px;
+    padding: 18px;
+}
+
+.owner-rentals-page .booking-card:hover {
+    transform: translateY(-2px);
+    background: #ffffff;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    border-color: #dbe2ea;
+}
+
+.owner-rentals-page .booking-image {
+    width: 180px;
+    height: 126px;
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+.owner-rentals-page .booking-details h3 {
+    color: #0f172a;
+    font-size: 1.25rem;
+}
+
+.owner-rentals-page .booking-info {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+    gap: 10px 16px;
+}
+
+.owner-rentals-page .booking-info p {
+    color: #475569;
+}
+
+.owner-rentals-page .booking-info p strong {
+    color: #1f2937;
+}
+
+.owner-rentals-page .booking-actions {
+    min-width: 156px;
+}
+
+.owner-rentals-empty {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    box-shadow: none;
+    min-height: 280px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.owner-rentals-loading {
+    width: 100%;
+    max-width: 1120px;
+    min-height: 46vh;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    color: #64748b;
+    margin: 0 auto;
+}
+
+@media (max-width: 1200px) {
+    .owner-rentals-page .booking-card {
+        grid-template-columns: 1fr;
+    }
+
+    .owner-rentals-page .booking-image {
+        width: 100%;
+        height: 220px;
+    }
+
+    .owner-rentals-page .booking-actions {
+        min-width: 0;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 768px) {
+    .owner-rentals-page .booking-info {
+        grid-template-columns: 1fr;
+    }
+
+    .owner-rentals-page .booking-image {
+        height: 180px;
+    }
+}
