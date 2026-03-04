@@ -9,7 +9,7 @@ import '../styles/Navbar.css'
 
 const isOwner = (user) => {
   const scope = String(user?.role || user?.scope || '')
-  return scope.includes('EXPERT') || scope.includes('OWNER')
+  return scope.includes('CAR_OWNER') || scope.includes('ROLE_CAR_OWNER')
 }
 
 function Navbar({ sticky = true }) {
@@ -85,39 +85,47 @@ function Navbar({ sticky = true }) {
           </button>
 
           {isAuthenticated ? (
-            <div className="nav-user-menu" ref={userMenuRef}>
-              <button
-                type="button"
-                className="user-name user-name-button"
-                onClick={() => setIsUserMenuOpen((prev) => !prev)}
-                aria-haspopup="menu"
-                aria-expanded={isUserMenuOpen}
-              >
-                Hi, {displayName} ▾
-              </button>
+            dashboardPath === '/my-bookings' ? (
+              // Customer: dropdown with bookings + logout
+              <div className="nav-user-menu" ref={userMenuRef}>
+                <button
+                  type="button"
+                  className="user-name user-name-button"
+                  onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                  aria-haspopup="menu"
+                  aria-expanded={isUserMenuOpen}
+                >
+                  Hi, {displayName} ▾
+                </button>
 
-              {isUserMenuOpen && (
-                <div className="user-dropdown" role="menu">
-                  <Link to="/my-bookings" className="dropdown-item" onClick={closeMenus} role="menuitem">
-                    🚗 Đặt xe của tôi
-                  </Link>
-                  {isOwner(user) && (
-                    <Link to="/manage-rentals" className="dropdown-item" onClick={closeMenus} role="menuitem">
-                      📋 Quản lý cho thuê
+                {isUserMenuOpen && (
+                  <div className="user-dropdown" role="menu">
+                    <Link to="/my-bookings" className="dropdown-item" onClick={closeMenus} role="menuitem">
+                      🚗 Đặt xe của tôi
                     </Link>
-                  )}
-                  <hr className="dropdown-divider" />
-                  <button
-                    type="button"
-                    className="dropdown-item dropdown-logout"
-                    onClick={handleLogout}
-                    role="menuitem"
-                  >
-                    🚪 Đăng xuất
-                  </button>
-                </div>
-              )}
-            </div>
+                    <hr className="dropdown-divider" />
+                    <button
+                      type="button"
+                      className="dropdown-item dropdown-logout"
+                      onClick={handleLogout}
+                      role="menuitem"
+                    >
+                      � Đăng xuất
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Owner / Admin: direct link to their dashboard + logout
+              <div className="nav-user-menu">
+                <Link to={dashboardPath} className="user-name user-name-link">
+                  Hi, {displayName}
+                </Link>
+                <button className="btn-logout" onClick={handleLogout}>
+                  Logout
+                </button>
+              </div>
+            )
           ) : (
             <>
               <Link to="/login" className="btn-login">
