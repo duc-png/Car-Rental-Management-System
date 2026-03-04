@@ -14,11 +14,13 @@ export function AuthProvider({ children }) {
     const decodeToken = (token) => {
         try {
             const decoded = jwtDecode(token)
+            const normalizedScope = String(decoded?.scope || '').replace(/\bROLE_EXPERT\b/g, 'ROLE_CAR_OWNER')
             return {
+                ...decoded,
                 email: decoded.sub,
                 userId: decoded.userId,
-                role: decoded.scope, // "ROLE_USER ROLE_CAR_OWNER" string
-                ...decoded
+                role: normalizedScope, // "ROLE_USER ROLE_CAR_OWNER" string
+                scope: normalizedScope
             }
         } catch (e) {
             console.error("Invalid token", e)
