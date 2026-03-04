@@ -1,8 +1,12 @@
 package com.example.car_management.controller;
 
 import com.example.car_management.entity.BookingEntity;
+import com.example.car_management.entity.PaymentEntity;
+import com.example.car_management.entity.enums.PaymentMethod;
 import com.example.car_management.entity.enums.PaymentStatus;
+import com.example.car_management.entity.enums.TransactionStatus;
 import com.example.car_management.repository.BookingRepository;
+import com.example.car_management.repository.PaymentRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Optional;
 
 @RestController
@@ -21,6 +27,7 @@ import java.util.Optional;
 public class PayOSWebhookController {
 
     private final BookingRepository bookingRepository;
+    private final PaymentRepository paymentRepository;
 
     @PostMapping("/payos-webhook")
     public ResponseEntity<String> receiveWebhook(@RequestBody JsonNode body) {
@@ -49,20 +56,46 @@ public class PayOSWebhookController {
             if (bookingOpt.isPresent()) {
                 BookingEntity booking = bookingOpt.get();
 
-                // If it's a deposit payment
+                // If it's a deposit payment (15%)
                 if (orderCode.equals(booking.getPayosDepositOrderCode())) {
                     if (booking.getPaymentStatus() == PaymentStatus.PENDING_DEPOSIT) {
                         booking.setPaymentStatus(PaymentStatus.DEPOSIT_PAID);
                         bookingRepository.save(booking);
-                        log.info("Deposit paid successfully for booking: {}", booking.getId());
+
+                        // Luu record vao bang payments
+                        BigDecimal depositAmount = booking.getDepositAmount() != null
+                                ? booking.getDepositAmount()
+                                : booking.getTotalPrice().multiply(BigDecimal.valueOf(0.15));
+                        paymentRepository.save(PaymentEntity.builder()
+                                .booking(booking)
+                                .paymentMethod(PaymentMethod.BANK_TRANSFER)
+                                .amount(depositAmount)
+                                .transactionId(String.valueOf(orderCode))
+                                .status(TransactionStatus.SUCCESS)
+                                .paymentDate(Instant.now())
+                                .build());
+                        log.info("Deposit payment recorded for booking #{}: {} VND",
+                                booking.getId(), depositAmount);
                     }
                 }
-                // If it's the final payment
+                // If it's the full payment (85%)
                 else if (orderCode.equals(booking.getPayosFullOrderCode())) {
                     if (booking.getPaymentStatus() == PaymentStatus.PENDING_FULL_PAYMENT) {
                         booking.setPaymentStatus(PaymentStatus.FULLY_PAID);
                         bookingRepository.save(booking);
-                        log.info("Full payment completed successfully for booking: {}", booking.getId());
+
+                        // Luu record vao bang payments
+                        BigDecimal remainingAmount = booking.getTotalPrice().multiply(BigDecimal.valueOf(0.85));
+                        paymentRepository.save(PaymentEntity.builder()
+                                .booking(booking)
+                                .paymentMethod(PaymentMethod.BANK_TRANSFER)
+                                .amount(remainingAmount)
+                                .transactionId(String.valueOf(orderCode))
+                                .status(TransactionStatus.SUCCESS)
+                                .paymentDate(Instant.now())
+                                .build());
+                        log.info("Full payment recorded for booking #{}: {} VND",
+                                booking.getId(), remainingAmount);
                     }
                 }
             } else {
