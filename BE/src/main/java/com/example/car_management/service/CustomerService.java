@@ -4,13 +4,12 @@ import com.example.car_management.dto.request.CreateCustomerRequest;
 import com.example.car_management.dto.request.UpdateCustomerRequest;
 import com.example.car_management.dto.request.UpdateCustomerStatusRequest;
 import com.example.car_management.dto.response.CustomerResponse;
-import com.example.car_management.entity.RoleEntity;
 import com.example.car_management.entity.UserEntity;
+import com.example.car_management.entity.enums.UserRole;
 import com.example.car_management.exception.AppException;
 import com.example.car_management.exception.ErrorCode;
 import com.example.car_management.repository.BookingRepository;
 import com.example.car_management.repository.CustomerBookingSummary;
-import com.example.car_management.repository.RoleRepository;
 import com.example.car_management.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,11 +26,10 @@ public class CustomerService {
 
     private final UserRepository userRepository;
     private final BookingRepository bookingRepository;
-    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
 
     public List<CustomerResponse> listCustomers(String query) {
-        List<UserEntity> customers = userRepository.searchCustomers(query, "USER");
+        List<UserEntity> customers = userRepository.searchCustomers(query, UserRole.USER);
         if (customers.isEmpty()) {
             return List.of();
         }
@@ -49,18 +47,6 @@ public class CustomerService {
                 .toList();
     }
 
-    public CustomerResponse getCustomerById(Integer id) {
-        UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
-        CustomerBookingSummary summary = bookingRepository.summarizeByCustomerIds(List.of(id))
-                .stream()
-                .findFirst()
-                .orElse(null);
-
-        return toResponse(user, summary);
-    }
-
     public CustomerResponse createCustomer(CreateCustomerRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_EXISTED);
@@ -71,9 +57,6 @@ public class CustomerService {
             rawPassword = generateTempPassword();
         }
 
-        RoleEntity userRole = roleRepository.findByName("USER")
-                .orElseThrow(() -> new RuntimeException("Role USER not found"));
-
         UserEntity user = UserEntity.builder()
                 .fullName(request.getFullName())
                 .email(request.getEmail())
@@ -81,7 +64,7 @@ public class CustomerService {
                 .licenseNumber(request.getLicenseNumber())
                 .address(request.getAddress())
                 .password(passwordEncoder.encode(rawPassword))
-                .roles(Collections.singleton(userRole))
+                .roleId(UserRole.USER)
                 .isVerified(Boolean.TRUE)
                 .isActive(Boolean.TRUE)
                 .createdAt(Instant.now())

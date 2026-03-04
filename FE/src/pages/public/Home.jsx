@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Award, CarFront, Headset, ShieldCheck } from 'lucide-react'
-import SearchBar from '../../components/SearchBar'
-import FeaturedVehicles from '../../components/FeaturedVehicles'
-import CallToAction from '../../components/CallToAction'
-import Testimonials from '../../components/Testimonials'
-import Newsletter from '../../components/Newsletter'
+import SearchBar from '../../components/home/SearchBar'
+import FeaturedVehicles from '../../components/home/FeaturedVehicles'
+import CallToAction from '../../components/home/CallToAction'
+import Testimonials from '../../components/home/Testimonials'
+import Newsletter from '../../components/home/Newsletter'
 import '../../styles/Home.css'
 
 function Home() {
@@ -134,3 +134,4 @@ function Home() {
 }
 
 export default Home
+

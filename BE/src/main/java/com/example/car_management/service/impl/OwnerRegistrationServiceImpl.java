@@ -12,8 +12,8 @@ import com.example.car_management.entity.UserEntity;
 import com.example.car_management.entity.VehicleEntity;
 import com.example.car_management.entity.VehicleImageEntity;
 import com.example.car_management.entity.VehicleModelEntity;
-import com.example.car_management.entity.RoleEntity;
 import com.example.car_management.entity.enums.OwnerRegistrationStatus;
+import com.example.car_management.entity.enums.UserRole;
 import com.example.car_management.entity.enums.VehicleStatus;
 import com.example.car_management.exception.AppException;
 import com.example.car_management.exception.ErrorCode;
@@ -22,7 +22,6 @@ import com.example.car_management.repository.CarTypeRepository;
 import com.example.car_management.repository.LocationRepository;
 import com.example.car_management.repository.OwnerRegistrationRepository;
 import com.example.car_management.repository.OwnerRegistrationImageRepository;
-import com.example.car_management.repository.RoleRepository;
 import com.example.car_management.repository.UserRepository;
 import com.example.car_management.repository.VehicleImageRepository;
 import com.example.car_management.repository.VehicleFeatureRepository;
@@ -42,7 +41,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.Instant;
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -53,7 +51,6 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
     private final OwnerRegistrationRepository ownerRegistrationRepository;
     private final OwnerRegistrationImageRepository imageRepository;
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
     private final VehicleRepository vehicleRepository;
     private final VehicleImageRepository vehicleImageRepository;
     private final VehicleFeatureRepository vehicleFeatureRepository;
@@ -173,9 +170,6 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
             throw new AppException(ErrorCode.LICENSE_PLATE_EXISTED);
         }
 
-        RoleEntity ownerRole = roleRepository.findByName("OWNER")
-                .orElseThrow(() -> new RuntimeException("Role OWNER not found"));
-
         UserEntity owner = UserEntity.builder()
                 .fullName(entity.getFullName())
                 .email(entity.getEmail())
@@ -184,10 +178,11 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
                 .isVerified(false)
                 .isActive(true)
                 .createdAt(Instant.now())
-                .roles(java.util.Collections.singleton(ownerRole))
+                .roleId(UserRole.CAR_OWNER)
                 .build();
 
         UserEntity savedOwner = userRepository.save(owner);
+        Instant vehicleReviewedAt = Instant.now();
 
         VehicleModelEntity model = resolveOrCreateModel(entity.getBrandName(), entity.getModelName());
         boolean deliveryEnabled = entity.getDeliveryEnabled() == null
@@ -205,6 +200,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
                 .year(entity.getManufacturingYear())
                 .fuelConsumption(entity.getFuelConsumption() != null ? entity.getFuelConsumption().floatValue() : null)
                 .currentKm(0)
+                .reviewedAt(vehicleReviewedAt)
                 .deliveryEnabled(deliveryEnabled)
                 .freeDeliveryWithinKm(deliveryEnabled
                         ? (entity.getFreeDeliveryWithinKm() == null ? 0 : Math.max(0, entity.getFreeDeliveryWithinKm()))
@@ -225,6 +221,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
                 .build();
 
         VehicleEntity savedVehicle = vehicleRepository.save(vehicle);
+        enforceRegistrationVehicleApproved(savedOwner.getId(), entity.getLicensePlate(), vehicleReviewedAt);
         copyRegistrationImagesToVehicle(entity.getId(), savedVehicle);
 
         entity.setStatus(OwnerRegistrationStatus.APPROVED);
@@ -237,6 +234,27 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
         ownerRegistrationNotificationService.sendApprovedEmail(savedRegistration);
         notificationService.notifyOwnerVehicleApproved(savedVehicle);
         return toResponse(savedRegistration);
+    }
+
+    private void enforceRegistrationVehicleApproved(Integer ownerId, String licensePlate, Instant reviewedAt) {
+        if (ownerId == null || licensePlate == null || licensePlate.isBlank()) {
+            return;
+        }
+
+        String normalizedTargetPlate = normalizeLicensePlate(licensePlate);
+        List<VehicleEntity> ownerVehicles = vehicleRepository.findByOwner_Id(ownerId);
+        for (VehicleEntity ownerVehicle : ownerVehicles) {
+            if (ownerVehicle == null || ownerVehicle.getLicensePlate() == null) {
+                continue;
+            }
+
+            String ownerVehiclePlate = normalizeLicensePlate(ownerVehicle.getLicensePlate());
+            if (normalizedTargetPlate.equals(ownerVehiclePlate)
+                    && ownerVehicle.getStatus() == VehicleStatus.PENDING_APPROVAL) {
+                ownerVehicle.setStatus(VehicleStatus.AVAILABLE);
+                ownerVehicle.setReviewedAt(reviewedAt == null ? Instant.now() : reviewedAt);
+            }
+        }
     }
 
     private VehicleModelEntity resolveOrCreateModel(String brandNameRaw, String modelNameRaw) {

@@ -5,12 +5,11 @@ import com.example.car_management.dto.response.AuthenticationResponse;
 import com.example.car_management.dto.response.IntrospectResponse;
 import com.example.car_management.entity.InvalidatedTokenEntity;
 import com.example.car_management.entity.UserEntity;
+import com.example.car_management.entity.enums.UserRole;
 import com.example.car_management.exception.AppException;
 import com.example.car_management.exception.ErrorCode;
 import com.example.car_management.mapper.UserMapper;
-import com.example.car_management.entity.RoleEntity;
 import com.example.car_management.repository.InvalidatedTokenRepository;
-import com.example.car_management.repository.RoleRepository;
 import com.example.car_management.repository.UserRepository;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -39,7 +38,6 @@ import java.util.UUID;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationService {
     UserRepository userRepository;
-    RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
     InvalidatedTokenRepository invalidatedTokenRepository;
     UserMapper userMapper;
@@ -79,9 +77,7 @@ public class AuthenticationService {
         String hashedPassword = passwordEncoder.encode(request.getPassword());
         user.setPassword(hashedPassword);
 
-        RoleEntity role = roleRepository.findByName("USER")
-                .orElseThrow(() -> new RuntimeException("Role USER not found"));
-        user.setRoles(java.util.Collections.singleton(role));
+        user.setRoleId(UserRole.USER);
 
         user.setCreatedAt(Instant.now());
 
@@ -128,6 +124,7 @@ public class AuthenticationService {
                 .jwtID(UUID.randomUUID().toString())
                 .claim("scope", buildScope(user))
                 .claim("userId", user.getId())
+                .claim("fullName", user.getFullName())
                 .build();
 
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());
@@ -207,8 +204,8 @@ public class AuthenticationService {
     private String buildScope(UserEntity user) {
         StringJoiner stringJoiner = new StringJoiner(" ");
 
-        if (!user.getRoles().isEmpty()) {
-            user.getRoles().forEach(role -> stringJoiner.add("ROLE_" + role.getName()));
+        if (user.getRoleId() != null) {
+            stringJoiner.add("ROLE_" + user.getRoleId().name());
         }
 
         return stringJoiner.toString();

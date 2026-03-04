@@ -4,6 +4,10 @@
   transition: var(--transition);
 }
 
+[data-theme='dark'] .cars-page {
+  background: var(--bg-light);
+}
+
 .cars-container {
   max-width: 1280px;
   margin: 28px auto 68px;
@@ -27,9 +31,19 @@
   gap: 14px;
 }
 
+[data-theme='dark'] .cars-sidebar {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
 .cars-filter-group {
   padding-bottom: 10px;
   border-bottom: 1px solid #edf1f7;
+}
+
+[data-theme='dark'] .cars-filter-group {
+  border-bottom-color: var(--border-color);
 }
 
 .cars-filter-group:last-of-type {
@@ -46,6 +60,10 @@
   letter-spacing: 0;
 }
 
+[data-theme='dark'] .cars-filter-group h3 {
+  color: var(--text-tertiary);
+}
+
 .cars-filter-group label {
   display: flex;
   align-items: center;
@@ -58,6 +76,10 @@
   font-weight: 500;
   font-size: 14px;
   line-height: 1.35;
+}
+
+[data-theme='dark'] .cars-filter-group label {
+  color: var(--text-secondary);
 }
 
 .cars-filter-group label:hover {
@@ -89,8 +111,18 @@
   color: #1f2a3a;
 }
 
+[data-theme='dark'] .cars-filter-search-input {
+  background: var(--input-bg);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
 .cars-filter-search-input::placeholder {
   color: #94a3b8;
+}
+
+[data-theme='dark'] .cars-filter-search-input::placeholder {
+  color: var(--text-tertiary);
 }
 
 .cars-filter-search-icon {
@@ -100,6 +132,10 @@
   transform: translateY(-50%);
   color: #94a3b8;
   pointer-events: none;
+}
+
+[data-theme='dark'] .cars-filter-search-icon {
+  color: var(--text-tertiary);
 }
 
 .cars-content {
@@ -139,10 +175,18 @@
   line-height: 1.05;
 }
 
+[data-theme='dark'] .toolbar-title {
+  color: var(--text-primary);
+}
+
 .toolbar-sub {
   margin: 0;
   color: #64748b;
   font-weight: 600;
+}
+
+[data-theme='dark'] .toolbar-sub {
+  color: var(--text-tertiary);
 }
 
 .cars-sort-wrap {
@@ -157,6 +201,10 @@
   font-weight: 600;
 }
 
+[data-theme='dark'] .cars-sort-label {
+  color: var(--text-tertiary);
+}
+
 .cars-sort-select {
   border: 1px solid #e2e8f0;
   background: #ffffff;
@@ -165,6 +213,12 @@
   height: 42px;
   padding: 0 36px 0 14px;
   font-weight: 600;
+}
+
+[data-theme='dark'] .cars-sort-select {
+  background: var(--input-bg);
+  border-color: var(--border-color);
+  color: var(--text-primary);
 }
 
 .cars-clear-btn {
@@ -180,13 +234,19 @@
 }
 
 [data-theme='dark'] .cars-clear-btn {
-  color: #0f172a;
+  color: var(--text-primary);
+  background: var(--card-bg);
+  border-color: var(--border-color);
 }
 
 .cars-clear-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.1);
   background: #f8fafc;
+}
+
+[data-theme='dark'] .cars-clear-btn:hover {
+  background: var(--primary-light);
 }
 
 .cars-full-width {

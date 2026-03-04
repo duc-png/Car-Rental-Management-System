@@ -113,6 +113,10 @@
   max-width: 360px;
 }
 
+.customer-menu {
+  position: relative;
+}
+
 .user-name {
   font-weight: 700;
   color: var(--text-primary);
@@ -120,6 +124,58 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 220px;
+}
+
+.user-name-link {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.user-name-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.user-name-link:hover {
+  color: var(--accent-color);
+}
+
+.user-name-button:hover {
+  color: var(--accent-color);
+}
+
+.customer-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 180px;
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 120;
+}
+
+.customer-dropdown-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.customer-dropdown-item:hover {
+  background: var(--bg-light);
+  color: var(--accent-color);
 }
 
 .btn-logout {
@@ -215,6 +271,15 @@
 
 [data-theme='dark'] .btn-register:hover {
   color: #0f172a;
+}
+
+[data-theme='dark'] .customer-dropdown {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme='dark'] .customer-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .btn-register:hover {

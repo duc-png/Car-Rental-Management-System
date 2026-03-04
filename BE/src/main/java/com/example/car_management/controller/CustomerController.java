@@ -31,17 +31,6 @@ public class CustomerController {
                 .build());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<CustomerResponse>> getCustomerById(
-            @PathVariable Integer id) {
-        CustomerResponse data = customerService.getCustomerById(id);
-        return ResponseEntity.ok(ApiResponse.<CustomerResponse>builder()
-                .code(1000)
-                .message("Success")
-                .result(data)
-                .build());
-    }
-
     @PostMapping
     public ResponseEntity<ApiResponse<CustomerResponse>> createCustomer(
             @Valid @RequestBody CreateCustomerRequest request) {

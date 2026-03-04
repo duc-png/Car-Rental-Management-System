@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { useAuth } from '../../hooks/useAuth'
 import { createCustomer, getCustomers, updateCustomer, updateCustomerStatus } from '../../api/customers'
-import DashboardNotificationBell from '../../components/DashboardNotificationBell'
+import DashboardNotificationBell from '../../components/layout/DashboardNotificationBell'
 import '../../styles/Customers.css'
 
 const emptyForm = {

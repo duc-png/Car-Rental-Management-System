@@ -1,34 +1,42 @@
 'use client';
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../hooks/useAuth'
+import { getDashboardPathByRole, getDisplayName } from '../utils/authUser'
 import '../styles/Navbar.css'
-
-const looksLikeEmail = (value) => /.+@.+\..+/.test(String(value || '').trim())
-
-const getDisplayName = (user) => {
-  const candidates = [
-    user?.fullName,
-    user?.name,
-    user?.full_name,
-    user?.preferred_username,
-    user?.username
-  ]
-
-  const firstValid = candidates
-    .map((item) => String(item || '').trim())
-    .find((item) => item && !looksLikeEmail(item))
-
-  return firstValid || 'User'
-}
 
 function Navbar({ sticky = true }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isCustomerMenuOpen, setIsCustomerMenuOpen] = useState(false)
+  const customerMenuRef = useRef(null)
   const { theme, toggleTheme } = useTheme()
   const { isAuthenticated, user, logout } = useAuth()
   const displayName = getDisplayName(user)
+  const dashboardPath = getDashboardPathByRole(user)
+  const isCustomerAccount = isAuthenticated && dashboardPath === '/my-bookings'
+
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (!customerMenuRef.current || customerMenuRef.current.contains(event.target)) {
+        return
+      }
+
+      setIsCustomerMenuOpen(false)
+    }
+
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick)
+    }
+  }, [])
+
+  const handleCustomerLogout = async () => {
+    setIsCustomerMenuOpen(false)
+    await logout()
+    setIsMobileMenuOpen(false)
+  }
 
 
   return (
@@ -73,15 +81,44 @@ function Navbar({ sticky = true }) {
             {theme === 'light' ? '🌙' : '☀️'}
           </button>
 
-          {isAuthenticated ? (
-            <div className="nav-user-menu">
-              <span className="user-name">Hi, {displayName}</span>
-              <Link to="/profile" className="btn-login" onClick={() => setIsMobileMenuOpen(false)}>
-                Hồ Sơ
-              </Link>
-              <button onClick={logout} className="btn-logout">
-                Logout
+          {isCustomerAccount ? (
+            <div className="nav-user-menu customer-menu" ref={customerMenuRef}>
+              <button
+                type="button"
+                className="user-name user-name-button"
+                onClick={() => setIsCustomerMenuOpen((prev) => !prev)}
+                aria-haspopup="menu"
+                aria-expanded={isCustomerMenuOpen}
+              >
+                Hi, {displayName}
               </button>
+
+              {isCustomerMenuOpen ? (
+                <div className="customer-dropdown" role="menu">
+                  <Link
+                    to={dashboardPath}
+                    className="customer-dropdown-item"
+                    onClick={() => setIsCustomerMenuOpen(false)}
+                    role="menuitem"
+                  >
+                    My bookings
+                  </Link>
+                  <button
+                    type="button"
+                    className="customer-dropdown-item"
+                    onClick={handleCustomerLogout}
+                    role="menuitem"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          ) : isAuthenticated ? (
+            <div className="nav-user-menu">
+              <Link to={dashboardPath} className="user-name user-name-link">
+                Hi, {displayName}
+              </Link>
             </div>
           ) : (
             <>
