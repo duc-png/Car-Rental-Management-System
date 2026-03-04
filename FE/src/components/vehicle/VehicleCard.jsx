@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { Fuel, Gauge, MapPin, Users } from 'lucide-react'
-import '../../styles/VehicleCard.css'
+import '../styles/VehicleCard.css'
 
 function VehicleCard({ vehicle }) {
   const navigate = useNavigate()
@@ -116,4 +116,3 @@ function VehicleCard({ vehicle }) {
 }
 
 export default VehicleCard
-

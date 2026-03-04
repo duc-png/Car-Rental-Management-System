@@ -20,7 +20,6 @@ public interface BookingMapper {
     @Mapping(target = "ownerId", source = "vehicle.owner.id")
     @Mapping(target = "ownerName", source = "vehicle.owner.fullName")
     @Mapping(target = "ownerPhone", source = "vehicle.owner.phone")
-    @Mapping(target = "pricePerDay", source = "vehicle.pricePerDay")
     BookingResponse toResponse(BookingEntity booking);
 
     List<BookingResponse> toResponseList(List<BookingEntity> bookings);

@@ -1,19 +1,14 @@
-import { createContext, useCallback, useEffect, useRef, useState } from 'react'
+import { createContext, useState, useEffect } from 'react'
 import { jwtDecode } from 'jwt-decode'
-import { login as apiLogin, logout as apiLogout, refreshToken as apiRefreshToken } from '../api/auth'
+import { login as apiLogin, logout as apiLogout } from '../api/auth'
 
 // Tạo Context để lưu thông tin authentication
 export const AuthContext = createContext()
-
-const REFRESH_BEFORE_EXPIRE_MS = 60 * 1000
-const EXPIRY_SKEW_SECONDS = 30
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null) // Thông tin user đang đăng nhập
     const [token, setToken] = useState(null) // JWT token
     const [loading, setLoading] = useState(true) // Loading state khi check auth
-    const refreshTimeoutRef = useRef(null)
-    const refreshingPromiseRef = useRef(null)
 
     // Helper to decode token safely
     const decodeToken = (token) => {
@@ -31,160 +26,27 @@ export function AuthProvider({ children }) {
         }
     }
 
-    const clearRefreshTimer = useCallback(() => {
-        if (refreshTimeoutRef.current) {
-            clearTimeout(refreshTimeoutRef.current)
-            refreshTimeoutRef.current = null
-        }
-    }, [])
-
-    const clearAuthData = useCallback(() => {
-        clearRefreshTimer()
-        setToken(null)
-        setUser(null)
-        localStorage.removeItem('token')
-        localStorage.removeItem('user')
-    }, [clearRefreshTimer])
-
-    const extractTokenValue = (payload) => {
-        if (!payload) return null
-        if (typeof payload === 'string') return payload
-        if (payload.result?.token) return payload.result.token
-        if (payload.token) return payload.token
-        return null
-    }
-
-    const getTokenExpiryMs = (rawToken) => {
-        try {
-            const decoded = jwtDecode(rawToken)
-            if (!decoded?.exp) return null
-            return decoded.exp * 1000
-        } catch {
-            return null
-        }
-    }
-
-    const isTokenExpired = (rawToken, skewSeconds = EXPIRY_SKEW_SECONDS) => {
-        const expiryMs = getTokenExpiryMs(rawToken)
-        if (!expiryMs) return true
-        return expiryMs <= Date.now() + (skewSeconds * 1000)
-    }
-
-    const applyToken = useCallback((nextToken) => {
-        const decodedUser = decodeToken(nextToken)
-        if (!decodedUser) {
-            clearAuthData()
-            return false
-        }
-
-        setToken(nextToken)
-        setUser(decodedUser)
-        localStorage.setItem('token', nextToken)
-        return true
-    }, [clearAuthData])
-
-    const scheduleRefresh = useCallback((rawToken) => {
-        clearRefreshTimer()
-        const expiryMs = getTokenExpiryMs(rawToken)
-        if (!expiryMs) return
-
-        const delay = expiryMs - Date.now() - REFRESH_BEFORE_EXPIRE_MS
-        const nextDelay = Math.max(1000, delay)
-
-        refreshTimeoutRef.current = setTimeout(async () => {
-            try {
-                if (refreshingPromiseRef.current) {
-                    await refreshingPromiseRef.current
-                    return
-                }
-
-                const currentToken = localStorage.getItem('token')
-                if (!currentToken) {
-                    clearAuthData()
-                    return
-                }
-
-                const refreshed = await apiRefreshToken(currentToken)
-                const refreshedToken = extractTokenValue(refreshed)
-
-                if (!refreshedToken || !applyToken(refreshedToken)) {
-                    clearAuthData()
-                    return
-                }
-
-                scheduleRefresh(refreshedToken)
-            } catch {
-                clearAuthData()
-            }
-        }, nextDelay)
-    }, [applyToken, clearAuthData, clearRefreshTimer])
-
-    const tryRefreshToken = useCallback(async (oldToken) => {
-        if (!oldToken) return null
-
-        if (refreshingPromiseRef.current) {
-            return refreshingPromiseRef.current
-        }
-
-        refreshingPromiseRef.current = (async () => {
-            try {
-                const refreshed = await apiRefreshToken(oldToken)
-                const refreshedToken = extractTokenValue(refreshed)
-                if (!refreshedToken || !applyToken(refreshedToken)) {
-                    clearAuthData()
-                    return null
-                }
-
-                scheduleRefresh(refreshedToken)
-                return refreshedToken
-            } catch {
-                clearAuthData()
-                return null
-            } finally {
-                refreshingPromiseRef.current = null
-            }
-        })()
-
-        return refreshingPromiseRef.current
-    }, [applyToken, clearAuthData, scheduleRefresh])
-
     // Khi app khởi động, kiểm tra xem có token đã lưu không
     useEffect(() => {
-        const bootstrapAuth = async () => {
-            try {
-                const savedToken = localStorage.getItem('token')
+        try {
+            const savedToken = localStorage.getItem('token')
 
-                if (!savedToken) {
-                    return
-                }
-
+            if (savedToken) {
                 const decodedUser = decodeToken(savedToken)
-                if (!decodedUser) {
-                    clearAuthData()
-                    return
+                if (decodedUser) {
+                    setToken(savedToken)
+                    setUser(decodedUser)
+                } else {
+                    localStorage.removeItem('token')
                 }
-
-                if (isTokenExpired(savedToken)) {
-                    await tryRefreshToken(savedToken)
-                    return
-                }
-
-                applyToken(savedToken)
-                scheduleRefresh(savedToken)
-            } catch (error) {
-                console.error('Error loading saved auth:', error)
-                clearAuthData()
-            } finally {
-                setLoading(false)
             }
+        } catch (error) {
+            console.error('Error loading saved auth:', error)
+            localStorage.removeItem('token')
+        } finally {
+            setLoading(false)
         }
-
-        bootstrapAuth()
-
-        return () => {
-            clearRefreshTimer()
-        }
-    }, [applyToken, clearAuthData, clearRefreshTimer, scheduleRefresh, tryRefreshToken])
+    }, [])
 
     /**
      * Hàm đăng nhập
@@ -200,14 +62,12 @@ export function AuthProvider({ children }) {
             const accessToken = data.result.token
 
             // Lưu token
-            if (!applyToken(accessToken)) {
-                return {
-                    success: false,
-                    error: 'Token không hợp lệ. Vui lòng đăng nhập lại.'
-                }
-            }
+            setToken(accessToken)
+            localStorage.setItem('token', accessToken)
 
-            scheduleRefresh(accessToken)
+            // Decode token để lấy info
+            const userInfo = decodeToken(accessToken)
+            setUser(userInfo)
 
             return { success: true }
         } catch (error) {
@@ -235,7 +95,10 @@ export function AuthProvider({ children }) {
             // Vẫn logout ở client dù API fail
         } finally {
             // Xóa token và user khỏi state và localStorage
-            clearAuthData()
+            setToken(null)
+            setUser(null)
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
         }
     }
 

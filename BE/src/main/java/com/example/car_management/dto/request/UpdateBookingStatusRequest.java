@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -25,5 +24,4 @@ public class UpdateBookingStatusRequest {
     private Integer endFuelLevel;
     private BigDecimal otherSurcharge; // Additional surcharge (damages, cleaning, etc.)
     private String returnNotes;
-    private LocalDateTime actualReturnTime; // Actual time car was returned (for late return penalty)
 }

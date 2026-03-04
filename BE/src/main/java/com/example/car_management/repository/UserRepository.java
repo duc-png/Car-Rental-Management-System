@@ -1,7 +1,6 @@
 package com.example.car_management.repository;
 
 import com.example.car_management.entity.UserEntity;
-import com.example.car_management.entity.enums.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,29 +15,30 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
 
   boolean existsByEmail(String email);
 
-  List<UserEntity> findByRoleId(UserRole roleId);
-
   @Query("""
       select u from UserEntity u
+      join u.roles r
       where (:q is null or :q = '' or
              lower(u.fullName) like lower(concat('%', :q, '%')) or
              lower(u.email) like lower(concat('%', :q, '%')) or
              lower(u.phone) like lower(concat('%', :q, '%')))
-        and (u.roleId is null or u.roleId = :role)
+        and (r.name = :role)
       order by u.createdAt desc
       """)
-  List<UserEntity> searchCustomers(@Param("q") String q, @Param("role") UserRole role);
+  List<UserEntity> searchCustomers(@Param("q") String q, @Param("role") String role);
 
   @Query("""
       select u from UserEntity u
-      where u.roleId = :role
+      join u.roles r
+      where r.name = :role
       order by u.id desc
       """)
-  Page<UserEntity> findByRole(@Param("role") UserRole role, Pageable pageable);
+  Page<UserEntity> findByRole(@Param("role") String role, Pageable pageable);
 
   @Query("""
         select u from UserEntity u
-        where u.roleId = :role
+        join u.roles r
+        where r.name = :role
           and (
       :q is null or :q = '' or
       lower(u.fullName) like lower(concat('%', :q, '%')) or
@@ -47,5 +47,5 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
           )
         order by u.id desc
         """)
-  Page<UserEntity> searchByRole(@Param("role") UserRole role, @Param("q") String q, Pageable pageable);
+  Page<UserEntity> searchByRole(@Param("role") String role, @Param("q") String q, Pageable pageable);
 }

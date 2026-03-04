@@ -1,9 +1,8 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { getMyBookings, cancelBooking } from '../../api/bookings'
-import { formatVndCurrency, getBookingStatusLabel } from '../../utils/bookingUtils'
 import '../../styles/MyBookings.css'
 
 function MyBookings() {
@@ -13,7 +12,11 @@ function MyBookings() {
   const [error, setError] = useState(null)
   const [cancellingId, setCancellingId] = useState(null)
 
-  const fetchBookings = useCallback(async () => {
+  useEffect(() => {
+    fetchBookings()
+  }, [])
+
+  const fetchBookings = async () => {
     try {
       setLoading(true)
       setError(null)
@@ -29,11 +32,7 @@ function MyBookings() {
     } finally {
       setLoading(false)
     }
-  }, [navigate])
-
-  useEffect(() => {
-    fetchBookings()
-  }, [fetchBookings])
+  }
 
   const handleCancelBooking = async (id) => {
     if (!confirm('Bạn có chắc muốn hủy đặt xe này?')) return
@@ -61,6 +60,17 @@ function MyBookings() {
       hour: '2-digit',
       minute: '2-digit'
     })
+  }
+
+  const getStatusLabel = (status) => {
+    const statusMap = {
+      'PENDING': 'Chờ duyệt',
+      'CONFIRMED': 'Đã duyệt',
+      'ONGOING': 'Đang thuê',
+      'COMPLETED': 'Hoàn thành',
+      'CANCELLED': 'Đã hủy'
+    }
+    return statusMap[status] || status
   }
 
   const canCancel = (status) => {
@@ -111,14 +121,14 @@ function MyBookings() {
                 <div className="booking-info">
                   <p><strong>Nhận xe:</strong> {formatDate(booking.startDate)}</p>
                   <p><strong>Trả xe:</strong> {formatDate(booking.endDate)}</p>
-                  <p><strong>Tổng tiền:</strong> {formatVndCurrency(booking.totalPrice)}</p>
+                  <p><strong>Tổng tiền:</strong> {booking.totalPrice?.toLocaleString('vi-VN')} ₫</p>
                   {booking.depositAmount && (
-                    <p><strong>Tiền cọc (15%):</strong> {formatVndCurrency(booking.depositAmount)}</p>
+                    <p><strong>Tiền cọc (15%):</strong> {booking.depositAmount?.toLocaleString('vi-VN')} ₫</p>
                   )}
                 </div>
                 <div className="booking-status">
                   <span className={`status-badge ${booking.status?.toLowerCase()}`}>
-                    {getBookingStatusLabel(booking.status)}
+                    {getStatusLabel(booking.status)}
                   </span>
                 </div>
               </div>

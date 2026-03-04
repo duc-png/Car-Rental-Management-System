@@ -5,7 +5,7 @@ import { listOwnerRegistrationsForAdmin } from '../../api/adminOwnerRegistration
 import { listAllVehicles } from '../../api/adminVehicles'
 import { getCustomers } from '../../api/customers'
 import { useAuth } from '../../hooks/useAuth'
-import DashboardNotificationBell from '../../components/layout/DashboardNotificationBell'
+import DashboardNotificationBell from '../../components/DashboardNotificationBell'
 import '../../styles/AdminDashboard.css'
 
 export default function AdminDashboard() {

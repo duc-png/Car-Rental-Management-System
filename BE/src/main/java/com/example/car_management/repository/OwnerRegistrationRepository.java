@@ -18,9 +18,6 @@ public interface OwnerRegistrationRepository extends JpaRepository<OwnerRegistra
 
     Optional<OwnerRegistration> findFirstByEmailAndStatusOrderByCreatedAtDesc(
             String email,
-            OwnerRegistrationStatus status);
-
-    Optional<OwnerRegistration> findFirstByApprovedOwner_IdAndStatusOrderByReviewedAtAsc(
-            Integer approvedOwnerId,
-            OwnerRegistrationStatus status);
+            OwnerRegistrationStatus status
+    );
 }

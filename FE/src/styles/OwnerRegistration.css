@@ -11,17 +11,6 @@
     --owner-shadow: 0 30px 60px rgba(31, 28, 26, 0.12);
 }
 
-[data-theme='dark'] {
-    --owner-bg: #0f172a;
-    --owner-card: #1e293b;
-    --owner-accent: #fbbf24;
-    --owner-accent-dark: #fcd34d;
-    --owner-dark: #f1f5f9;
-    --owner-muted: #94a3b8;
-    --owner-border: #334155;
-    --owner-shadow: 0 30px 60px rgba(0, 0, 0, 0.35);
-}
-
 .owner-registration {
     min-height: auto;
     background: radial-gradient(circle at 10% 15%, #fff7ef, transparent 55%),
@@ -278,31 +267,6 @@
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
-.image-preview-head {
-    margin-top: 14px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 10px;
-    color: var(--owner-muted);
-    font-family: 'Work Sans', Arial, sans-serif;
-}
-
-.image-preview-head span {
-    font-weight: 600;
-    color: var(--owner-dark);
-}
-
-.image-preview-head small {
-    font-size: 0.85rem;
-}
-
-.image-preview-empty {
-    margin: 12px 0 0;
-    color: var(--owner-muted);
-    font-size: 0.92rem;
-}
-
 .image-dropzone {
     border: 1px dashed rgba(217, 107, 76, 0.5);
     border-radius: 16px;
@@ -332,18 +296,6 @@
     border: 1px solid var(--owner-border);
     background: #fff;
     animation: fadeUp 0.35s ease;
-}
-
-.image-preview-button {
-    padding: 0;
-    width: 100%;
-    cursor: pointer;
-    transition: border-color 0.2s ease, transform 0.2s ease;
-}
-
-.image-preview-button:hover {
-    border-color: var(--owner-accent);
-    transform: translateY(-1px);
 }
 
 .image-preview img {
@@ -533,8 +485,8 @@
 }
 
 .owner-registration-intro-cta {
-    background: var(--accent-color);
-    color: var(--primary-color);
+    background: #59d389;
+    color: #ffffff;
     border: none;
     border-radius: 9px;
     padding: 13px 34px;
@@ -542,11 +494,11 @@
     font-weight: 700;
     line-height: 1;
     margin-bottom: 20px;
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.16);
+    box-shadow: 0 8px 20px rgba(25, 135, 84, 0.22);
 }
 
 .owner-registration-intro-cta:hover {
-    background: var(--accent-light);
+    background: #47bf77;
 }
 
 .owner-registration-intro-shell h2 {
@@ -589,7 +541,7 @@
 
 .owner-registration-intro-checklist li::before {
     content: '◉';
-    color: var(--accent-color);
+    color: #74c88d;
     font-size: 10px;
     line-height: 1;
 }
@@ -601,7 +553,7 @@
 }
 
 .owner-registration-intro-policy a {
-    color: var(--accent-color);
+    color: #59c57e;
     text-decoration: underline;
     font-weight: 600;
 }
@@ -696,8 +648,8 @@
 }
 
 .owner-step-item.active span {
-    background: var(--accent-color);
-    color: #0f172a;
+    background: #58c879;
+    color: #ffffff;
 }
 
 .owner-step-item.active small {
@@ -757,10 +709,6 @@
     color: #334155;
 }
 
-.owner-registration--form .owner-rental-field-full {
-    grid-column: 1 / -1;
-}
-
 .owner-registration--form .form-section input,
 .owner-registration--form .form-section select,
 .owner-registration--form .form-section textarea {
@@ -790,7 +738,7 @@
 .owner-registration--form .owner-delivery-field input[type='checkbox'] {
     width: 18px;
     height: 18px;
-    accent-color: var(--accent-color);
+    accent-color: #58c879;
 }
 
 .owner-registration--form .owner-feature-grid {
@@ -828,8 +776,7 @@
 }
 
 .owner-registration--form .primary-btn {
-    background: var(--accent-color);
-    color: var(--primary-color);
+    background: #58c879;
     box-shadow: none;
 }
 
@@ -896,99 +843,14 @@
     border-color: #cbd5e1;
 }
 
-.owner-registration--form .owner-address-map-wrap {
-    margin-top: 10px;
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    overflow: hidden;
-    background: #ffffff;
-}
-
-.owner-registration--form .owner-address-map {
-    width: 100%;
-    min-height: 240px;
-    height: 240px;
-}
-
-.owner-registration--form .owner-address-map-state {
-    padding: 10px 12px;
-    font-size: 13px;
-    color: #334155;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.owner-registration--form .owner-address-map-state-error {
-    color: #b91c1c;
-}
-
-.owner-registration--form .owner-delivery-toggle-row {
-    margin-top: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.owner-registration--form .owner-delivery-toggle-row h3 {
-    margin: 0;
-    font-family: 'Work Sans', Arial, sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.2;
-    color: #334155;
-}
-
-.owner-registration--form .owner-switch {
-    position: relative;
-    width: 58px;
-    height: 30px;
-    display: inline-block;
-}
-
-.owner-registration--form .owner-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-    position: absolute;
-}
-
-.owner-registration--form .owner-switch-slider {
-    position: absolute;
-    inset: 0;
-    border-radius: 999px;
-    background: #d1d5db;
-    transition: background 0.2s ease;
-}
-
-.owner-registration--form .owner-switch-slider::before {
-    content: '';
-    position: absolute;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: #ffffff;
-    top: 4px;
-    left: 4px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s ease;
-}
-
-.owner-registration--form .owner-switch input:checked+.owner-switch-slider {
-    background: var(--accent-color);
-}
-
-.owner-registration--form .owner-switch input:checked+.owner-switch-slider::before {
-    transform: translateX(28px);
-}
-
 .owner-registration--form .owner-delivery-config {
     margin-top: 14px;
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    padding: 0;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px;
     display: grid;
-    gap: 14px;
+    gap: 10px;
 }
 
 .owner-registration--form .owner-delivery-config-grid {
@@ -998,10 +860,10 @@
 }
 
 .owner-registration--form .owner-range-field {
-    background: transparent;
-    border: none;
-    border-radius: 0;
-    padding: 0;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 10px;
     display: grid;
     gap: 8px;
 }
@@ -1017,25 +879,16 @@
     gap: 8px;
     color: #334155;
     font-size: 12px;
-    font-family: 'Work Sans', Arial, sans-serif;
-    font-weight: 500;
 }
 
 .owner-registration--form .owner-range-label-row b {
     color: #111827;
     font-size: 12px;
-    font-weight: 600;
 }
 
 .owner-registration--form .owner-range-field input[type='range'] {
     width: 100%;
-    accent-color: var(--accent-color);
-}
-
-.owner-registration--form .owner-range-field small {
-    color: #9ca3af;
-    font-size: 12px;
-    font-weight: 500;
+    accent-color: #58c879;
 }
 
 .owner-address-modal-overlay {
@@ -1086,8 +939,8 @@
 .owner-address-modal input:focus,
 .owner-address-modal select:focus {
     outline: none;
-    border-color: var(--accent-color);
-    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.24);
+    border-color: #58c879;
+    box-shadow: 0 0 0 3px rgba(88, 200, 121, 0.2);
 }
 
 .owner-address-modal-close {
@@ -1121,12 +974,12 @@
 
 .owner-address-apply-btn {
     border: none;
-    background: var(--accent-color);
-    color: var(--primary-color);
+    background: #58c879;
+    color: #ffffff;
 }
 
 .owner-address-apply-btn:hover {
-    background: var(--accent-light);
+    background: #43b664;
 }
 
 .owner-address-cancel-btn {
@@ -1140,161 +993,9 @@
     color: #0f172a;
 }
 
-[data-theme='dark'] .owner-registration-intro,
-[data-theme='dark'] .owner-registration--form {
-    background: var(--bg-light);
-}
-
-[data-theme='dark'] .owner-registration-intro-shell,
-[data-theme='dark'] .owner-registration-form-title,
-[data-theme='dark'] .owner-registration-form-back {
-    color: var(--text-primary);
-}
-
-[data-theme='dark'] .owner-registration-form-stepper,
-[data-theme='dark'] .owner-registration--form .owner-registration-form,
-[data-theme='dark'] .owner-registration-intro-checklist {
-    background: var(--card-bg);
-    border-color: var(--border-color);
-}
-
-[data-theme='dark'] .owner-registration-intro-checklist h3,
-[data-theme='dark'] .owner-registration-intro-checklist ul,
-[data-theme='dark'] .owner-registration-intro-policy {
-    color: var(--text-secondary);
-}
-
-[data-theme='dark'] .owner-registration-intro-policy a {
-    color: var(--accent-color);
-}
-
-[data-theme='dark'] .owner-step-item span {
-    background: var(--primary-light);
-    color: var(--text-tertiary);
-}
-
-[data-theme='dark'] .owner-step-item small,
-[data-theme='dark'] .owner-step-divider {
-    color: var(--text-tertiary);
-}
-
-[data-theme='dark'] .owner-step-item.active span {
-    background: var(--accent-color);
-    color: #0f172a;
-}
-
-[data-theme='dark'] .owner-step-item.active small {
-    color: var(--text-primary);
-}
-
-[data-theme='dark'] .owner-registration--form .form-section h2,
-[data-theme='dark'] .owner-registration--form .owner-description-field>span,
-[data-theme='dark'] .owner-registration--form .owner-feature-title {
-    color: var(--text-primary);
-}
-
-[data-theme='dark'] .owner-registration--form .form-section label,
-[data-theme='dark'] .owner-registration--form .owner-delivery-field span,
-[data-theme='dark'] .owner-registration--form .owner-range-label-row,
-[data-theme='dark'] .owner-registration--form .owner-address-map-state {
-    color: var(--text-secondary);
-}
-
-[data-theme='dark'] .owner-registration--form .form-section input,
-[data-theme='dark'] .owner-registration--form .form-section select,
-[data-theme='dark'] .owner-registration--form .form-section textarea,
-[data-theme='dark'] .owner-registration--form .owner-address-trigger,
-[data-theme='dark'] .owner-registration--form .owner-delivery-field,
-[data-theme='dark'] .owner-registration--form .owner-range-field,
-[data-theme='dark'] .owner-address-modal,
-[data-theme='dark'] .owner-address-modal input,
-[data-theme='dark'] .owner-address-modal select,
-[data-theme='dark'] .owner-address-cancel-btn {
-    background: var(--input-bg);
-    border-color: var(--border-color);
-    color: var(--text-primary);
-}
-
-[data-theme='dark'] .owner-registration--form .owner-address-trigger span,
-[data-theme='dark'] .owner-registration--form .owner-address-trigger-icon,
-[data-theme='dark'] .owner-registration--form .owner-range-label-row b,
-[data-theme='dark'] .owner-address-modal h3,
-[data-theme='dark'] .owner-address-modal label,
-[data-theme='dark'] .owner-address-modal-close {
-    color: var(--text-primary);
-}
-
-[data-theme='dark'] .owner-registration--form .owner-delivery-config,
-[data-theme='dark'] .owner-registration--form .ghost-btn,
-[data-theme='dark'] .owner-address-modal-close:hover {
-    background: var(--primary-light);
-    border-color: var(--border-color);
-    color: var(--text-primary);
-}
-
-[data-theme='dark'] .owner-registration--form .owner-address-map-wrap {
-    border-color: var(--border-color);
-    background: var(--input-bg);
-}
-
-[data-theme='dark'] .owner-registration--form .owner-address-map-state {
-    border-bottom-color: var(--border-color);
-}
-
-[data-theme='dark'] .owner-registration--form .owner-delivery-toggle-row h3,
-[data-theme='dark'] .owner-registration--form .owner-range-label-row b {
-    color: var(--text-primary);
-}
-
-[data-theme='dark'] .owner-registration--form .owner-range-field small {
-    color: var(--text-tertiary);
-}
-
-[data-theme='dark'] .owner-registration--form .form-actions {
-    border-top-color: var(--border-color);
-}
-
-[data-theme='dark'] .owner-registration--form .primary-btn,
-[data-theme='dark'] .owner-address-apply-btn,
-[data-theme='dark'] .owner-registration-intro-cta {
-    background: var(--accent-color);
-    color: #0f172a;
-}
-
-[data-theme='dark'] .owner-registration--form .primary-btn:hover,
-[data-theme='dark'] .owner-address-apply-btn:hover,
-[data-theme='dark'] .owner-registration-intro-cta:hover {
-    background: var(--accent-light);
-}
-
-[data-theme='dark'] .owner-address-modal-overlay {
-    background: rgba(2, 6, 23, 0.72);
-}
-
 @media (max-width: 768px) {
     .owner-registration--form .owner-delivery-config-grid {
         grid-template-columns: 1fr;
-    }
-
-    .owner-registration--form .owner-delivery-toggle-row h3 {
-        font-size: 13px;
-    }
-
-    .owner-registration--form .owner-range-label-row {
-        font-size: 11px;
-    }
-
-    .owner-registration--form .owner-range-label-row b {
-        font-size: 11px;
-    }
-
-    .owner-registration--form .owner-range-field small {
-        font-size: 11px;
-    }
-
-    .owner-registration--form .owner-address-map {
-        min-height: 220px;
-        height: 220px;
     }
 
     .owner-address-modal {

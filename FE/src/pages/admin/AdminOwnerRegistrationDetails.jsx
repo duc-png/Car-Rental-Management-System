@@ -6,7 +6,7 @@ import {
     cancelOwnerRegistration,
     getOwnerRegistrationDetailForAdmin
 } from '../../api/adminOwnerRegistrations'
-import DashboardNotificationBell from '../../components/layout/DashboardNotificationBell'
+import DashboardNotificationBell from '../../components/DashboardNotificationBell'
 import '../../styles/AdminOwnerRegistrationDetails.css'
 
 const statusBucket = (status) => {

@@ -3,22 +3,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Search } from 'lucide-react'
-import VehicleCard from '../../components/vehicle/VehicleCard'
+import VehicleCard from '../../components/VehicleCard'
 import { getCarsList, searchCars } from '../../api/cars'
 import '../../styles/Cars.css'
-
-const normalizeLocationName = (value) => {
-  if (!value) return ''
-
-  return String(value)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/\b(thanh\s*pho|tp\.?|tinh|city)\b/g, ' ')
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
 
 function Cars() {
   const location = useLocation()
@@ -44,7 +31,6 @@ function Cars() {
   const returnDateParam = searchParams.get('returnDate') || ''
   const pickupTimeParam = searchParams.get('pickupTime') || '09:00'
   const returnTimeParam = searchParams.get('returnTime') || '09:00'
-  const normalizedAddressParam = useMemo(() => normalizeLocationName(addressParam), [addressParam])
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -52,7 +38,7 @@ function Cars() {
         setLoading(true)
         const hasSearchQuery = Boolean(pickupDateParam && returnDateParam)
 
-        let data = hasSearchQuery
+        const data = hasSearchQuery
           ? await searchCars({
             address: addressParam,
             pickupDate: pickupDateParam,
@@ -61,21 +47,6 @@ function Cars() {
             returnTime: returnTimeParam
           })
           : await getCarsList()
-
-        if (
-          hasSearchQuery
-          && (!Array.isArray(data) || data.length === 0)
-          && normalizedAddressParam
-          && normalizedAddressParam !== addressParam.trim().toLowerCase()
-        ) {
-          data = await searchCars({
-            address: normalizedAddressParam,
-            pickupDate: pickupDateParam,
-            returnDate: returnDateParam,
-            pickupTime: pickupTimeParam,
-            returnTime: returnTimeParam
-          })
-        }
 
         setCars(data || [])
         setSearchApplied(hasSearchQuery)
@@ -88,7 +59,7 @@ function Cars() {
     }
 
     fetchCars()
-  }, [addressParam, normalizedAddressParam, pickupDateParam, returnDateParam, pickupTimeParam, returnTimeParam])
+  }, [addressParam, pickupDateParam, returnDateParam, pickupTimeParam, returnTimeParam])
 
   const availableCars = useMemo(
     () => (cars || []).filter(car => car.status === 'AVAILABLE'),
@@ -104,23 +75,7 @@ function Cars() {
   const transmissionOptions = ['all', ...optionFromField('transmission')]
   const fuelOptions = ['all', ...optionFromField('fuelType')]
   const seatOptions = ['all', ...optionFromField('seatCount')]
-  const cityOptions = useMemo(() => {
-    const byNormalized = new Map()
-
-    availableCars.forEach((car) => {
-      const rawCity = String(car.city || '').trim()
-      if (!rawCity) return
-
-      const normalizedCity = normalizeLocationName(rawCity)
-      if (!normalizedCity) return
-
-      if (!byNormalized.has(normalizedCity) || rawCity.length < byNormalized.get(normalizedCity).length) {
-        byNormalized.set(normalizedCity, rawCity)
-      }
-    })
-
-    return ['all', ...Array.from(byNormalized.entries()).map(([value, label]) => ({ value, label }))]
-  }, [availableCars])
+  const cityOptions = ['all', ...optionFromField('city')]
 
   const filteredCars = useMemo(() => {
     const text = filters.search.trim().toLowerCase()
@@ -130,8 +85,7 @@ function Cars() {
       const matchesTransmission = filters.transmission === 'all' || car.transmission === filters.transmission
       const matchesFuel = filters.fuel === 'all' || car.fuelType === filters.fuel
       const matchesSeats = filters.seats === 'all' || String(car.seatCount) === String(filters.seats)
-      const carCityNormalized = normalizeLocationName(car.city)
-      const matchesCity = filters.city === 'all' || carCityNormalized === filters.city
+      const matchesCity = filters.city === 'all' || car.city === filters.city
 
       return matchesText && matchesType && matchesTransmission && matchesFuel && matchesSeats && matchesCity
     })
@@ -232,7 +186,7 @@ function Cars() {
                   checked={filters.seats === opt}
                   onChange={() => handleChange('seats', opt)}
                 />
-                {opt === 'all' ? 'Tất cả' : `${opt}`}
+                {opt === 'all' ? 'Tất cả' : `${opt} chỗ`}
               </label>
             ))}
           </div>
@@ -240,14 +194,14 @@ function Cars() {
           <div className="cars-filter-group">
             <h3>Khu vực</h3>
             {cityOptions.map(opt => (
-              <label key={typeof opt === 'string' ? opt : opt.value}>
+              <label key={opt}>
                 <input
                   type="radio"
                   name="city"
-                  checked={filters.city === (typeof opt === 'string' ? opt : opt.value)}
-                  onChange={() => handleChange('city', typeof opt === 'string' ? opt : opt.value)}
+                  checked={filters.city === opt}
+                  onChange={() => handleChange('city', opt)}
                 />
-                {opt === 'all' ? 'Tất cả' : opt.label}
+                {opt === 'all' ? 'Tất cả' : opt}
               </label>
             ))}
           </div>
@@ -269,7 +223,7 @@ function Cars() {
               <div className="cars-toolbar">
                 <div className="cars-toolbar-left">
                   <div className="toolbar-title-row">
-                    {/* <h3 className="toolbar-title">{sortedCars.length} kết quả được tìm thấy</h3> */}
+                    <h3 className="toolbar-title">{sortedCars.length} kết quả được tìm thấy</h3>
                   </div>
                   {searchApplied && (
                     <p className="toolbar-sub">

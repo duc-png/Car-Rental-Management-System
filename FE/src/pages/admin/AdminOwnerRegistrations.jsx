@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { listOwnerRegistrationsForAdmin } from '../../api/adminOwnerRegistrations'
-import DashboardNotificationBell from '../../components/layout/DashboardNotificationBell'
+import DashboardNotificationBell from '../../components/DashboardNotificationBell'
 import '../../styles/AdminOwnerRegistrations.css'
 
 const STATUS_OPTIONS = [

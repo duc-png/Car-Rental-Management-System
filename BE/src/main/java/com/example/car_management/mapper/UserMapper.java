@@ -9,7 +9,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface UserMapper {
 
-    @Mapping(target = "roleId", ignore = true)
+    @Mapping(target = "roles", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "address", ignore = true)
@@ -18,6 +18,6 @@ public interface UserMapper {
     @Mapping(target = "createdAt", ignore = true)
     UserEntity toEntity(RegisterRequest request);
 
-    @Mapping(source = "roleId", target = "roleId")
+    @Mapping(target = "roleId", expression = "java(user.getRoles().isEmpty() ? null : user.getRoles().iterator().next().getName())")
     UserResponse toResponse(UserEntity user);
 }
