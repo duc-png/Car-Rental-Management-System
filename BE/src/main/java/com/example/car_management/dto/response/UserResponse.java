@@ -22,5 +22,5 @@ public class UserResponse {
     private Boolean isVerified;
     private Boolean isActive;
     private Instant createdAt;
-    private String roleId; // Changed from roles to roleId
+    private String roleId;
 }

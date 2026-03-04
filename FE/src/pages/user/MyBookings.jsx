@@ -123,22 +123,24 @@ function MyBookings() {
                 </div>
               </div>
               <div className="booking-actions">
-                {booking.paymentStatus === 'PENDING_DEPOSIT' && booking.checkoutUrl && (
-                  <button
-                    className="btn-pay"
-                    onClick={() => window.open(booking.checkoutUrl, '_blank')}
-                  >
-                    Thanh toán cọc 15%
-                  </button>
-                )}
-                {booking.paymentStatus === 'PENDING_FULL_PAYMENT' && booking.checkoutUrl && (
-                  <button
-                    className="btn-pay full-payment"
-                    onClick={() => window.open(booking.checkoutUrl, '_blank')}
-                  >
-                    Thanh toán 85% còn lại
-                  </button>
-                )}
+                {booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED'
+                  && booking.paymentStatus === 'PENDING_DEPOSIT' && booking.checkoutUrl && (
+                    <button
+                      className="btn-pay"
+                      onClick={() => window.open(booking.checkoutUrl, '_blank')}
+                    >
+                      Thanh toán cọc 15%
+                    </button>
+                  )}
+                {booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED'
+                  && booking.paymentStatus === 'PENDING_FULL_PAYMENT' && booking.checkoutUrl && (
+                    <button
+                      className="btn-pay full-payment"
+                      onClick={() => window.open(booking.checkoutUrl, '_blank')}
+                    >
+                      Thanh toán 85% còn lại
+                    </button>
+                  )}
                 <button
                   className="btn-view"
                   onClick={() => navigate(`/cars/${booking.vehicleId}`)}
