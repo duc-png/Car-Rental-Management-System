@@ -205,10 +205,7 @@ public class AuthenticationService {
         StringJoiner stringJoiner = new StringJoiner(" ");
 
         if (user.getRoleId() != null) {
-            String roleName = user.getRoleId() == UserRole.EXPERT
-                    ? UserRole.CAR_OWNER.name()
-                    : user.getRoleId().name();
-            stringJoiner.add("ROLE_" + roleName);
+            stringJoiner.add("ROLE_" + user.getRoleId().name());
         }
 
         return stringJoiner.toString();

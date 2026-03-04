@@ -26,9 +26,6 @@ public interface UserMapper {
         if (role == null) {
             return null;
         }
-        if (role == UserRole.EXPERT) {
-            return UserRole.CAR_OWNER.name();
-        }
         return role.name();
     }
 }
