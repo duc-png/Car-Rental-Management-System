@@ -114,6 +114,10 @@
   max-width: 360px;
 }
 
+.customer-menu {
+  position: relative;
+}
+
 .user-name {
   font-weight: 700;
   color: var(--text-primary);
@@ -132,6 +136,23 @@
 .user-name:hover {
   background: var(--bg-light);
   color: var(--primary-color);
+}
+
+.user-name-link {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.user-name-button {
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.user-name-link:hover,
+.user-name-button:hover {
+  color: var(--accent-color);
 }
 
 /* Dropdown */
@@ -303,6 +324,15 @@
 
 [data-theme='dark'] .btn-register:hover {
   color: #0f172a;
+}
+
+[data-theme='dark'] .customer-dropdown {
+  background: #0f172a;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme='dark'] .customer-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .btn-register:hover {

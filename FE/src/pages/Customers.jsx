@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '../hooks/useAuth'
@@ -47,7 +47,7 @@ export default function Customers() {
         return { totalCustomers, activeCustomers, totalBookings, avgBookings }
     }, [customers])
 
-    const loadCustomers = async (searchValue = '') => {
+    const loadCustomers = useCallback(async (searchValue = '') => {
         try {
             setLoading(true)
             const response = await getCustomers(token, searchValue)
@@ -57,7 +57,7 @@ export default function Customers() {
         } finally {
             setLoading(false)
         }
-    }
+    }, [token])
 
     useEffect(() => {
         if (!token) {
@@ -69,7 +69,7 @@ export default function Customers() {
             return
         }
         loadCustomers()
-    }, [token, user, navigate])
+    }, [token, user, navigate, loadCustomers])
 
     const handleLogout = async () => {
         await logout()
@@ -86,7 +86,7 @@ export default function Customers() {
         }, 400)
 
         return () => clearTimeout(handler)
-    }, [query, token, user])
+    }, [query, token, user, loadCustomers])
 
     const openCreateModal = () => {
         setEditingCustomer(null)

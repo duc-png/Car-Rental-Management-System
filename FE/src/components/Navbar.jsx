@@ -1,28 +1,11 @@
 'use client';
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../hooks/useAuth'
+import { getDashboardPathByRole, getDisplayName } from '../utils/authUser'
 import '../styles/Navbar.css'
-
-const looksLikeEmail = (value) => /.+@.+\..+/.test(String(value || '').trim())
-
-const getDisplayName = (user) => {
-  const candidates = [
-    user?.fullName,
-    user?.name,
-    user?.full_name,
-    user?.preferred_username,
-    user?.username
-  ]
-
-  const firstValid = candidates
-    .map((item) => String(item || '').trim())
-    .find((item) => item && !looksLikeEmail(item))
-
-  return firstValid || 'User'
-}
 
 const isOwner = (user) => {
   const scope = String(user?.role || user?.scope || '')
@@ -32,13 +15,31 @@ const isOwner = (user) => {
 function Navbar({ sticky = true }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const userMenuRef = useRef(null)
   const { theme, toggleTheme } = useTheme()
   const { isAuthenticated, user, logout } = useAuth()
   const displayName = getDisplayName(user)
+  const dashboardPath = getDashboardPathByRole(user)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (!userMenuRef.current || userMenuRef.current.contains(event.target)) return
+      setIsUserMenuOpen(false)
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [])
 
   const closeMenus = () => {
     setIsMobileMenuOpen(false)
     setIsUserMenuOpen(false)
+  }
+
+  const handleLogout = async () => {
+    setIsUserMenuOpen(false)
+    await logout()
+    setIsMobileMenuOpen(false)
   }
 
   return (
@@ -84,28 +85,33 @@ function Navbar({ sticky = true }) {
           </button>
 
           {isAuthenticated ? (
-            <div className="nav-user-menu">
+            <div className="nav-user-menu" ref={userMenuRef}>
               <button
-                className="user-name"
-                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                type="button"
+                className="user-name user-name-button"
+                onClick={() => setIsUserMenuOpen((prev) => !prev)}
+                aria-haspopup="menu"
+                aria-expanded={isUserMenuOpen}
               >
                 Hi, {displayName} ▾
               </button>
 
               {isUserMenuOpen && (
-                <div className="user-dropdown">
-                  <Link to="/my-bookings" className="dropdown-item" onClick={closeMenus}>
+                <div className="user-dropdown" role="menu">
+                  <Link to="/my-bookings" className="dropdown-item" onClick={closeMenus} role="menuitem">
                     🚗 Đặt xe của tôi
                   </Link>
                   {isOwner(user) && (
-                    <Link to="/manage-rentals" className="dropdown-item" onClick={closeMenus}>
+                    <Link to="/manage-rentals" className="dropdown-item" onClick={closeMenus} role="menuitem">
                       📋 Quản lý cho thuê
                     </Link>
                   )}
                   <hr className="dropdown-divider" />
                   <button
+                    type="button"
                     className="dropdown-item dropdown-logout"
-                    onClick={() => { logout(); closeMenus(); }}
+                    onClick={handleLogout}
+                    role="menuitem"
                   >
                     🚪 Đăng xuất
                   </button>
@@ -129,4 +135,3 @@ function Navbar({ sticky = true }) {
 }
 
 export default Navbar
-

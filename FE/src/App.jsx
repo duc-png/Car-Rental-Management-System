@@ -2,8 +2,8 @@ import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'r
 import { Toaster } from 'sonner'
 import { ThemeProvider } from './contexts/ThemeContext'
 import { AuthProvider } from './contexts/AuthContext'
-import Navbar from './components/Navbar'
-import Footer from './components/Footer'
+import Navbar from './components/layout/Navbar'
+import Footer from './components/layout/Footer'
 import Home from './pages/public/Home'
 import Cars from './pages/public/Cars'
 import MyBookings from './pages/user/MyBookings'
@@ -56,8 +56,9 @@ function AdminRoute({ children }) {
 function AppLayout() {
   const location = useLocation()
   const isOwnerArea = /^\/owner(\/|$)/.test(location.pathname)
+  const isOwnerRentalsArea = /^\/manage-rentals(\/|$)/.test(location.pathname)
   const isAdminArea = /^\/admin(\/|$)/.test(location.pathname)
-  const isOwnerDashboard = isOwnerArea || isAdminArea
+  const isOwnerDashboard = isOwnerArea || isOwnerRentalsArea || isAdminArea
   const isCarDetailsPage = location.pathname.startsWith('/car/') || (location.pathname.startsWith('/cars/') && location.pathname !== '/cars')
 
   return (
@@ -79,6 +80,7 @@ function AppLayout() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/owner/fleet" element={<CarOwnerFleet />} />
+          <Route path="/owner/fleet/vehicles" element={<CarOwnerFleet />} />
           <Route path="/owner/vehicles/:id" element={<OwnerVehicleDetails />} />
           <Route path="/owner/vehicles/:id/edit" element={<OwnerVehicleEdit />} />
           <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
@@ -111,3 +113,4 @@ function App() {
 }
 
 export default App
+

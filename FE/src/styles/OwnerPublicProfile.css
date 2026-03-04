@@ -4,6 +4,10 @@
     padding: 24px 12px 40px;
 }
 
+[data-theme='dark'] .owner-public-page {
+    background: var(--bg-light);
+}
+
 .owner-public-shell {
     max-width: 980px;
     margin: 0 auto;
@@ -23,11 +27,20 @@
     font-weight: 700;
 }
 
+[data-theme='dark'] .owner-public-back {
+    color: var(--accent-color);
+}
+
 .owner-public-card {
     background: #fff;
     border: 1px solid #e5e7eb;
     border-radius: 14px;
     padding: 14px 16px;
+}
+
+[data-theme='dark'] .owner-public-card {
+    background: var(--card-bg);
+    border-color: var(--border-color);
 }
 
 .owner-public-header {
@@ -44,9 +57,17 @@
     color: #111827;
 }
 
+[data-theme='dark'] .owner-public-header h2 {
+    color: var(--text-primary);
+}
+
 .owner-public-header span {
     color: #6b7280;
     font-weight: 600;
+}
+
+[data-theme='dark'] .owner-public-header span {
+    color: var(--text-tertiary);
 }
 
 .owner-trip-badge {
@@ -55,6 +76,12 @@
     color: #166534;
     border-radius: 999px;
     padding: 6px 12px;
+}
+
+[data-theme='dark'] .owner-trip-badge {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.35);
+    color: #86efac;
 }
 
 .owner-public-main {
@@ -83,16 +110,29 @@
     font-weight: 800;
 }
 
+[data-theme='dark'] .owner-public-avatar {
+    background: #22c55e;
+    color: #0f172a;
+}
+
 .owner-public-identity h3 {
     margin: 0;
     color: #111827;
     font-size: 22px;
 }
 
+[data-theme='dark'] .owner-public-identity h3 {
+    color: var(--text-primary);
+}
+
 .owner-public-identity p {
     margin: 4px 0 0;
     color: #6b7280;
     font-size: 14px;
+}
+
+[data-theme='dark'] .owner-public-identity p {
+    color: var(--text-tertiary);
 }
 
 .owner-public-metrics {
@@ -112,16 +152,28 @@
     font-size: 13px;
 }
 
+[data-theme='dark'] .owner-public-metrics span {
+    color: var(--text-tertiary);
+}
+
 .owner-public-metrics b {
     color: #111827;
     font-size: 28px;
     line-height: 1.1;
 }
 
+[data-theme='dark'] .owner-public-metrics b {
+    color: var(--text-primary);
+}
+
 .owner-public-summary {
     margin-top: 12px;
     font-weight: 700;
     color: #111827;
+}
+
+[data-theme='dark'] .owner-public-summary {
+    color: var(--text-primary);
 }
 
 .owner-vehicle-grid {
@@ -140,6 +192,11 @@
     background: #fff;
 }
 
+[data-theme='dark'] .owner-vehicle-card {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
 .owner-vehicle-card img {
     width: 100%;
     height: 170px;
@@ -155,14 +212,26 @@
     color: #111827;
 }
 
+[data-theme='dark'] .owner-vehicle-info strong {
+    color: var(--text-primary);
+}
+
 .owner-vehicle-info p {
     margin: 4px 0;
     color: #6b7280;
     font-size: 13px;
 }
 
+[data-theme='dark'] .owner-vehicle-info p {
+    color: var(--text-tertiary);
+}
+
 .owner-vehicle-info b {
     color: #16a34a;
+}
+
+[data-theme='dark'] .owner-vehicle-info b {
+    color: #4ade80;
 }
 
 .owner-review-list {
@@ -179,6 +248,11 @@
     padding: 10px;
 }
 
+[data-theme='dark'] .owner-review-item {
+    border-color: var(--border-color);
+    background: rgba(255, 255, 255, 0.02);
+}
+
 .owner-review-avatar {
     width: 42px;
     height: 42px;
@@ -189,6 +263,11 @@
     place-items: center;
     font-weight: 700;
     flex-shrink: 0;
+}
+
+[data-theme='dark'] .owner-review-avatar {
+    background: var(--primary-light);
+    color: var(--text-primary);
 }
 
 .owner-review-content {
@@ -205,9 +284,17 @@
     color: #111827;
 }
 
+[data-theme='dark'] .owner-review-head strong {
+    color: var(--text-primary);
+}
+
 .owner-review-head span {
     color: #9ca3af;
     font-size: 13px;
+}
+
+[data-theme='dark'] .owner-review-head span {
+    color: var(--text-tertiary);
 }
 
 .owner-review-stars {
@@ -221,15 +308,27 @@
     color: #374151;
 }
 
+[data-theme='dark'] .owner-review-comment {
+    color: var(--text-secondary);
+}
+
 .owner-review-vehicle {
     margin: 2px 0 0;
     color: #6b7280;
     font-size: 13px;
 }
 
+[data-theme='dark'] .owner-review-vehicle {
+    color: var(--text-tertiary);
+}
+
 .owner-empty {
     margin: 0;
     color: #6b7280;
+}
+
+[data-theme='dark'] .owner-empty {
+    color: var(--text-tertiary);
 }
 
 .owner-public-loading,
@@ -243,6 +342,14 @@
 
 .owner-public-error {
     color: #b91c1c;
+}
+
+[data-theme='dark'] .owner-public-loading {
+    color: var(--text-secondary);
+}
+
+[data-theme='dark'] .owner-public-error {
+    color: #f87171;
 }
 
 @media (max-width: 820px) {

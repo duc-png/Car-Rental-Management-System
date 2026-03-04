@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import '../styles/LocationModal.css';
-import { reverseGeocode } from '../utils/carDetailsUtils';
+import '../../styles/LocationModal.css';
+import { reverseGeocode } from '../../utils/carDetailsUtils';
 
 const AIRPORTS = [
     { id: 1, name: 'Tân Sơn Nhất', icon: '✈️' },
@@ -363,3 +363,4 @@ function LocationModal({ isOpen, onClose, onSelect, value }) {
 }
 
 export default LocationModal;
+

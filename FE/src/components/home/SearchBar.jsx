@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react'
-import '../styles/SearchBar.css'
-import LocationModal from './LocationModal'
-import TimeModal from './TimeModal'
+import '../../styles/SearchBar.css'
+import LocationModal from '../booking/LocationModal'
+import TimeModal from '../booking/TimeModal'
 
 function SearchBar({ onSearch }) {
   const [location, setLocation] = useState('TP. Hồ Chí Minh')
@@ -120,3 +120,4 @@ function SearchBar({ onSearch }) {
 }
 
 export default SearchBar
+
