@@ -36,7 +36,7 @@ function Login() {
                 if (token) {
                     try {
                         const decoded = jwtDecode(token)
-                        const scope = decoded?.scope || ''
+                        const scope = String(decoded?.scope || '').replace(/\bROLE_EXPERT\b/g, 'ROLE_CAR_OWNER')
                         if (scope.includes('ROLE_ADMIN')) {
                             navigate('/admin/dashboard')
                             return

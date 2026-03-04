@@ -3,6 +3,7 @@ package com.example.car_management.mapper;
 import com.example.car_management.dto.request.RegisterRequest;
 import com.example.car_management.dto.response.UserResponse;
 import com.example.car_management.entity.UserEntity;
+import com.example.car_management.entity.enums.UserRole;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -18,6 +19,16 @@ public interface UserMapper {
     @Mapping(target = "createdAt", ignore = true)
     UserEntity toEntity(RegisterRequest request);
 
-    @Mapping(source = "roleId", target = "roleId")
+    @Mapping(target = "roleId", expression = "java(mapRoleId(user.getRoleId()))")
     UserResponse toResponse(UserEntity user);
+
+    default String mapRoleId(UserRole role) {
+        if (role == null) {
+            return null;
+        }
+        if (role == UserRole.EXPERT) {
+            return UserRole.CAR_OWNER.name();
+        }
+        return role.name();
+    }
 }
