@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="76bd9a22-de77-40cd-b8d6-2987ab222b98" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/BE/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/BE/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BE/src/main/java/com/example/car_management/repository/BookingRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/BE/src/main/java/com/example/car_management/repository/BookingRepository.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/FE/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/App.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/components/layout/Navbar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/components/layout/Navbar.jsx" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHomeTypeForPersistence" value="WRAPPER" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 5
+}]]></component>
+  <component name="ProjectId" id="3ATCSYj8XTX7cvbdNmPvhv9HpqR" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "D:/git-swp/main/Car-Rental-Management-System"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="76bd9a22-de77-40cd-b8d6-2987ab222b98" name="Changes" comment="" />
+      <created>1772607175903</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1772607175903</updated>
+    </task>
+    <servers />
+  </component>
+</project>
