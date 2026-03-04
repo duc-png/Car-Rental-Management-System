@@ -57,8 +57,9 @@ function AdminRoute({ children }) {
 function AppLayout() {
   const location = useLocation()
   const isOwnerArea = /^\/owner(\/|$)/.test(location.pathname)
+  const isOwnerRentalsArea = /^\/manage-rentals(\/|$)/.test(location.pathname)
   const isAdminArea = /^\/admin(\/|$)/.test(location.pathname)
-  const isOwnerDashboard = isOwnerArea || isAdminArea
+  const isOwnerDashboard = isOwnerArea || isOwnerRentalsArea || isAdminArea
   const isCarDetailsPage = location.pathname.startsWith('/car/') || (location.pathname.startsWith('/cars/') && location.pathname !== '/cars')
 
   return (
@@ -81,6 +82,7 @@ function AppLayout() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/owner/fleet" element={<CarOwnerFleet />} />
+          <Route path="/owner/fleet/vehicles" element={<CarOwnerFleet />} />
           <Route path="/owner/vehicles/:id" element={<OwnerVehicleDetails />} />
           <Route path="/owner/vehicles/:id/edit" element={<OwnerVehicleEdit />} />
           <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
