@@ -58,16 +58,16 @@ function ManageRentals() {
     }
 
     // Modal states
-    const [startTripModal, setStartTripModal] = useState(null) // booking object or null
-    const [completeTripModal, setCompleteTripModal] = useState(null) // booking object or null
+    const [startTripModal, setStartTripModal] = useState(null)
+    const [completeTripModal, setCompleteTripModal] = useState(null)
 
     // Start Trip form
     const [startKm, setStartKm] = useState('')
-    const [startFuelLevel, setStartFuelLevel] = useState('')
+    const [startFuelLevel, setStartFuelLevel] = useState(FUEL_MAX)
 
     // Complete Trip form
     const [endKm, setEndKm] = useState('')
-    const [endFuelLevel, setEndFuelLevel] = useState('')
+    const [endFuelLevel, setEndFuelLevel] = useState(FUEL_MAX)
     const [otherSurcharge, setOtherSurcharge] = useState('')
     const [returnNotes, setReturnNotes] = useState('')
     const [actualReturnTime, setActualReturnTime] = useState('')
@@ -118,7 +118,9 @@ function ManageRentals() {
         setStartTripModal(booking)
     }
 
-    const submitStartTrip = async () => {
+    const closeStartTripModal = () => setStartTripModal(null)
+
+    const handleStartTripConfirm = async () => {
         const parsedStartKm = parseInt(startKm, 10)
         const parsedStartFuelLevel = parseInt(startFuelLevel, 10)
 
@@ -147,6 +149,8 @@ function ManageRentals() {
         setActualReturnTime(getCurrentDateTimeLocal())
         setCompleteTripModal(booking)
     }
+
+    const closeCompleteTripModal = () => setCompleteTripModal(null)
 
     // Calculate surcharge in real-time
     const overKmInfo = useMemo(() => {
@@ -213,9 +217,8 @@ function ManageRentals() {
         await handleStatusUpdate(completeTripModal.id, 'COMPLETED', {
             endKm: parsedEndKm,
             endFuelLevel: parsedEndFuelLevel,
-            otherSurcharge: parsedOtherSurcharge,
+            surchargeAmount: totalSurcharge,
             returnNotes: returnNotes || null,
-            actualReturnTime: actualReturnTime ? new Date(actualReturnTime).toISOString().slice(0, 19) : null,
         })
         setCompleteTripModal(null)
     }
@@ -232,26 +235,6 @@ function ManageRentals() {
 
     const getStatusColor = (status) => {
         return STATUS_COLORS[status] || ''
-    }
-
-    if (!isAuthenticated) {
-        return (
-            <div className="fleet-guard">
-                <h2>Cần đăng nhập để tiếp tục</h2>
-                <p>Vui lòng đăng nhập bằng tài khoản chủ xe để quản lý đơn thuê.</p>
-                <Link to="/login" className="add-vehicle">Đăng nhập ngay</Link>
-            </div>
-        )
-    }
-
-    if (!canManage) {
-        return (
-            <div className="fleet-guard">
-                <h2>Không đủ quyền truy cập</h2>
-                <p>Tài khoản hiện tại không có quyền quản lý đơn thuê.</p>
-                <Link to="/" className="add-vehicle">Quay lại trang chủ</Link>
-            </div>
-        )
     }
 
     const getReturnStatusLabel = (returnStatus) => {
@@ -274,6 +257,26 @@ function ManageRentals() {
             'CUSTOMER_CONFIRMED': '#10b981'
         }
         return colors[returnStatus] || '#6b7280'
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <div className="fleet-guard">
+                <h2>Cần đăng nhập để tiếp tục</h2>
+                <p>Vui lòng đăng nhập bằng tài khoản chủ xe để quản lý đơn thuê.</p>
+                <Link to="/login" className="add-vehicle">Đăng nhập ngay</Link>
+            </div>
+        )
+    }
+
+    if (!canManage) {
+        return (
+            <div className="fleet-guard">
+                <h2>Không đủ quyền truy cập</h2>
+                <p>Tài khoản hiện tại không có quyền quản lý đơn thuê.</p>
+                <Link to="/" className="add-vehicle">Quay lại trang chủ</Link>
+            </div>
+        )
     }
 
     if (loading) {
@@ -312,79 +315,238 @@ function ManageRentals() {
                         <h1>Đơn thuê</h1>
                         <p>Quản lý các yêu cầu đặt xe của bạn.</p>
                     </div>
-                ) : (
-                    rentals.map((booking) => (
-                        <div key={booking.id} className={`booking-card ${getStatusColor(booking.status)}`}>
-                            <div className="booking-image">
-                                <img
-                                    src={booking.vehicleImage || '/placeholder.svg'}
-                                    alt={booking.vehicleName || `Vehicle #${booking.vehicleId}`}
+                    <div className="fleet-header-actions">
+                        <DashboardNotificationBell />
+                    </div>
+                </header>
+
+                <div className="bookings-grid">
+                    {rentals.length === 0 ? (
+                        <div className="no-bookings">
+                            <p>Chưa có đơn thuê nào.</p>
+                        </div>
+                    ) : (
+                        rentals.map((booking) => (
+                            <div key={booking.id} className={`booking-card ${getStatusColor(booking.status)}`}>
+                                <div className="booking-image">
+                                    <img
+                                        src={booking.vehicleImage || '/placeholder.svg'}
+                                        alt={booking.vehicleName || `Vehicle #${booking.vehicleId}`}
+                                    />
+                                </div>
+
+                                <div className="booking-details">
+                                    <h3>{booking.vehicleName || `Vehicle #${booking.vehicleId}`}</h3>
+                                    <div className="booking-info">
+                                        <p><strong>Khách thuê:</strong> {booking.renterName || 'N/A'} {booking.renterEmail && `(${booking.renterEmail})`}</p>
+                                        <p><strong>Thời gian:</strong> {booking.startDate ? new Date(booking.startDate).toLocaleDateString('vi-VN') : 'N/A'} - {booking.endDate ? new Date(booking.endDate).toLocaleDateString('vi-VN') : 'N/A'}</p>
+                                        <p><strong>Tổng tiền:</strong> {formatVndCurrency(booking.totalPrice)}</p>
+                                        
+                                        {booking.totalAdditionalFees > 0 && (
+                                            <p><strong>Phí phát sinh:</strong> <span style={{color: '#f87171', fontWeight: 600}}>+{formatVndCurrency(booking.totalAdditionalFees)}</span></p>
+                                        )}
+                                        
+                                        <div className="booking-status">
+                                            <span className={`status-badge ${getStatusColor(booking.status)}`}>
+                                                {getBookingStatusLabel(booking.status)}
+                                            </span>
+                                            {getReturnStatusLabel(booking.returnStatus) && (
+                                                <span 
+                                                    className="status-badge" 
+                                                    style={{ 
+                                                        background: getReturnStatusColor(booking.returnStatus),
+                                                        marginLeft: '8px',
+                                                        color: 'white'
+                                                    }}
+                                                >
+                                                    {getReturnStatusLabel(booking.returnStatus)}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="booking-actions">
+                                    {booking.status === 'PENDING' && (
+                                        <>
+                                            <button
+                                                className="btn-view"
+                                                style={ACTION_BUTTON_STYLES.confirm}
+                                                onClick={() => confirmAndUpdate('Xác nhận đơn thuê này?', booking.id, 'CONFIRMED')}
+                                            >
+                                                Xác nhận
+                                            </button>
+                                            <button
+                                                className="btn-cancel"
+                                                onClick={() => confirmAndUpdate('Từ chối đơn thuê này?', booking.id, 'CANCELLED')}
+                                            >
+                                                Từ chối
+                                            </button>
+                                        </>
+                                    )}
+
+                                    {booking.status === 'CONFIRMED' && (
+                                        <button
+                                            className="btn-view"
+                                            style={ACTION_BUTTON_STYLES.startTrip}
+                                            onClick={() => openStartTripModal(booking)}
+                                        >
+                                            Bắt đầu chuyến
+                                        </button>
+                                    )}
+
+                                    {booking.status === 'ONGOING' && !booking.returnStatus && (
+                                        <button
+                                            className="btn-view"
+                                            style={ACTION_BUTTON_STYLES.completeTrip}
+                                            onClick={() => openCompleteTripModal(booking)}
+                                        >
+                                            Hoàn thành chuyến
+                                        </button>
+                                    )}
+
+                                    {booking.status === 'ONGOING' && booking.returnStatus === 'NOT_RETURNED' && (
+                                        <button
+                                            className="btn-view"
+                                            style={{ background: '#3b82f6', color: 'white' }}
+                                            onClick={() => handleReturnInspection(booking)}
+                                        >
+                                            Kiểm tra trả xe
+                                        </button>
+                                    )}
+
+                                    {booking.returnStatus === 'DISPUTED' && (
+                                        <button
+                                            className="btn-view"
+                                            style={{ background: '#f59e0b', color: 'white' }}
+                                            onClick={() => handleOpenChat(booking)}
+                                        >
+                                            Mở cuộc trò chuyện
+                                        </button>
+                                    )}
+
+                                    {['PENDING', 'CONFIRMED'].includes(booking.status) && (
+                                        <button
+                                            className="btn-cancel"
+                                            onClick={() => confirmAndUpdate('Bạn có chắc muốn hủy đơn thuê này?', booking.id, 'CANCELLED')}
+                                        >
+                                            Hủy đơn
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </section>
+
+            {/* ========== Modal: Start Trip ========== */}
+            {startTripModal && (
+                <div className="trip-modal-overlay" onClick={closeStartTripModal}>
+                    <div className="trip-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="trip-modal-close" onClick={closeStartTripModal}>×</button>
+                        <h2 className="trip-modal-title">Bắt đầu chuyến đi</h2>
+                        <p className="trip-modal-subtitle">
+                            Ghi lại thông tin ODO và mức nhiên liệu tại thời điểm giao xe
+                        </p>
+
+                        <div className="trip-modal-body">
+                            <div className="trip-modal-booking-info">
+                                <h3>{startTripModal.vehicleName}</h3>
+                                <p>{startTripModal.renterName}</p>
+                                <p>{new Date(startTripModal.startDate).toLocaleDateString('vi-VN')} – {new Date(startTripModal.endDate).toLocaleDateString('vi-VN')}</p>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Số Km hiện tại (ODO)</label>
+                                <input
+                                    type="number"
+                                    value={startKm}
+                                    onChange={(e) => setStartKm(e.target.value)}
+                                    placeholder="Ví dụ: 43500"
                                 />
                             </div>
 
-                            <div className="booking-details">
-                                <h3>{booking.vehicleName || `Vehicle #${booking.vehicleId}`}</h3>
-                                <div className="booking-info">
-                                    <p><strong>Renter:</strong> {booking.renterName || 'N/A'} {booking.renterEmail && `(${booking.renterEmail})`}</p>
-                                    <p><strong>Dates:</strong> {booking.startDate ? new Date(booking.startDate).toLocaleDateString() : 'N/A'} - {booking.endDate ? new Date(booking.endDate).toLocaleDateString() : 'N/A'}</p>
-                                    <p><strong>Total:</strong> ${(booking.totalPrice || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                                    
-                                    {booking.totalAdditionalFees > 0 && (
-                                        <p><strong>Extra Fees:</strong> <span style={{color: '#f87171', fontWeight: 600}}>+${booking.totalAdditionalFees.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></p>
-                                    )}
-                                    
-                                    <div className="booking-status">
-                                        <span className={`status-badge ${getStatusColor(booking.status)}`}>
-                                            {booking.status}
-                                        </span>
-                                        {getReturnStatusLabel(booking.returnStatus) && (
-                                            <span 
-                                                className="status-badge" 
-                                                style={{ 
-                                                    background: getReturnStatusColor(booking.returnStatus)
-                                                }}
-                                            >
-                                                {getReturnStatusLabel(booking.returnStatus)}
-                                            </span>
-                                        )}
-                                    </div>
+                            <div className="form-group">
+                                <label>Mức nhiên liệu (%): {startFuelLevel}%</label>
+                                <input
+                                    type="range"
+                                    min={FUEL_MIN}
+                                    max={FUEL_MAX}
+                                    value={startFuelLevel}
+                                    onChange={(e) => setStartFuelLevel(toNumber(e.target.value))}
+                                />
+                                <div className="fuel-level-bar">
+                                    <div
+                                        className="fuel-level-fill"
+                                        style={{ width: `${startFuelLevel}%` }}
+                                    />
                                 </div>
                             </div>
 
-                            <div className="booking-actions">
-                                {booking.status === 'PENDING' && (
-                                    <>
-                                        <button
-                                            className="btn-view"
-                                            style={{ background: '#10b981', color: 'white' }}
-                                            onClick={() => handleStatusUpdate(booking.id, 'CONFIRMED')}
-                                        >
-                                            Confirm
-                                        </button>
-                                        <button
-                                            className="btn-cancel"
-                                            onClick={() => handleStatusUpdate(booking.id, 'CANCELLED')}
-                                        >
-                                            Reject
-                                        </button>
-                                    </>
-                                )}
+                            <div className="trip-modal-actions">
+                                <button className="trip-modal-btn-cancel" onClick={closeStartTripModal}>
+                                    Hủy
+                                </button>
+                                <button
+                                    className="trip-modal-btn-confirm"
+                                    onClick={handleStartTripConfirm}
+                                    disabled={!startKm || !isFuelLevelValid(startFuelLevel)}
+                                >
+                                    Xác nhận bắt đầu
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ========== Modal: Complete Trip ========== */}
+            {completeTripModal && (
+                <div className="trip-modal-overlay" onClick={closeCompleteTripModal}>
+                    <div className="trip-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="trip-modal-close" onClick={closeCompleteTripModal}>×</button>
+                        <h2 className="trip-modal-title">Hoàn thành chuyến đi</h2>
+                        <p className="trip-modal-subtitle">
+                            Ghi lại thông tin ODO và mức nhiên liệu tại thời điểm trả xe
+                        </p>
+
+                        <div className="trip-modal-body">
+                            <div className="trip-modal-booking-info">
+                                <h3>{completeTripModal.vehicleName}</h3>
+                                <p>{completeTripModal.renterName}</p>
+                                <p>{new Date(completeTripModal.startDate).toLocaleDateString('vi-VN')} – {new Date(completeTripModal.endDate).toLocaleDateString('vi-VN')}</p>
+                            </div>
 
                             <div className="form-group">
-                                <label>Mức nhiên liệu lúc trả (%)</label>
-                                <div className="fuel-input-row">
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="100"
-                                        step="5"
-                                        value={endFuelLevel}
-                                        onChange={(e) => setEndFuelLevel(e.target.value)}
+                                <label>Số Km lúc bắt đầu: {completeTripModal.startKm?.toLocaleString() || 'N/A'} km</label>
+                            </div>
+
+                            <div className="form-group">
+                                <label>Số Km lúc trả xe (ODO)</label>
+                                <input
+                                    type="number"
+                                    value={endKm}
+                                    onChange={(e) => setEndKm(e.target.value)}
+                                    placeholder="Ví dụ: 45800"
+                                    min={completeTripModal.startKm || 0}
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label>Mức nhiên liệu lúc trả (%): {endFuelLevel}%</label>
+                                <input
+                                    type="range"
+                                    min={FUEL_MIN}
+                                    max={FUEL_MAX}
+                                    value={endFuelLevel}
+                                    onChange={(e) => setEndFuelLevel(toNumber(e.target.value))}
+                                />
+                                <div className="fuel-level-bar">
+                                    <div
+                                        className="fuel-level-fill"
+                                        style={{ width: `${endFuelLevel}%` }}
                                     />
-                                    <span className="fuel-value">{endFuelLevel}%</span>
-                                </div>
-                                <div className="fuel-bar">
-                                    <div className="fuel-bar-fill" style={{ width: `${endFuelLevel}%` }}></div>
                                 </div>
                             </div>
 
@@ -399,33 +561,6 @@ function ManageRentals() {
                                         </p>
                                     ) : (
                                         <p className="surcharge-ok">✅ Trong giới hạn cho phép</p>
-                                    )}
-                                </div>
-                            )}
-
-                            <div className="form-group">
-                                <label>⏰ Thời gian trả xe thực tế</label>
-                                <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '4px' }}>
-                                    Dự kiến: {completeTripModal && new Date(completeTripModal.endDate).toLocaleString('vi-VN')}
-                                </div>
-                                <input
-                                    type="datetime-local"
-                                    value={actualReturnTime}
-                                    onChange={(e) => setActualReturnTime(e.target.value)}
-                                />
-                            </div>
-
-                            {/* Late return warning */}
-                            {lateReturnInfo && (
-                                <div className="surcharge-box warning">
-                                    {lateReturnInfo.type === 'hourly' ? (
-                                        <p className="surcharge-amount">
-                                            🕐 Trả muộn <strong>{lateReturnInfo.lateHours} giờ</strong> × 10% × {formatVndCurrency(completeTripModal.pricePerDay || 0)}/ngày = <strong>{formatVndCurrency(lateReturnInfo.fee)}</strong>
-                                        </p>
-                                    ) : (
-                                        <p className="surcharge-amount">
-                                            🕐 Trả muộn <strong>{lateReturnInfo.lateDays} ngày</strong> × 150% × {formatVndCurrency(completeTripModal.pricePerDay || 0)}/ngày = <strong>{formatVndCurrency(lateReturnInfo.fee)}</strong>
-                                        </p>
                                     )}
                                 </div>
                             )}
@@ -459,7 +594,7 @@ function ManageRentals() {
                         </div>
 
                         <div className="trip-modal-footer">
-                            <button className="btn-modal-cancel" onClick={() => setCompleteTripModal(null)}>
+                            <button className="btn-modal-cancel" onClick={closeCompleteTripModal}>
                                 Huỷ
                             </button>
                             <button className="btn-modal-confirm complete" onClick={submitCompleteTrip}>
@@ -495,7 +630,6 @@ function ManageRentals() {
                         fetchRentals()
                     }}
                 />
->>>>>>> duong
             )}
         </div>
     )
