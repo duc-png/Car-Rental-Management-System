@@ -68,8 +68,6 @@ function MyBookings() {
     })
   }
 
-<<<<<<< HEAD:FE/src/pages/user/MyBookings.jsx
-=======
   const getStatusLabel = (status) => {
     const statusMap = {
       'PENDING': 'Chờ duyệt',
@@ -103,7 +101,6 @@ function MyBookings() {
     return colors[returnStatus] || '#6b7280'
   }
 
->>>>>>> duong:FE/src/pages/MyBookings.jsx
   const canCancel = (status) => {
     return status === 'PENDING' || status === 'CONFIRMED'
   }
@@ -170,12 +167,10 @@ function MyBookings() {
                 <div className="booking-info">
                   <p><strong>Nhận xe:</strong> {formatDate(booking.startDate)}</p>
                   <p><strong>Trả xe:</strong> {formatDate(booking.endDate)}</p>
-<<<<<<< HEAD:FE/src/pages/user/MyBookings.jsx
                   <p><strong>Tổng tiền:</strong> {formatVndCurrency(booking.totalPrice)}</p>
                   {booking.depositAmount && (
                     <p><strong>Tiền cọc (15%):</strong> {formatVndCurrency(booking.depositAmount)}</p>
-=======
-                  <p><strong>Tổng tiền:</strong> {booking.totalPrice?.toLocaleString('vi-VN')} ₫</p>
+                  )}
                   
                   {booking.totalAdditionalFees > 0 && (
                     <p>
@@ -184,7 +179,6 @@ function MyBookings() {
                         {booking.totalAdditionalFees?.toLocaleString('vi-VN')} ₫
                       </span>
                     </p>
->>>>>>> duong:FE/src/pages/MyBookings.jsx
                   )}
                 </div>
                 <div className="booking-status">

@@ -515,11 +515,7 @@
 
 .search-field input {
     width: 100%;
-<<<<<<< HEAD
     padding: 11px 14px 11px 40px;
-=======
-    padding: 12px 14px;
->>>>>>> duong
     border-radius: 10px;
     border: 1px solid var(--fleet-border);
     background: #f9fafb;
@@ -541,10 +537,9 @@
     color: var(--fleet-muted);
     pointer-events: none;
 }
-=======
+
 /* removed icon for cleaner UI */
 .search-icon { display: none; }
->>>>>>> duong
 
 .fleet-filters select {
     padding: 11px 12px;
@@ -865,13 +860,9 @@
     border-radius: 999px;
     font-size: 11px;
     font-weight: 700;
-<<<<<<< HEAD
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: #ffffff;
-=======
     color: #ffffff !important;
->>>>>>> duong
 }
 
 .status-badge.available {

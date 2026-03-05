@@ -6,7 +6,6 @@ import com.example.car_management.entity.BookingEntity;
 import com.example.car_management.entity.DisputeEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.Named;
 
 import java.util.List;
 

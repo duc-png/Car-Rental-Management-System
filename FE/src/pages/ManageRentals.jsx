@@ -41,20 +41,16 @@ const getCurrentDateTimeLocal = () => {
     const pad = (n) => String(n).padStart(2, '0')
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
 }
->>>>>>> duong
 
 function ManageRentals() {
     const navigate = useNavigate()
     const [rentals, setRentals] = useState([])
     const [loading, setLoading] = useState(true)
-<<<<<<< HEAD
-    const { user, isAuthenticated, logout } = useAuth()
-    const canManage = Boolean(user?.role?.includes('ROLE_CAR_OWNER') || user?.role?.includes('ROLE_ADMIN'))
-=======
     const [showReturnModal, setShowReturnModal] = useState(false)
     const [showChatModal, setShowChatModal] = useState(false)
     const [selectedBooking, setSelectedBooking] = useState(null)
-    const { user } = useAuth()
+    const { user, isAuthenticated, logout } = useAuth()
+    const canManage = Boolean(user?.role?.includes('ROLE_CAR_OWNER') || user?.role?.includes('ROLE_ADMIN'))
     const navigate = useNavigate()
 >>>>>>> duong
 
@@ -81,13 +77,9 @@ function ManageRentals() {
     const fetchRentals = useCallback(async () => {
         try {
             const data = await getMyBookings()
-<<<<<<< HEAD
             const myRentals = data.filter(booking =>
                 Number(booking.ownerId) === Number(user?.userId) || Number(booking.ownerId) === Number(user?.id)
             )
-=======
-            const myRentals = data.filter(booking => booking.ownerId === user?.userId)
->>>>>>> duong
             myRentals.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             setRentals(myRentals)
         } catch (error) {
@@ -106,17 +98,9 @@ function ManageRentals() {
 
     const handleStatusUpdate = useCallback(async (bookingId, newStatus, extraData = {}) => {
         try {
-<<<<<<< HEAD
             await updateBookingStatus(bookingId, newStatus, extraData)
             toast.success(`Cập nhật trạng thái thành công: ${BOOKING_STATUS_LABELS[newStatus] || newStatus}`)
             await fetchRentals()
-=======
-            if (!confirm(`Are you sure you want to change status to ${newStatus}?`)) return
-
-            await updateBookingStatus(bookingId, newStatus)
-            toast.success(`Booking updated to ${newStatus}`)
-            fetchRentals()
->>>>>>> duong
         } catch (error) {
             console.error('Update failed:', error)
             toast.error('Không thể cập nhật trạng thái đơn thuê')
@@ -330,204 +314,6 @@ function ManageRentals() {
                         <h1>Đơn thuê</h1>
                         <p>Quản lý các yêu cầu đặt xe của bạn.</p>
                     </div>
-<<<<<<< HEAD
-                    <div className="fleet-header-actions">
-                        <DashboardNotificationBell />
-                    </div>
-                </header>
-
-                <div className="bookings-list owner-rentals-list">
-                    {rentals.length === 0 ? (
-                        <div className="empty-state owner-rentals-empty">
-                            <div className="empty-icon">📂</div>
-                            <h3>Chưa có yêu cầu thuê</h3>
-                            <p>Khi khách đặt xe của bạn, đơn thuê sẽ hiển thị tại đây.</p>
-                        </div>
-                    ) : (
-                        rentals.map((booking) => (
-                            <div key={booking.id} className={`booking-card ${getStatusColor(booking.status)}`}>
-                                {/* Left: Image */}
-                                <div className="booking-image">
-                                    <img
-                                        src={booking.vehicleImage || '/placeholder.svg'}
-                                        alt={booking.vehicleName || `Vehicle #${booking.vehicleId}`}
-                                    />
-                                </div>
-
-                                {/* Middle: Info */}
-                                <div className="booking-details">
-                                    <h3>{booking.vehicleName}</h3>
-                                    <div className="booking-info">
-                                        <p><strong>Khách thuê:</strong> {booking.renterName} ({booking.renterEmail})</p>
-                                        <p><strong>Thời gian:</strong> {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}</p>
-                                        <p><strong>Tổng tiền:</strong> {formatVndCurrency(booking.totalPrice)}</p>
-                                        {booking.paymentStatus && (
-                                            <p><strong>Thanh toán:</strong> {booking.paymentStatus}</p>
-                                        )}
-                                        {/* Show ODO/Fuel info if available */}
-                                        {booking.startKm && (
-                                            <p><strong>ODO giao:</strong> {booking.startKm.toLocaleString()} km | Xăng: {booking.startFuelLevel}%</p>
-                                        )}
-                                        {booking.endKm && (
-                                            <p><strong>ODO trả:</strong> {booking.endKm.toLocaleString()} km | Xăng: {booking.endFuelLevel}%</p>
-                                        )}
-                                        {booking.surchargeAmount > 0 && (
-                                            <p><strong>Phụ phí:</strong> {formatVndCurrency(booking.surchargeAmount)}</p>
-                                        )}
-                                        {booking.returnNotes && (
-                                            <p><strong>Ghi chú:</strong> {booking.returnNotes}</p>
-                                        )}
-                                        <div className="booking-status">
-                                            <span className={`status-badge ${getStatusColor(booking.status)}`}>
-                                                {getBookingStatusLabel(booking.status)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Right: Actions */}
-                                <div className="booking-actions">
-                                    {booking.status === 'PENDING' && (
-                                        <>
-                                            <button
-                                                className="btn-view"
-                                                style={ACTION_BUTTON_STYLES.confirm}
-                                                onClick={() => confirmAndUpdate('Xác nhận duyệt đơn?', booking.id, 'CONFIRMED')}
-                                            >
-                                                ✅ Duyệt đơn
-                                            </button>
-                                            <button
-                                                className="btn-cancel"
-                                                onClick={() => confirmAndUpdate('Từ chối đơn này?', booking.id, 'CANCELLED')}
-                                            >
-                                                ❌ Từ chối
-                                            </button>
-                                        </>
-                                    )}
-
-                                    {booking.status === 'CONFIRMED' && (
-                                        <>
-                                            <button
-                                                className="btn-view"
-                                                style={ACTION_BUTTON_STYLES.startTrip}
-                                                onClick={() => openStartTripModal(booking)}
-                                            >
-                                                🚗 Bắt đầu chuyến
-                                            </button>
-                                            <button
-                                                className="btn-cancel"
-                                                onClick={() => confirmAndUpdate('Huỷ đơn này?', booking.id, 'CANCELLED')}
-                                            >
-                                                Huỷ đơn
-                                            </button>
-                                        </>
-                                    )}
-
-                                    {booking.status === 'ONGOING' && (
-                                        <button
-                                            className="btn-view"
-                                            style={ACTION_BUTTON_STYLES.completeTrip}
-                                            onClick={() => openCompleteTripModal(booking)}
-                                        >
-                                            🏁 Hoàn tất chuyến
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
-            </section>
-
-            {/* ========== START TRIP MODAL ========== */}
-            {startTripModal && (
-                <div className="trip-modal-overlay" onClick={() => setStartTripModal(null)}>
-                    <div className="trip-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="trip-modal-header start">
-                            <h2>🚗 Giao xe - Bắt đầu chuyến đi</h2>
-                            <p>{startTripModal.vehicleName} → {startTripModal.renterName}</p>
-                        </div>
-
-                        <div className="trip-modal-body">
-                            <div className="form-group">
-                                <label>Số Km hiện tại (ODO)</label>
-                                <input
-                                    type="number"
-                                    value={startKm}
-                                    onChange={(e) => setStartKm(e.target.value)}
-                                    placeholder="Ví dụ: 45000"
-                                    min="0"
-                                />
-                            </div>
-
-                            <div className="form-group">
-                                <label>Mức nhiên liệu (%)</label>
-                                <div className="fuel-input-row">
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="100"
-                                        step="5"
-                                        value={startFuelLevel}
-                                        onChange={(e) => setStartFuelLevel(e.target.value)}
-                                    />
-                                    <span className="fuel-value">{startFuelLevel}%</span>
-                                </div>
-                                <div className="fuel-bar">
-                                    <div className="fuel-bar-fill" style={{ width: `${startFuelLevel}%` }}></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="trip-modal-footer">
-                            <button className="btn-modal-cancel" onClick={() => setStartTripModal(null)}>
-                                Huỷ
-                            </button>
-                            <button className="btn-modal-confirm start" onClick={submitStartTrip}>
-                                Xác nhận giao xe
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ========== COMPLETE TRIP MODAL ========== */}
-            {completeTripModal && (
-                <div className="trip-modal-overlay" onClick={() => setCompleteTripModal(null)}>
-                    <div className="trip-modal complete" onClick={(e) => e.stopPropagation()}>
-                        <div className="trip-modal-header complete">
-                            <h2>🏁 Trả xe - Hoàn thành chuyến đi</h2>
-                            <p>{completeTripModal.vehicleName} ← {completeTripModal.renterName}</p>
-                        </div>
-
-                        <div className="trip-modal-body">
-                            {/* Info box */}
-                            <div className="trip-info-box">
-                                <div className="info-item">
-                                    <span className="info-label">ODO lúc giao</span>
-                                    <span className="info-value">{completeTripModal.startKm?.toLocaleString() || '—'} km</span>
-                                </div>
-                                <div className="info-item">
-                                    <span className="info-label">Xăng lúc giao</span>
-                                    <span className="info-value">{completeTripModal.startFuelLevel ?? '—'}%</span>
-                                </div>
-                                <div className="info-item">
-                                    <span className="info-label">Định mức Km</span>
-                                    <span className="info-value">{overKmInfo ? `${overKmInfo.allowedKm.toLocaleString()} km (${overKmInfo.rentalDays} ngày × 300km)` : '—'}</span>
-                                </div>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Số Km lúc trả xe (ODO)</label>
-                                <input
-                                    type="number"
-                                    value={endKm}
-                                    onChange={(e) => setEndKm(e.target.value)}
-                                    placeholder="Ví dụ: 45800"
-                                    min={completeTripModal.startKm || 0}
-                                />
-                            </div>
-=======
                 ) : (
                     rentals.map((booking) => (
                         <div key={booking.id} className={`booking-card ${getStatusColor(booking.status)}`}>
@@ -585,7 +371,6 @@ function ManageRentals() {
                                         </button>
                                     </>
                                 )}
->>>>>>> duong
 
                             <div className="form-group">
                                 <label>Mức nhiên liệu lúc trả (%)</label>
