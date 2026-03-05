@@ -388,7 +388,6 @@ function ManageRentals() {
                                 </div>
                             </div>
 
-<<<<<<< HEAD
                             {/* Over-KM calculation */}
                             {overKmInfo && (
                                 <div className={`surcharge-box ${overKmInfo.overKm > 0 ? 'warning' : 'ok'}`}>
