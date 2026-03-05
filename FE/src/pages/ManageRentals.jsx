@@ -51,8 +51,6 @@ function ManageRentals() {
     const [selectedBooking, setSelectedBooking] = useState(null)
     const { user, isAuthenticated, logout } = useAuth()
     const canManage = Boolean(user?.role?.includes('ROLE_CAR_OWNER') || user?.role?.includes('ROLE_ADMIN'))
-    const navigate = useNavigate()
->>>>>>> duong
 
     const handleLogout = async () => {
         await logout()
@@ -471,40 +469,7 @@ function ManageRentals() {
                         </div>
                     </div>
                 </div>
-=======
-                                {booking.status === 'ONGOING' && booking.returnStatus === 'NOT_RETURNED' && (
-                                    <button
-                                        className="btn-view"
-                                        style={{ background: '#3b82f6', color: 'white' }}
-                                        onClick={() => handleReturnInspection(booking)}
-                                    >
-                                        Return Inspection
-                                    </button>
-                                )}
-
-                                {booking.returnStatus === 'DISPUTED' && (
-                                    <button
-                                        className="btn-view"
-                                        style={{ background: '#f59e0b', color: 'white' }}
-                                        onClick={() => handleOpenChat(booking)}
-                                    >
-                                        Open Chat
-                                    </button>
-                                )}
-
-                                {['PENDING', 'CONFIRMED'].includes(booking.status) && (
-                                    <button
-                                        className="btn-cancel"
-                                        onClick={() => handleStatusUpdate(booking.id, 'CANCELLED')}
-                                    >
-                                        Cancel
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    ))
-                )}
-            </div>
+            )}
 
             {showReturnModal && selectedBooking && (
                 <ReturnInspectionModal
