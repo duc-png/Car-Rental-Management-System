@@ -68,6 +68,7 @@ export default function OwnerVehicleEdit() {
 
     const [imageUrlsInput, setImageUrlsInput] = useState('');
     const [uploadFiles, setUploadFiles] = useState([]);
+    const [invalidUploadNames, setInvalidUploadNames] = useState([]);
     const [setFirstAsMain, setSetFirstAsMain] = useState(false);
     const [imagesUpdating, setImagesUpdating] = useState(false);
 
@@ -198,6 +199,7 @@ export default function OwnerVehicleEdit() {
             if (uploadFiles.length > 0) {
                 await uploadVehicleImages(id, ownerId, uploadFiles, { setFirstAsMain });
                 setUploadFiles([]);
+                setInvalidUploadNames([]);
                 setSetFirstAsMain(false);
             }
 
@@ -251,6 +253,7 @@ export default function OwnerVehicleEdit() {
             await uploadVehicleImages(id, ownerId, uploadFiles, { setFirstAsMain });
             await loadVehicle();
             setUploadFiles([]);
+            setInvalidUploadNames([]);
             setSetFirstAsMain(false);
         } catch (err) {
             setError(err?.message || 'Không thể tải ảnh lên');
@@ -358,6 +361,9 @@ export default function OwnerVehicleEdit() {
                             uploadFiles={uploadFiles}
                             setUploadFiles={setUploadFiles}
                             onUploadImages={onUploadImages}
+                            invalidUploadNames={invalidUploadNames}
+                            onImageFileError={(message) => setError(message)}
+                            onInvalidUploadNamesChange={setInvalidUploadNames}
                         />
 
                         <div className="action-bar">

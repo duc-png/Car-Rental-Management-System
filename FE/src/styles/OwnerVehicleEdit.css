@@ -515,6 +515,23 @@ select.status-available {
     color: #6b7280;
 }
 
+.owner-edit-invalid-files {
+    margin: 8px 0 0;
+    color: #b91c1c;
+    text-align: left;
+    font-size: 13px;
+}
+
+.owner-edit-invalid-files p {
+    margin: 0 0 4px;
+    font-weight: 700;
+}
+
+.owner-edit-invalid-files ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
 .upload-zone input[type="text"],
 .upload-zone textarea {
     margin: 16px auto 20px;

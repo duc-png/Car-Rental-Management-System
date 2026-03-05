@@ -1,3 +1,4 @@
+import { useEffect, useLayoutEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { ThemeProvider } from './contexts/ThemeContext'
@@ -7,6 +8,7 @@ import Footer from './components/layout/Footer'
 import Home from './pages/public/Home'
 import Cars from './pages/public/Cars'
 import MyBookings from './pages/user/MyBookings'
+import ChatPage from './pages/user/ChatPage'
 import CarDetails from './pages/public/CarDetails'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
@@ -14,6 +16,7 @@ import ForgotPassword from './pages/auth/ForgotPassword'
 import CarOwnerFleet from './pages/owner/CarOwnerFleet'
 import OwnerVehicleDetails from './pages/owner/OwnerVehicleDetails'
 import OwnerVehicleEdit from './pages/owner/OwnerVehicleEdit'
+import OwnerResponseDashboard from './pages/owner/OwnerResponseDashboard'
 import OwnerPublicProfile from './pages/public/OwnerPublicProfile'
 import OwnerRegistration from './pages/public/OwnerRegistration'
 import ManageRentals from './pages/ManageRentals'
@@ -29,6 +32,12 @@ import AdminOwnerRegistrationDetails from './pages/admin/AdminOwnerRegistrationD
 import { useAuth } from './hooks/useAuth'
 import './styles/App.css'
 import './index.css'
+
+const forceScrollTop = () => {
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  document.documentElement.scrollTop = 0
+  document.body.scrollTop = 0
+}
 
 function hasAdminRole(user) {
   const scope = String(user?.role || user?.scope || '')
@@ -55,9 +64,32 @@ function AdminRoute({ children }) {
 
 function AppLayout() {
   const location = useLocation()
+
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+    }
+  }, [])
+
+  useLayoutEffect(() => {
+    forceScrollTop()
+    const rafId = window.requestAnimationFrame(() => {
+      forceScrollTop()
+    })
+    const timeoutId = window.setTimeout(() => {
+      forceScrollTop()
+    }, 0)
+
+    return () => {
+      window.cancelAnimationFrame(rafId)
+      window.clearTimeout(timeoutId)
+    }
+  }, [location.pathname, location.search, location.hash])
+
   const isOwnerArea = /^\/owner(\/|$)/.test(location.pathname)
   const isOwnerRentalsArea = /^\/manage-rentals(\/|$)/.test(location.pathname)
   const isAdminArea = /^\/admin(\/|$)/.test(location.pathname)
+  const isChatPage = /^\/chat(\/|$)/.test(location.pathname)
   const isOwnerDashboard = isOwnerArea || isOwnerRentalsArea || isAdminArea
   const isCarDetailsPage = location.pathname.startsWith('/car/') || (location.pathname.startsWith('/cars/') && location.pathname !== '/cars')
 
@@ -73,6 +105,7 @@ function AppLayout() {
           <Route path="/owners/:ownerId" element={<OwnerPublicProfile />} />
           <Route path="/become-owner" element={<OwnerRegistration />} />
           <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/chat" element={<ChatPage />} />
           <Route path="/manage-rentals" element={<ManageRentals />} />
           <Route path="/booking/:id/payment-success" element={<PaymentSuccess />} />
           <Route path="/booking/:id/payment-cancel" element={<PaymentCancel />} />
@@ -83,6 +116,7 @@ function AppLayout() {
           <Route path="/owner/fleet/vehicles" element={<CarOwnerFleet />} />
           <Route path="/owner/vehicles/:id" element={<OwnerVehicleDetails />} />
           <Route path="/owner/vehicles/:id/edit" element={<OwnerVehicleEdit />} />
+          <Route path="/owner/feedback" element={<OwnerResponseDashboard />} />
           <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
@@ -94,7 +128,7 @@ function AppLayout() {
           </Route>
         </Routes>
       </main>
-      {!isOwnerDashboard && <Footer />}
+      {!isOwnerDashboard && !isChatPage && <Footer />}
     </>
   )
 }

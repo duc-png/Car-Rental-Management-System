@@ -18,7 +18,11 @@ export const createEmptyVehicleForm = () => ({
     currentKm: '',
     province: '',
     ward: '',
-    addressDetail: ''
+    addressDetail: '',
+    deliveryEnabled: true,
+    freeDeliveryWithinKm: 0,
+    maxDeliveryDistanceKm: 20,
+    extraFeePerKm: 10000
 })
 
 export const formatEnumLabel = (value) => {
