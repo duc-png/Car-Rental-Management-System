@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { getMyBookings, cancelBooking } from '../../api/bookings'
 import { formatVndCurrency, getBookingStatusLabel } from '../../utils/bookingUtils'
+import ReturnConfirmationModal from '../../components/ReturnConfirmationModal'
+import DisputeChatModal from '../../components/DisputeChatModal'
 import '../../styles/MyBookings.css'
 
 function MyBookings() {
@@ -12,6 +14,9 @@ function MyBookings() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [cancellingId, setCancellingId] = useState(null)
+  const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showChatModal, setShowChatModal] = useState(false)
+  const [selectedBooking, setSelectedBooking] = useState(null)
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -63,8 +68,62 @@ function MyBookings() {
     })
   }
 
+<<<<<<< HEAD:FE/src/pages/user/MyBookings.jsx
+=======
+  const getStatusLabel = (status) => {
+    const statusMap = {
+      'PENDING': 'Chờ duyệt',
+      'CONFIRMED': 'Đã duyệt',
+      'ONGOING': 'Đang thuê',
+      'COMPLETED': 'Hoàn thành',
+      'CANCELLED': 'Đã hủy'
+    }
+    return statusMap[status] || status
+  }
+
+  const getReturnStatusLabel = (returnStatus) => {
+    const labels = {
+      'NOT_RETURNED': null,
+      'PENDING_INSPECTION': 'Đang kiểm tra',
+      'FEES_CALCULATED': 'Chờ xác nhận phí',
+      'CUSTOMER_CONFIRMED': 'Đã xác nhận',
+      'DISPUTED': 'Đang tranh chấp',
+      'RESOLVED': 'Đã giải quyết'
+    }
+    return labels[returnStatus] || null
+  }
+
+  const getReturnStatusColor = (returnStatus) => {
+    const colors = {
+      'FEES_CALCULATED': '#f59e0b',
+      'DISPUTED': '#ef4444',
+      'RESOLVED': '#10b981',
+      'CUSTOMER_CONFIRMED': '#10b981'
+    }
+    return colors[returnStatus] || '#6b7280'
+  }
+
+>>>>>>> duong:FE/src/pages/MyBookings.jsx
   const canCancel = (status) => {
     return status === 'PENDING' || status === 'CONFIRMED'
+  }
+
+  const handleReviewFees = (booking) => {
+    setSelectedBooking(booking)
+    setShowConfirmModal(true)
+  }
+
+  const handleOpenChat = (booking) => {
+    setSelectedBooking(booking)
+    setShowChatModal(true)
+  }
+
+  const handleDisputeCreated = () => {
+    setShowConfirmModal(false)
+    fetchBookings()
+    if (selectedBooking) {
+      setShowChatModal(true)
+    }
   }
 
   if (loading) {
@@ -111,15 +170,39 @@ function MyBookings() {
                 <div className="booking-info">
                   <p><strong>Nhận xe:</strong> {formatDate(booking.startDate)}</p>
                   <p><strong>Trả xe:</strong> {formatDate(booking.endDate)}</p>
+<<<<<<< HEAD:FE/src/pages/user/MyBookings.jsx
                   <p><strong>Tổng tiền:</strong> {formatVndCurrency(booking.totalPrice)}</p>
                   {booking.depositAmount && (
                     <p><strong>Tiền cọc (15%):</strong> {formatVndCurrency(booking.depositAmount)}</p>
+=======
+                  <p><strong>Tổng tiền:</strong> {booking.totalPrice?.toLocaleString('vi-VN')} ₫</p>
+                  
+                  {booking.totalAdditionalFees > 0 && (
+                    <p>
+                      <strong>Phí phát sinh:</strong>{' '}
+                      <span style={{color: '#ef4444', fontWeight: 600}}>
+                        {booking.totalAdditionalFees?.toLocaleString('vi-VN')} ₫
+                      </span>
+                    </p>
+>>>>>>> duong:FE/src/pages/MyBookings.jsx
                   )}
                 </div>
                 <div className="booking-status">
                   <span className={`status-badge ${booking.status?.toLowerCase()}`}>
                     {getBookingStatusLabel(booking.status)}
                   </span>
+                  {getReturnStatusLabel(booking.returnStatus) && (
+                    <span 
+                      className="status-badge" 
+                      style={{ 
+                        background: getReturnStatusColor(booking.returnStatus),
+                        marginLeft: '8px',
+                        color: 'white'
+                      }}
+                    >
+                      {getReturnStatusLabel(booking.returnStatus)}
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="booking-actions">
@@ -147,6 +230,27 @@ function MyBookings() {
                 >
                   Xem xe
                 </button>
+                
+                {booking.returnStatus === 'FEES_CALCULATED' && (
+                  <button
+                    className="btn-view"
+                    style={{ background: '#f59e0b', color: 'white' }}
+                    onClick={() => handleReviewFees(booking)}
+                  >
+                    Xem phí trả xe
+                  </button>
+                )}
+
+                {(booking.returnStatus === 'DISPUTED' || booking.returnStatus === 'RESOLVED') && (
+                  <button
+                    className="btn-view"
+                    style={{ background: '#667eea', color: 'white' }}
+                    onClick={() => handleOpenChat(booking)}
+                  >
+                    {booking.returnStatus === 'RESOLVED' ? 'Xem kết quả' : 'Mở chat'}
+                  </button>
+                )}
+                
                 {canCancel(booking.status) && (
                   <button
                     className="btn-cancel"
@@ -168,6 +272,34 @@ function MyBookings() {
             Khám phá xe ngay
           </button>
         </div>
+      )}
+
+      {showConfirmModal && selectedBooking && (
+        <ReturnConfirmationModal
+          booking={selectedBooking}
+          onClose={() => {
+            setShowConfirmModal(false)
+            setSelectedBooking(null)
+          }}
+          onSuccess={() => {
+            fetchBookings()
+          }}
+          onDispute={handleDisputeCreated}
+        />
+      )}
+
+      {showChatModal && selectedBooking && (
+        <DisputeChatModal
+          booking={selectedBooking}
+          isOwner={false}
+          onClose={() => {
+            setShowChatModal(false)
+            setSelectedBooking(null)
+          }}
+          onResolved={() => {
+            fetchBookings()
+          }}
+        />
       )}
     </div>
   )

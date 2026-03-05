@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuth } from '../hooks/useAuth'
 import { createCustomer, getCustomers, updateCustomer, updateCustomerStatus } from '../api/customers'
@@ -170,7 +170,7 @@ export default function Customers() {
                         <button className="nav-item">Vehicles</button>
                         <button className="nav-item">Bookings</button>
                         <button className="nav-item active">Customers</button>
-                        <button className="nav-item">Analytics</button>
+                        <Link to="/admin/reports" className="nav-item">Reports</Link>
                     </nav>
 
                     <nav className="admin-nav">

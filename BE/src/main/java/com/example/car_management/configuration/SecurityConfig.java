@@ -25,7 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
         private final String[] PUBLIC_ENDPOINTS = {
-                        "/auth/token", "/auth/logout", "/auth/refresh", "/auth/register", "/api/v1/owner-registrations"
+                        "/auth/token", "/auth/logout", "/auth/refresh", "/auth/register", "/api/v1/owner-registrations", "/auth/forgot-password"
         };
 
         private final CustomJwtDecoder customJwtDecoder;
@@ -34,6 +34,8 @@ public class SecurityConfig {
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
                 http.authorizeHttpRequests(request -> request
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+                                // Allow public GET for forgot-password (user chưa đăng nhập)
+                                .requestMatchers(HttpMethod.GET, "/auth/forgot-password/**").permitAll()
                                 // Allow public GET access to vehicles (for browsing)
                                 .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/**").permitAll()
                                 // Allow public GET access to vehicle models (for dropdowns)
