@@ -1,3 +1,5 @@
+import { buildInvalidImageFilesMessage, splitImageFiles } from '../../../utils/imageFileValidation';
+
 export default function OwnerVehicleImagesSection({
     vehicle,
     imagesUpdating,
@@ -9,6 +11,9 @@ export default function OwnerVehicleImagesSection({
     uploadFiles,
     setUploadFiles,
     onUploadImages,
+    onImageFileError,
+    invalidUploadNames,
+    onInvalidUploadNamesChange,
 }) {
     return (
         <div className="edit-card">
@@ -74,10 +79,32 @@ export default function OwnerVehicleImagesSection({
                             type="file"
                             multiple
                             accept="image/*"
-                            onChange={(e) => setUploadFiles(Array.from(e.target.files || []))}
+                            onChange={(e) => {
+                                const pickedFiles = Array.from(e.target.files || []);
+                                const { validFiles, invalidFiles } = splitImageFiles(pickedFiles);
+                                if (invalidFiles.length > 0 && typeof onImageFileError === 'function') {
+                                    onImageFileError(buildInvalidImageFilesMessage(invalidFiles));
+                                }
+                                if (typeof onInvalidUploadNamesChange === 'function') {
+                                    const names = invalidFiles.map((file) => String(file?.name || '').trim()).filter(Boolean);
+                                    onInvalidUploadNamesChange(names);
+                                }
+                                setUploadFiles(validFiles);
+                                e.target.value = '';
+                            }}
                             hidden
                         />
                     </label>
+                    {Array.isArray(invalidUploadNames) && invalidUploadNames.length > 0 && (
+                        <div className="owner-edit-invalid-files" role="alert">
+                            <p>File khong duoc chap nhan:</p>
+                            <ul>
+                                {invalidUploadNames.map((name) => (
+                                    <li key={name}>{name}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                     {uploadFiles.length > 0 && (
                         <button
                             type="button"

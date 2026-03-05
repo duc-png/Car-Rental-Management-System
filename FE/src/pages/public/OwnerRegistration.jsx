@@ -5,11 +5,11 @@ import { submitOwnerRegistration } from '../../api/ownerRegistrations';
 import { useVehicleCatalogs } from '../../hooks/useVehicleCatalogs';
 import { generateQueryVariants, resolveBestGeocodeFromVariants } from '../../utils/carDetailsUtils';
 import {
-    ACCEPTED_OWNER_IMAGE_TYPES,
     createEmptyOwnerRegistrationForm,
     CUSTOM_MODEL_OPTION,
     MAX_OWNER_REGISTRATION_IMAGES,
 } from '../../utils/ownerRegistrationUtils';
+import { buildInvalidImageFilesMessage, getInvalidFileNames, splitImageFiles } from '../../utils/imageFileValidation';
 import '../../styles/OwnerRegistration.css';
 import 'leaflet/dist/leaflet.css';
 
@@ -19,6 +19,7 @@ function OwnerRegistration() {
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState(() => createEmptyOwnerRegistrationForm());
     const [images, setImages] = useState([]);
+    const [invalidImageNames, setInvalidImageNames] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const {
         featureCatalog,
@@ -392,15 +393,18 @@ function OwnerRegistration() {
             return;
         }
 
-        const invalidFile = files.find((file) => !ACCEPTED_OWNER_IMAGE_TYPES.includes((file.type || '').toLowerCase()));
-        if (invalidFile) {
-            toast.error('Chỉ hỗ trợ ảnh JPG, PNG hoặc WEBP');
+        const { validFiles, invalidFiles } = splitImageFiles(files);
+        if (invalidFiles.length > 0) {
+            toast.error(buildInvalidImageFilesMessage(invalidFiles));
+            setInvalidImageNames(getInvalidFileNames(invalidFiles));
             event.target.value = '';
             return;
         }
 
+        setInvalidImageNames([]);
+
         const currentFiles = Array.isArray(images) ? images : [];
-        const mergedFiles = [...currentFiles, ...files];
+        const mergedFiles = [...currentFiles, ...validFiles];
 
         if (mergedFiles.length > MAX_OWNER_REGISTRATION_IMAGES) {
             toast.error(`Tối đa ${MAX_OWNER_REGISTRATION_IMAGES} ảnh`);
@@ -488,6 +492,7 @@ function OwnerRegistration() {
             toast.success('Đã gửi yêu cầu, admin sẽ duyệt sớm');
             setFormData(createEmptyOwnerRegistrationForm());
             setImages([]);
+            setInvalidImageNames([]);
             setCurrentStep(1);
             navigate('/');
         } catch (error) {
@@ -900,6 +905,16 @@ function OwnerRegistration() {
                             <span>Kéo thả ảnh hoặc bấm để tải lên</span>
                             <small>PNG, JPG. Tối đa 5 ảnh.</small>
                         </label>
+                        {Array.isArray(invalidImageNames) && invalidImageNames.length > 0 && (
+                            <div className="owner-invalid-image-list" role="alert">
+                                <p>File khong duoc chap nhan:</p>
+                                <ul>
+                                    {invalidImageNames.map((name) => (
+                                        <li key={name}>{name}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                         <div className="image-preview-head">
                             <span>Ảnh đã chọn ({previews.length})</span>
                             <small>Bấm vào ảnh để bỏ ảnh</small>

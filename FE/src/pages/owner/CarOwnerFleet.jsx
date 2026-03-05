@@ -29,6 +29,7 @@ import {
     TRANSMISSION_VALUES,
     vehicleDisplayName
 } from '../../utils/ownerFleetUtils'
+import { buildInvalidImageFilesMessage, getInvalidFileNames, splitImageFiles } from '../../utils/imageFileValidation'
 
 function CarOwnerFleet() {
     const navigate = useNavigate()
@@ -73,6 +74,18 @@ function CarOwnerFleet() {
     const [createModelName, setCreateModelName] = useState('')
     const [createTypeName, setCreateTypeName] = useState('')
     const [createUploadFiles, setCreateUploadFiles] = useState([])
+    const [createInvalidUploadNames, setCreateInvalidUploadNames] = useState([])
+    const [createFieldErrors, setCreateFieldErrors] = useState({})
+
+    const clearCreateFieldError = useCallback((field) => {
+        if (!field) return
+        setCreateFieldErrors((prev) => {
+            if (!prev[field]) return prev
+            const next = { ...prev }
+            delete next[field]
+            return next
+        })
+    }, [])
 
     const closeCreateModal = useCallback(() => {
         setCreateForm(createEmptyVehicleForm())
@@ -80,7 +93,9 @@ function CarOwnerFleet() {
         setCreateModelName('')
         setCreateTypeName('')
         setCreateUploadFiles([])
+        setCreateInvalidUploadNames([])
         setSelectedFeatureIds([])
+        setCreateFieldErrors({})
         setShowCreateForm(false)
     }, [])
 
@@ -223,6 +238,45 @@ function CarOwnerFleet() {
             ...prev,
             [field]: value
         }))
+        clearCreateFieldError(field)
+    }
+
+    const handleCreateBrandNameChange = (value) => {
+        setCreateBrandName(value)
+        clearCreateFieldError('brandName')
+    }
+
+    const handleCreateModelNameChange = (value) => {
+        setCreateModelName(value)
+        clearCreateFieldError('modelName')
+    }
+
+    const handleCreateTypeNameChange = (value) => {
+        setCreateTypeName(value)
+        clearCreateFieldError('typeName')
+    }
+
+    const handleCreateUploadFilesChange = (nextValueOrUpdater) => {
+        setCreateUploadFiles((prev) => {
+            const next = typeof nextValueOrUpdater === 'function' ? nextValueOrUpdater(prev) : nextValueOrUpdater
+            const { validFiles, invalidFiles } = splitImageFiles(next)
+
+            if (invalidFiles.length > 0) {
+                const message = buildInvalidImageFilesMessage(invalidFiles)
+                setError(message)
+                setCreateInvalidUploadNames(getInvalidFileNames(invalidFiles))
+                setCreateFieldErrors((current) => ({
+                    ...current,
+                    uploadFiles: message,
+                }))
+            } else if (Array.isArray(validFiles) && validFiles.length > 0) {
+                setCreateInvalidUploadNames([])
+                clearCreateFieldError('uploadFiles')
+                setError('')
+            }
+
+            return validFiles
+        })
     }
 
     const resetCreateForm = () => {
@@ -231,7 +285,9 @@ function CarOwnerFleet() {
         setCreateModelName('')
         setCreateTypeName('')
         setCreateUploadFiles([])
+        setCreateInvalidUploadNames([])
         setSelectedFeatureIds([])
+        setCreateFieldErrors({})
     }
 
     const onToggleCreateFeature = (featureId) => {
@@ -290,8 +346,119 @@ function CarOwnerFleet() {
         const typeName = String(selectedExistingModel?.typeName || '').trim()
         if (typeName && typeName.toLowerCase() !== 'unknown') {
             setCreateTypeName(typeName)
+            clearCreateFieldError('typeName')
         }
-    }, [selectedExistingModel])
+    }, [selectedExistingModel, clearCreateFieldError])
+
+    const validateCreateVehicleForm = () => {
+        const errors = {}
+
+        const brandName = String(createBrandName || '').trim()
+        const modelName = String(createModelName || '').trim()
+        const typeName = String(createTypeName || '').trim()
+        const licensePlate = String(createForm.licensePlate || '').trim()
+        const seatCount = Number(createForm.seatCount)
+        const pricePerDay = Number(createForm.pricePerDay)
+        const currentKm = Number(createForm.currentKm)
+        const yearValue = String(createForm.year || '').trim()
+        const fuelConsumptionValue = String(createForm.fuelConsumption || '').trim()
+        const province = String(createForm.province || '').trim()
+        const ward = String(createForm.ward || '').trim()
+        const addressDetail = String(createForm.addressDetail || '').trim()
+
+        if (!brandName) {
+            errors.brandName = 'Vui lòng chọn hãng xe.'
+        }
+
+        if (!modelName) {
+            errors.modelName = 'Vui lòng nhập mẫu xe.'
+        }
+
+        const existingTypeName = String(selectedExistingModel?.typeName || '').trim()
+        const existingTypeKnown = existingTypeName && existingTypeName.toLowerCase() !== 'unknown'
+        const needsType = !selectedExistingModel || !existingTypeKnown
+        if (needsType && !typeName) {
+            errors.typeName = 'Vui lòng nhập loại xe (VD: Sedan, SUV, Hatchback...).'
+        }
+
+        if (!licensePlate) {
+            errors.licensePlate = 'Vui lòng nhập biển số.'
+        } else if (licensePlate.length < 6) {
+            errors.licensePlate = 'Biển số chưa hợp lệ.'
+        }
+
+        if (!String(createForm.seatCount ?? '').trim()) {
+            errors.seatCount = 'Vui lòng nhập số chỗ.'
+        } else if (!Number.isFinite(seatCount) || !Number.isInteger(seatCount) || seatCount < 1) {
+            errors.seatCount = 'Số chỗ phải là số nguyên lớn hơn 0.'
+        }
+
+        if (!String(createForm.pricePerDay ?? '').trim()) {
+            errors.pricePerDay = 'Vui lòng nhập giá thuê/ngày.'
+        } else if (!Number.isFinite(pricePerDay) || pricePerDay <= 0) {
+            errors.pricePerDay = 'Giá thuê/ngày phải lớn hơn 0.'
+        }
+
+        if (!String(createForm.currentKm ?? '').trim()) {
+            errors.currentKm = 'Vui lòng nhập số km đã đi.'
+        } else if (!Number.isFinite(currentKm) || currentKm < 0) {
+            errors.currentKm = 'Số km đã đi không được âm.'
+        }
+
+        if (yearValue) {
+            const year = Number(yearValue)
+            const maxYear = new Date().getFullYear() + 1
+            if (!Number.isInteger(year) || year < 1900 || year > maxYear) {
+                errors.year = `Năm sản xuất phải trong khoảng 1900-${maxYear}.`
+            }
+        }
+
+        if (fuelConsumptionValue) {
+            const fuelConsumption = Number(fuelConsumptionValue)
+            if (!Number.isFinite(fuelConsumption) || fuelConsumption < 0) {
+                errors.fuelConsumption = 'Mức tiêu thụ phải là số không âm.'
+            }
+        }
+
+        if (!province) {
+            errors.province = 'Vui lòng nhập tỉnh/thành phố.'
+        }
+        if (!ward) {
+            errors.ward = 'Vui lòng nhập xã/phường.'
+        }
+        if (!addressDetail) {
+            errors.addressDetail = 'Vui lòng nhập địa chỉ cụ thể.'
+        }
+
+        if (!Array.isArray(createUploadFiles) || createUploadFiles.length === 0) {
+            errors.uploadFiles = 'Vui lòng thêm ít nhất 1 ảnh xe.'
+        }
+
+        if (createForm.deliveryEnabled) {
+            const freeDeliveryWithinKm = Number(createForm.freeDeliveryWithinKm)
+            const maxDeliveryDistanceKm = Number(createForm.maxDeliveryDistanceKm)
+            const extraFeePerKm = Number(createForm.extraFeePerKm)
+
+            if (!Number.isFinite(freeDeliveryWithinKm) || freeDeliveryWithinKm < 0) {
+                errors.freeDeliveryWithinKm = 'Km miễn phí phải là số không âm.'
+            }
+            if (!Number.isFinite(maxDeliveryDistanceKm) || maxDeliveryDistanceKm <= 0) {
+                errors.maxDeliveryDistanceKm = 'Quãng đường tối đa phải lớn hơn 0.'
+            }
+            if (!Number.isFinite(extraFeePerKm) || extraFeePerKm < 0) {
+                errors.extraFeePerKm = 'Phí/km phải là số không âm.'
+            }
+            if (
+                Number.isFinite(freeDeliveryWithinKm) &&
+                Number.isFinite(maxDeliveryDistanceKm) &&
+                maxDeliveryDistanceKm < freeDeliveryWithinKm
+            ) {
+                errors.maxDeliveryDistanceKm = 'Quãng đường tối đa phải >= km miễn phí.'
+            }
+        }
+
+        return errors
+    }
 
     const createVehicle = async () => {
         if (!ownerId || Number.isNaN(ownerId)) {
@@ -299,39 +466,16 @@ function CarOwnerFleet() {
             return
         }
 
-        if (!String(createBrandName || '').trim()) {
-            setError('Vui lòng chọn hãng xe')
-            return
-        }
-
-        if (!String(createModelName || '').trim()) {
-            setError('Vui lòng nhập mẫu xe')
-            return
-        }
-
-        const selectedTypeName = String(createTypeName || '').trim()
-        const existingTypeName = String(selectedExistingModel?.typeName || '').trim()
-        const existingTypeKnown = existingTypeName && existingTypeName.toLowerCase() !== 'unknown'
-        const needsType = !selectedExistingModel || !existingTypeKnown
-        if (needsType && !selectedTypeName) {
-            setError('Vui lòng nhập loại xe (VD: Sedan, SUV, Hatchback...)')
-            return
-        }
-
-        const requiredFields = ['licensePlate', 'seatCount', 'pricePerDay', 'currentKm', 'province', 'ward', 'addressDetail']
-        for (const field of requiredFields) {
-            if (!String(createForm[field] ?? '').trim()) {
-                setError(`Thiếu thông tin bắt buộc: ${field}`)
-                return
-            }
-        }
-
-        if (!createUploadFiles.length) {
-            setError('Vui lòng thêm ít nhất 1 ảnh xe trước khi tạo.')
+        const validationErrors = validateCreateVehicleForm()
+        if (Object.keys(validationErrors).length > 0) {
+            setCreateFieldErrors(validationErrors)
+            const firstError = Object.values(validationErrors)[0]
+            setError(typeof firstError === 'string' ? firstError : 'Vui lòng kiểm tra lại thông tin xe.')
             return
         }
 
         setCreating(true)
+        setCreateFieldErrors({})
         setError('')
         try {
             let modelId = selectedExistingModel?.id ? Number(selectedExistingModel.id) : null
@@ -389,7 +533,17 @@ function CarOwnerFleet() {
                     province: String(createForm.province || '').trim(),
                     ward: String(createForm.ward || '').trim(),
                     addressDetail: String(createForm.addressDetail || '').trim(),
-                }
+                },
+                deliveryEnabled: Boolean(createForm.deliveryEnabled),
+                freeDeliveryWithinKm: createForm.deliveryEnabled
+                    ? Math.max(0, Number(createForm.freeDeliveryWithinKm || 0))
+                    : null,
+                maxDeliveryDistanceKm: createForm.deliveryEnabled
+                    ? Math.max(0, Number(createForm.maxDeliveryDistanceKm || 0))
+                    : null,
+                extraFeePerKm: createForm.deliveryEnabled
+                    ? Math.max(0, Number(createForm.extraFeePerKm || 0))
+                    : null,
             }
 
             const created = await createOwnerVehicle(payload)
@@ -496,9 +650,9 @@ function CarOwnerFleet() {
                     brandsLoading={brandsLoading}
                     brandOptions={brandOptions}
                     createBrandName={createBrandName}
-                    setCreateBrandName={setCreateBrandName}
-                    setCreateModelName={setCreateModelName}
-                    setCreateTypeName={setCreateTypeName}
+                    setCreateBrandName={handleCreateBrandNameChange}
+                    setCreateModelName={handleCreateModelNameChange}
+                    setCreateTypeName={handleCreateTypeNameChange}
                     updateCreateField={updateCreateField}
                     createModelName={createModelName}
                     modelsLoading={modelsLoading}
@@ -513,8 +667,10 @@ function CarOwnerFleet() {
                     featureCatalog={featureCatalog}
                     selectedFeatureIds={selectedFeatureIds}
                     onToggleCreateFeature={onToggleCreateFeature}
+                    fieldErrors={createFieldErrors}
                     createUploadFiles={createUploadFiles}
-                    setCreateUploadFiles={setCreateUploadFiles}
+                    invalidUploadNames={createInvalidUploadNames}
+                    setCreateUploadFiles={handleCreateUploadFilesChange}
                     creating={creating}
                     onCreate={createVehicle}
                 />

@@ -1,3 +1,5 @@
+import { buildInvalidImageFilesMessage, splitImageFiles } from '../utils/imageFileValidation';
+
 const API_BASE_URL = import.meta.env.VITE_API_V1_URL || 'http://localhost:8080/api/v1';
 
 const parseJson = async (response) => {
@@ -136,8 +138,16 @@ export const uploadVehicleImages = async (vehicleId, ownerId, files, { setFirstA
     if (!vehicleId || !ownerId) throw new Error('Missing vehicleId/ownerId');
     if (!files || files.length === 0) return [];
 
+    const { validFiles, invalidFiles } = splitImageFiles(files);
+    if (invalidFiles.length > 0) {
+        throw new Error(buildInvalidImageFilesMessage(invalidFiles));
+    }
+    if (validFiles.length === 0) {
+        throw new Error('Vui long chon it nhat 1 file anh hop le.');
+    }
+
     const formData = new FormData();
-    for (const file of files) {
+    for (const file of validFiles) {
         formData.append('files', file);
     }
 
