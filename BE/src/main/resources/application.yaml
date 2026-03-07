@@ -14,7 +14,7 @@ spring:
     show-sql: true
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
-    port: ${MAIL_PORT:587}
+    port: ${MAIL_PORT:587}  
     username: ${MAIL_USERNAME:quanghao040102@gmail.com}
     password: ${MAIL_PASSWORD:nlck asdg bomc gggb}
     properties:
@@ -50,3 +50,6 @@ app:
   frontend-url: http://localhost:3000
   mail:
     enabled: true
+  payment:
+    enabled: false  # Set to false to disable payment, true to enable real payment
+    mock-mode: true  # Set to true for instant payment success without real transaction
