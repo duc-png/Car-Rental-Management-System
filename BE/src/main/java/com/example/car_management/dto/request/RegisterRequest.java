@@ -30,5 +30,7 @@ public class RegisterRequest {
     @Size(min = 10, max = 15, message = "Phone không hợp lệ")
     private String phone;
 
-    private String licenseNumber; 
+    private String licenseNumber;
+
+    private String avatar;
 }

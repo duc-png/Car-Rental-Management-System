@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Car, ChartSpline, LayoutGrid, LogOut, MessageSquareText, ReceiptText, Settings, UsersRound } from 'lucide-react'
+import { CalendarDays, Car, LayoutGrid, LogOut, MessageSquareText, ReceiptText, Settings, UsersRound, Wallet } from 'lucide-react'
 import '../../../styles/FleetSidebar.css'
 
 function FleetSidebar({ user, onLogout }) {
@@ -11,6 +11,8 @@ function FleetSidebar({ user, onLogout }) {
     const isVehiclesRoute = location.pathname.startsWith('/owner/fleet') || location.pathname.startsWith('/owner/vehicles')
     const isRentalRoute = location.pathname.startsWith('/manage-rentals')
     const isFeedbackRoute = location.pathname.startsWith('/owner/feedback')
+    const isCalendarRoute = location.pathname.startsWith('/owner/booking-calendar')
+    const isWalletRoute = location.pathname.startsWith('/owner/wallet')
 
     const navItems = [
         {
@@ -35,6 +37,13 @@ function FleetSidebar({ user, onLogout }) {
             active: isRentalRoute,
         },
         {
+            key: 'calendar',
+            to: '/owner/booking-calendar',
+            icon: CalendarDays,
+            label: 'Lịch booking',
+            active: isCalendarRoute,
+        },
+        {
             key: 'feedback',
             to: '/owner/feedback',
             icon: MessageSquareText,
@@ -50,10 +59,10 @@ function FleetSidebar({ user, onLogout }) {
         },
         {
             key: 'stats',
-            to: `/owner/fleet${ownerQuery}`,
-            icon: ChartSpline,
-            label: 'Thống kê',
-            active: false,
+            to: '/owner/wallet',
+            icon: Wallet,
+            label: 'Ví của tôi',
+            active: isWalletRoute,
         },
     ]
 
@@ -69,29 +78,31 @@ function FleetSidebar({ user, onLogout }) {
                 </div>
             </Link>
 
-            <div className="fleet-nav">
-                <p className="nav-section">Điều hướng</p>
-                {navItems.map((item) => {
-                    const Icon = item.icon
-                    return (
-                        <Link key={item.key} to={item.to} className={`nav-item ${item.active ? 'active' : ''}`.trim()}>
-                            <span className="nav-item-icon" aria-hidden="true">
-                                <Icon size={20} strokeWidth={2.2} />
-                            </span>
-                            <span>{item.label}</span>
-                        </Link>
-                    )
-                })}
-            </div>
+            <div className="fleet-sidebar-content">
+                <div className="fleet-nav">
+                    <p className="nav-section">Điều hướng</p>
+                    {navItems.map((item) => {
+                        const Icon = item.icon
+                        return (
+                            <Link key={item.key} to={item.to} className={`nav-item ${item.active ? 'active' : ''}`.trim()}>
+                                <span className="nav-item-icon" aria-hidden="true">
+                                    <Icon size={20} strokeWidth={2.2} />
+                                </span>
+                                <span>{item.label}</span>
+                            </Link>
+                        )
+                    })}
+                </div>
 
-            <div className="fleet-system">
-                <p className="nav-section">Hệ thống</p>
-                <Link to={`/owner/fleet${ownerQuery}`} className="nav-item">
-                    <span className="nav-item-icon" aria-hidden="true">
-                        <Settings size={20} strokeWidth={2.2} />
-                    </span>
-                    <span>Cài đặt</span>
-                </Link>
+                <div className="fleet-system">
+                    <p className="nav-section">Hệ thống</p>
+                    <Link to={`/owner/fleet${ownerQuery}`} className="nav-item">
+                        <span className="nav-item-icon" aria-hidden="true">
+                            <Settings size={20} strokeWidth={2.2} />
+                        </span>
+                        <span>Cài đặt</span>
+                    </Link>
+                </div>
             </div>
 
             <div className="fleet-sidebar-bottom">

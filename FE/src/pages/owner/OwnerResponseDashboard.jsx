@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { getConversationMessages, getMyConversations, sendMessage } from '../../api/chat'
@@ -19,6 +19,25 @@ const formatTime = (value) => {
     })
 }
 
+const ROLE_LABELS = {
+    USER: 'Khách Hàng',
+    ROLE_USER: 'Khách Hàng',
+    CAR_OWNER: 'Chủ xe',
+    ROLE_CAR_OWNER: 'Chủ xe',
+    ADMIN: 'Quản trị viên',
+    ROLE_ADMIN: 'Quản trị viên',
+}
+
+const getRoleLabel = (role) => ROLE_LABELS[String(role || '').toUpperCase()] || 'Khách Hàng'
+
+const getConversationRoleLabel = (conversation, myUserId) => {
+    const customerId = Number(conversation?.customerId)
+    const ownerId = Number(conversation?.ownerId)
+    if (Number(myUserId) === ownerId) return 'Khách Hàng'
+    if (Number(myUserId) === customerId) return 'Chủ xe'
+    return getRoleLabel(conversation?.otherUserRole)
+}
+
 export default function OwnerResponseDashboard() {
     const navigate = useNavigate()
     const { user, isAuthenticated, logout } = useAuth()
@@ -31,6 +50,8 @@ export default function OwnerResponseDashboard() {
     const [sending, setSending] = useState(false)
     const [error, setError] = useState('')
     const [draft, setDraft] = useState('')
+    const messageListRef = useRef(null)
+    const keepScrollToBottomRef = useRef(true)
 
     const canManage = Boolean(user?.role?.includes('ROLE_CAR_OWNER') || user?.role?.includes('ROLE_ADMIN'))
 
@@ -91,8 +112,10 @@ export default function OwnerResponseDashboard() {
         }
 
         let mounted = true
-        const loadMessages = async () => {
-            setLoadingMessages(true)
+        const loadMessages = async (showLoading = false) => {
+            if (showLoading) {
+                setLoadingMessages(true)
+            }
             try {
                 const list = await getConversationMessages(activeConversationId)
                 if (!mounted) return
@@ -102,14 +125,16 @@ export default function OwnerResponseDashboard() {
                 if (!mounted) return
                 setError(err?.message || 'Không thể tải nội dung cuộc trò chuyện.')
             } finally {
-                if (mounted) {
+                if (mounted && showLoading) {
                     setLoadingMessages(false)
                 }
             }
         }
 
-        loadMessages()
-        const timer = window.setInterval(loadMessages, 5000)
+        loadMessages(true)
+        const timer = window.setInterval(() => {
+            loadMessages(false)
+        }, 5000)
 
         return () => {
             mounted = false
@@ -121,6 +146,23 @@ export default function OwnerResponseDashboard() {
         () => conversations.find((item) => Number(item?.id) === Number(activeConversationId)) || null,
         [conversations, activeConversationId]
     )
+
+    useEffect(() => {
+        keepScrollToBottomRef.current = true
+    }, [activeConversationId])
+
+    useEffect(() => {
+        const container = messageListRef.current
+        if (!container || !keepScrollToBottomRef.current) return
+        container.scrollTop = container.scrollHeight
+    }, [messages])
+
+    const handleMessageListScroll = () => {
+        const container = messageListRef.current
+        if (!container) return
+        const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight
+        keepScrollToBottomRef.current = distanceToBottom < 24
+    }
 
     const handleSendMessage = async () => {
         const content = draft.trim()
@@ -198,7 +240,10 @@ export default function OwnerResponseDashboard() {
                                             className={`owner-feedback-item ${isActive ? 'active' : ''}`}
                                             onClick={() => setActiveConversationId(Number(item?.id) || null)}
                                         >
-                                            <strong>{item?.otherUserName || 'Khách hàng'}</strong>
+                                            <div className="owner-feedback-top">
+                                                <strong>{item?.otherUserName || 'Khách hàng'}</strong>
+                                                <em className="owner-feedback-role">{getConversationRoleLabel(item, myUserId)}</em>
+                                            </div>
                                             <span>{item?.vehicleName || 'Xe'}</span>
                                             <small>{item?.lastMessage || 'Chưa có tin nhắn'}</small>
                                         </button>
@@ -216,7 +261,7 @@ export default function OwnerResponseDashboard() {
                                     <p>{activeConversation?.vehicleName || ''}</p>
                                 </header>
 
-                                <div className="owner-feedback-messages">
+                                <div className="owner-feedback-messages" ref={messageListRef} onScroll={handleMessageListScroll}>
                                     {loadingMessages ? (
                                         <p className="owner-feedback-placeholder">Đang tải tin nhắn...</p>
                                     ) : messages.length === 0 ? (

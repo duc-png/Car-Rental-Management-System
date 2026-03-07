@@ -50,6 +50,12 @@ app:
   frontend-url: http://localhost:3000
   mail:
     enabled: true
+
+fpt:
+  vision:
+    dlr:
+      url: ${FPT_DLR_URL:https://api.fpt.ai/vision/dlr/vnm}
+      api-key: ${FPT_DLR_API_KEY:pfLqtAKgeeVIfohchD3D74uXMzEAKB9x}
   payment:
     enabled: false  # Set to false to disable payment, true to enable real payment
     mock-mode: true  # Set to true for instant payment success without real transaction

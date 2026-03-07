@@ -1,8 +1,14 @@
+.owner-feedback-page .fleet-main {
+    width: 100%;
+    max-width: 1360px;
+    margin: 0 auto;
+}
+
 .owner-feedback-layout {
     display: grid;
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: minmax(250px, 280px) 1fr;
     gap: 16px;
-    min-height: calc(100vh - 190px);
+    height: clamp(500px, calc(100vh - 230px), 720px);
 }
 
 .owner-feedback-sidebar,
@@ -17,6 +23,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    min-height: 0;
 }
 
 .owner-feedback-sidebar h3 {
@@ -30,7 +37,7 @@
     flex-direction: column;
     gap: 10px;
     overflow-y: auto;
-    max-height: calc(100vh - 300px);
+    min-height: 0;
 }
 
 .owner-feedback-item {
@@ -48,6 +55,25 @@
 
 .owner-feedback-item strong {
     font-size: 14px;
+}
+
+.owner-feedback-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.owner-feedback-role {
+    display: inline-flex;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid #cbd5e1;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 700;
 }
 
 .owner-feedback-item span {
@@ -68,10 +94,17 @@
     border-color: #93c5fd;
 }
 
+.owner-feedback-item.active .owner-feedback-role {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
+
 .owner-feedback-main {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-height: 0;
 }
 
 .owner-feedback-main-header {
@@ -93,14 +126,37 @@
 
 .owner-feedback-messages {
     flex: 1;
-    padding: 16px;
-    overflow-y: auto;
+    min-height: 0;
+    padding: 14px;
+    overflow-y: scroll;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
     background: #f8fafc;
+}
+
+.owner-feedback-messages::-webkit-scrollbar {
+    width: 10px;
+}
+
+.owner-feedback-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.owner-feedback-messages::-webkit-scrollbar-thumb {
+    background: #9ca3af;
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.owner-feedback-messages::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+    background-clip: padding-box;
 }
 
 .owner-feedback-row {
     display: flex;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .owner-feedback-row.mine {
@@ -108,11 +164,11 @@
 }
 
 .owner-feedback-bubble {
-    max-width: min(560px, 82%);
+    max-width: min(520px, 80%);
     background: #ffffff;
     border: 1px solid #dbe3ef;
     border-radius: 12px;
-    padding: 10px 12px;
+    padding: 9px 11px;
 }
 
 .owner-feedback-row.mine .owner-feedback-bubble {
@@ -135,7 +191,7 @@
 
 .owner-feedback-send {
     border-top: 1px solid #e2e8f0;
-    padding: 10px;
+    padding: 9px;
     display: flex;
     gap: 10px;
     background: #ffffff;
@@ -145,7 +201,7 @@
     flex: 1;
     border: 1px solid #cbd5e1;
     border-radius: 10px;
-    padding: 10px 12px;
+    padding: 9px 11px;
     font-size: 14px;
 }
 
@@ -155,13 +211,19 @@
     background: #1d4ed8;
     color: #ffffff;
     font-weight: 600;
-    padding: 10px 14px;
+    padding: 9px 12px;
     cursor: pointer;
 }
 
 .owner-feedback-send button:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+@media (max-height: 780px) {
+    .owner-feedback-layout {
+        height: calc(100vh - 210px);
+    }
 }
 
 .owner-feedback-placeholder,
@@ -177,6 +239,7 @@
 @media (max-width: 1100px) {
     .owner-feedback-layout {
         grid-template-columns: 1fr;
+        height: auto;
     }
 
     .owner-feedback-list {

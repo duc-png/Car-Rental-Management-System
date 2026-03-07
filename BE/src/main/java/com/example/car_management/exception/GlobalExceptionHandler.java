@@ -3,6 +3,7 @@ package com.example.car_management.exception;
 import com.example.car_management.dto.ApiResponse;
 import jakarta.validation.ConstraintViolation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -109,6 +110,17 @@ public class GlobalExceptionHandler {
                 (attributes != null)
                         ? mapAttribute(finalMessage, attributes)
                         : finalMessage);
+
+        return ResponseEntity.badRequest().body(apiResponse);
+    }
+
+    @ExceptionHandler(value = DataIntegrityViolationException.class)
+    ResponseEntity<ApiResponse> handlingDataIntegrityViolation(DataIntegrityViolationException exception) {
+        log.error("Data integrity violation: ", exception);
+
+        ApiResponse apiResponse = new ApiResponse();
+        apiResponse.setCode(ErrorCode.INVALID_KEY.getCode());
+        apiResponse.setMessage("Du lieu khong hop le hoac vuot qua gioi han cho phep.");
 
         return ResponseEntity.badRequest().body(apiResponse);
     }

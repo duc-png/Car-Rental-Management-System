@@ -41,11 +41,12 @@ public class VehicleServiceImpl implements VehicleService {
     @Override
     @Transactional
     public VehicleResponse createVehicle(CreateVehicleRequest req) {
-
+        // 1) Validate bien so la duy nhat truoc khi tao xe.
         if (vehicleRepository.existsByLicensePlate(req.getLicensePlate())) {
             throw new AppException(ErrorCode.LICENSE_PLATE_EXISTED);
         }
 
+        // 2) Resolve owner/model/location tu request de tao entity day du lien ket.
         UserEntity owner = userRepository.findById(req.getOwnerId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
@@ -78,6 +79,8 @@ public class VehicleServiceImpl implements VehicleService {
 
         applyDeliveryRules(v);
 
+        // 3) Xe moi cua chu xe vao trang thai PENDING_APPROVAL va gui thong bao cho
+        // admin.
         VehicleEntity saved = vehicleRepository.save(v);
         notificationService.notifyAdminsVehicleSubmitted(saved);
         return VehicleMapper.toResponse(saved);
@@ -115,8 +118,10 @@ public class VehicleServiceImpl implements VehicleService {
         VehicleEntity v = vehicleRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_NOT_FOUND));
 
+        // Chi chu xe so huu moi duoc cap nhat xe.
         assertOwner(v, ownerId);
 
+        // Chan cap nhat cac field co dinh (model/bien so/seat/fuel/year).
         assertImmutableFields(req, v);
 
         if (req.getColor() != null)
@@ -324,10 +329,12 @@ public class VehicleServiceImpl implements VehicleService {
                 .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_NOT_FOUND));
         assertOwner(v, ownerId);
 
+        // Chu xe khong duoc tu duyet xe dang pending/rejected.
         if (v.getStatus() == VehicleStatus.PENDING_APPROVAL || v.getStatus() == VehicleStatus.REJECTED) {
             throw new AppException(ErrorCode.VEHICLE_APPROVAL_REQUIRED);
         }
 
+        // Khong cho set ve trang thai can admin xu ly.
         if (req.getStatus() == VehicleStatus.PENDING_APPROVAL || req.getStatus() == VehicleStatus.REJECTED) {
             throw new AppException(ErrorCode.FORBIDDEN_RESOURCE);
         }
@@ -369,7 +376,7 @@ public class VehicleServiceImpl implements VehicleService {
             throw new AppException(ErrorCode.INVALID_KEY);
         }
 
-        // 2) Nếu setFirstAsMain => clear main hiện tại
+        // 2) Neu yeu cau set main, clear main hien tai truoc khi them anh moi.
         if (setFirstAsMain) {
             List<VehicleImageEntity> current = vehicleImageRepository.findByVehicle_Id(vehicleId);
             boolean changed = false;
@@ -384,7 +391,7 @@ public class VehicleServiceImpl implements VehicleService {
             }
         }
 
-        // 3) Tạo entity và save batch (nhanh hơn save từng cái)
+        // 3) Tao batch image entity de luu mot lan.
         List<VehicleImageEntity> toSave = new java.util.ArrayList<>(urls.size());
         for (int i = 0; i < urls.size(); i++) {
             VehicleImageEntity img = VehicleImageEntity.builder()
@@ -396,7 +403,7 @@ public class VehicleServiceImpl implements VehicleService {
         }
         vehicleImageRepository.saveAll(toSave);
 
-        // 4) Trả response
+        // 4) Tra ve danh sach anh moi nhat sau khi cap nhat.
         return VehicleMapper.toImageResponses(vehicleImageRepository.findByVehicle_Id(vehicleId));
     }
 
@@ -410,6 +417,7 @@ public class VehicleServiceImpl implements VehicleService {
         VehicleImageEntity target = vehicleImageRepository.findById(imageId)
                 .orElseThrow(() -> new AppException(ErrorCode.IMAGE_NOT_FOUND));
 
+        // Dam bao image thuoc dung vehicle de tranh cross-vehicle update.
         if (target.getVehicle() == null || !target.getVehicle().getId().equals(vehicleId)) {
             throw new AppException(ErrorCode.IMAGE_NOT_FOUND);
         }
@@ -433,6 +441,7 @@ public class VehicleServiceImpl implements VehicleService {
         VehicleImageEntity img = vehicleImageRepository.findById(imageId)
                 .orElseThrow(() -> new AppException(ErrorCode.IMAGE_NOT_FOUND));
 
+        // Chi xoa khi image thuoc vehicle dang thao tac.
         if (img.getVehicle() == null || !img.getVehicle().getId().equals(vehicleId)) {
             throw new AppException(ErrorCode.IMAGE_NOT_FOUND);
         }
@@ -457,7 +466,7 @@ public class VehicleServiceImpl implements VehicleService {
 
         boolean setFirstAsMain = Boolean.TRUE.equals(setFirstAsMainFlag);
 
-        // nếu setFirstAsMain => clear main hiện tại
+        // Neu setFirstAsMain thi clear main hien tai, anh upload dau tien se la main.
         if (setFirstAsMain) {
             List<VehicleImageEntity> current = vehicleImageRepository.findByVehicle_Id(vehicleId);
             boolean changed = false;
@@ -471,7 +480,7 @@ public class VehicleServiceImpl implements VehicleService {
                 vehicleImageRepository.saveAll(current);
         }
 
-        // upload cloudinary -> lấy URL -> lưu DB
+        // Upload file len cloud, lay URL va persist xuong DB.
         List<VehicleImageEntity> toSave = new java.util.ArrayList<>(files.size());
         for (int i = 0; i < files.size(); i++) {
             org.springframework.web.multipart.MultipartFile f = files.get(i);
@@ -565,14 +574,17 @@ public class VehicleServiceImpl implements VehicleService {
         // Load ảnh riêng để tránh thay thế collection managed (orphanRemoval)
         List<VehicleImageEntity> imgs = vehicleImageRepository.findByVehicle_Id(v.getId());
 
+        // Neu da duyet truoc do thi tra ngay ket qua hien tai.
         if (v.getStatus() == com.example.car_management.entity.enums.VehicleStatus.AVAILABLE) {
             return VehicleMapper.toResponse(v, imgs);
         }
 
+        // Chi duyet duoc xe dang PENDING_APPROVAL.
         if (v.getStatus() != com.example.car_management.entity.enums.VehicleStatus.PENDING_APPROVAL) {
             throw new AppException(ErrorCode.INVALID_KEY);
         }
 
+        // Chot duyet: cap nhat trang thai, thoi diem duyet va thong bao cho chu xe.
         v.setStatus(com.example.car_management.entity.enums.VehicleStatus.AVAILABLE);
         v.setReviewedAt(Instant.now());
         notificationService.notifyOwnerVehicleApproved(v);
@@ -588,6 +600,7 @@ public class VehicleServiceImpl implements VehicleService {
         // Load ảnh riêng để tránh thay thế collection managed (orphanRemoval)
         List<VehicleImageEntity> imgs = vehicleImageRepository.findByVehicle_Id(v.getId());
 
+        // Chi tu choi duoc xe dang cho duyet.
         if (v.getStatus() != com.example.car_management.entity.enums.VehicleStatus.PENDING_APPROVAL) {
             throw new AppException(ErrorCode.INVALID_KEY);
         }

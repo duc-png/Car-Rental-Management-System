@@ -4,6 +4,7 @@ import com.example.car_management.dto.request.CreateBookingRequest;
 import com.example.car_management.dto.request.UpdateBookingStatusRequest;
 import com.example.car_management.dto.response.BookingResponse;
 import com.example.car_management.dto.response.BookedDateResponse;
+import com.example.car_management.dto.response.OwnerBookingCalendarItemResponse;
 import com.example.car_management.entity.BookingEntity;
 import com.example.car_management.entity.UserEntity;
 import com.example.car_management.entity.VehicleEntity;
@@ -151,6 +152,58 @@ public class BookingService {
                     b.getStatus());
         }
         return bookingMapper.toResponseList(bookings);
+    }
+
+    @Transactional(readOnly = true)
+    public List<OwnerBookingCalendarItemResponse> getOwnerSuccessfulBookingCalendar(
+            LocalDateTime from,
+            LocalDateTime to,
+            Integer vehicleId) {
+        Integer userId = getCurrentUserId();
+
+        if (vehicleId != null) {
+            VehicleEntity vehicle = vehicleRepository.findById(vehicleId)
+                    .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_NOT_FOUND));
+
+            Integer ownerId = vehicle.getOwner() != null ? vehicle.getOwner().getId() : null;
+            if (!userId.equals(ownerId)) {
+                throw new AppException(ErrorCode.FORBIDDEN_RESOURCE);
+            }
+        }
+
+        List<BookingStatus> successStatuses = Arrays.asList(
+                BookingStatus.CONFIRMED,
+                BookingStatus.ONGOING,
+                BookingStatus.COMPLETED);
+
+        List<BookingEntity> bookings = bookingRepository.findOwnerBookingsForCalendar(
+                userId,
+                vehicleId,
+                from,
+                to,
+                successStatuses);
+
+        return bookings.stream()
+                .map(booking -> {
+                    String brandName = booking.getVehicle() != null && booking.getVehicle().getModel() != null
+                            && booking.getVehicle().getModel().getBrand() != null
+                                    ? booking.getVehicle().getModel().getBrand().getName()
+                                    : "";
+                    String modelName = booking.getVehicle() != null && booking.getVehicle().getModel() != null
+                            ? booking.getVehicle().getModel().getName()
+                            : "";
+                    String vehicleName = (brandName + " " + modelName).trim();
+
+                    return OwnerBookingCalendarItemResponse.builder()
+                            .bookingId(booking.getId())
+                            .vehicleId(booking.getVehicle() != null ? booking.getVehicle().getId() : null)
+                            .vehicleName(vehicleName.isEmpty() ? "Xe #" + booking.getVehicle().getId() : vehicleName)
+                            .startDate(booking.getStartDate())
+                            .endDate(booking.getEndDate())
+                            .status(booking.getStatus())
+                            .build();
+                })
+                .toList();
     }
 
     @Transactional

@@ -10,21 +10,23 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessageEntity, Integer> {
-    List<ChatMessageEntity> findByConversationIdOrderByCreatedAtAsc(Integer conversationId);
+        List<ChatMessageEntity> findByConversationIdOrderByCreatedAtAsc(Integer conversationId);
 
-    Optional<ChatMessageEntity> findTopByConversationIdOrderByCreatedAtDesc(Integer conversationId);
+        List<ChatMessageEntity> findByConversation_Owner_IdOrderByConversation_IdAscCreatedAtAsc(Integer ownerId);
 
-    long countByConversationIdAndSenderIdNotAndIsReadFalse(Integer conversationId, Integer senderId);
+        Optional<ChatMessageEntity> findTopByConversationIdOrderByCreatedAtDesc(Integer conversationId);
 
-    @Modifying
-    @Query("""
-            update ChatMessageEntity m
-            set m.isRead = true
-            where m.conversation.id = :conversationId
-              and m.sender.id <> :viewerId
-              and m.isRead = false
-            """)
-    int markOtherSideMessagesAsRead(
-            @Param("conversationId") Integer conversationId,
-            @Param("viewerId") Integer viewerId);
+        long countByConversationIdAndSenderIdNotAndIsReadFalse(Integer conversationId, Integer senderId);
+
+        @Modifying
+        @Query("""
+                        update ChatMessageEntity m
+                        set m.isRead = true
+                        where m.conversation.id = :conversationId
+                          and m.sender.id <> :viewerId
+                          and m.isRead = false
+                        """)
+        int markOtherSideMessagesAsRead(
+                        @Param("conversationId") Integer conversationId,
+                        @Param("viewerId") Integer viewerId);
 }

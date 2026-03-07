@@ -103,7 +103,7 @@
     align-items: start;
 }
 
-.owner-reg-card {
+.owner-reg-details-card {
     background: #ffffff;
     border: 1px solid #eef2f7;
     border-radius: 18px;
@@ -111,11 +111,11 @@
     overflow: hidden;
 }
 
-.owner-reg-card+.owner-reg-card {
+.owner-reg-details-card+.owner-reg-details-card {
     margin-top: 16px;
 }
 
-.owner-reg-card-title {
+.owner-reg-details-card-title {
     padding: 14px 16px;
     font-weight: 900;
     color: #0f172a;
@@ -234,21 +234,21 @@
     line-height: 1.6;
 }
 
-.owner-reg-applicant {
+.owner-reg-details-applicant {
     padding: 14px 16px 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-.owner-reg-applicant .line {
+.owner-reg-details-applicant .line {
     display: grid;
     grid-template-columns: 120px minmax(0, 1fr);
     gap: 10px;
     align-items: start;
 }
 
-.owner-reg-applicant .label {
+.owner-reg-details-applicant .label {
     color: #64748b;
     font-weight: 900;
     text-transform: uppercase;
@@ -256,7 +256,7 @@
     font-size: 0.7rem;
 }
 
-.owner-reg-applicant .value {
+.owner-reg-details-applicant .value {
     color: #0f172a;
     font-weight: 800;
     min-width: 0;
@@ -264,7 +264,7 @@
     text-overflow: ellipsis;
 }
 
-.owner-reg-reviewer-sub {
+.owner-reg-details-reviewer-sub {
     padding: 12px 16px 6px;
     font-size: 0.72rem;
     letter-spacing: 0.08em;
@@ -273,7 +273,7 @@
     font-weight: 900;
 }
 
-.owner-reg-textarea {
+.owner-reg-details-textarea {
     margin: 0 16px 12px;
     width: calc(100% - 32px);
     border-radius: 12px;
@@ -285,7 +285,7 @@
     outline: none;
 }
 
-.owner-reg-btn {
+.owner-reg-details-btn {
     width: calc(100% - 32px);
     margin: 0 16px 10px;
     border-radius: 10px;
@@ -295,23 +295,23 @@
     cursor: pointer;
 }
 
-.owner-reg-btn.approve {
+.owner-reg-details-btn.approve {
     background: #059669;
     color: #ffffff;
 }
 
-.owner-reg-btn.cancel {
+.owner-reg-details-btn.cancel {
     background: #ffffff;
     color: #ef4444;
     border-color: rgba(239, 68, 68, 0.5);
 }
 
-.owner-reg-btn:disabled {
+.owner-reg-details-btn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
 }
 
-.owner-reg-back {
+.owner-reg-details-back {
     width: calc(100% - 32px);
     margin: 0 16px 16px;
     border-radius: 10px;
@@ -322,7 +322,7 @@
     cursor: pointer;
 }
 
-.owner-reg-back:hover {
+.owner-reg-details-back:hover {
     background: #f8fafc;
 }
 

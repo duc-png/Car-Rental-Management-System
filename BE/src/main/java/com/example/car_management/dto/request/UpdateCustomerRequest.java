@@ -28,5 +28,7 @@ public class UpdateCustomerRequest {
 
     private String licenseNumber;
 
+    private String avatar;
+
     private String address;
 }

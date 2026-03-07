@@ -189,7 +189,7 @@ export default function AdminOwnerRegistrations() {
     }, [sorted, currentPage])
 
     return (
-        <>
+        <section className="admin-owner-registrations-page">
             <div className="owner-reg-page-header">
                 <div>
                     <h1>Yêu cầu đăng ký chủ xe</h1>
@@ -245,7 +245,7 @@ export default function AdminOwnerRegistrations() {
                 </div>
             </div>
 
-            {error && <div className="admin-alert">{error}</div>}
+            {error && <div className="owner-reg-alert">{error}</div>}
 
             <div className="owner-reg-card">
                 <div className="owner-reg-card-head">
@@ -315,13 +315,13 @@ export default function AdminOwnerRegistrations() {
                                                 </div>
                                             </td>
                                             <td>
-                                                <div className="vehicle-cell">
-                                                    <div className="vehicle-thumb">
+                                                <div className="owner-reg-vehicle-cell">
+                                                    <div className="owner-reg-vehicle-thumb">
                                                         {previewUrl ? <img src={previewUrl} alt="Vehicle" loading="lazy" /> : null}
                                                     </div>
-                                                    <div className="vehicle-meta">
-                                                        <div className="vehicle-title" title={registrationTitle(item)}>{registrationTitle(item)}</div>
-                                                        <div className="vehicle-sub" title={registrationSubtitle(item)}>{registrationSubtitle(item)}</div>
+                                                    <div className="owner-reg-vehicle-meta">
+                                                        <div className="owner-reg-vehicle-title" title={registrationTitle(item)}>{registrationTitle(item)}</div>
+                                                        <div className="owner-reg-vehicle-sub" title={registrationSubtitle(item)}>{registrationSubtitle(item)}</div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -371,7 +371,7 @@ export default function AdminOwnerRegistrations() {
                             <div className="owner-reg-pagination">
                                 <button
                                     type="button"
-                                    className="page-btn"
+                                    className="owner-reg-page-btn"
                                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                                     disabled={currentPage === 1}
                                     aria-label="Trang trước"
@@ -384,7 +384,7 @@ export default function AdminOwnerRegistrations() {
                                         <button
                                             key={p}
                                             type="button"
-                                            className={`page-btn ${p === currentPage ? 'active' : ''}`}
+                                            className={`owner-reg-page-btn ${p === currentPage ? 'active' : ''}`}
                                             onClick={() => setPage(p)}
                                         >
                                             {p}
@@ -393,7 +393,7 @@ export default function AdminOwnerRegistrations() {
                                 })}
                                 <button
                                     type="button"
-                                    className="page-btn"
+                                    className="owner-reg-page-btn"
                                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                                     disabled={currentPage === totalPages}
                                     aria-label="Trang sau"
@@ -405,6 +405,6 @@ export default function AdminOwnerRegistrations() {
                     </div>
                 )}
             </div>
-        </>
+        </section>
     )
 }

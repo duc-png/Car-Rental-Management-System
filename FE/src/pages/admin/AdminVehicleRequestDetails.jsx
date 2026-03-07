@@ -217,7 +217,7 @@ export default function AdminVehicleRequestDetails() {
                                     <button
                                         key={img.id || img.imageUrl}
                                         type="button"
-                                        className={`thumb ${img.imageUrl === selectedImage ? 'active' : ''}`}
+                                        className={`request-thumb ${img.imageUrl === selectedImage ? 'active' : ''}`}
                                         onClick={() => setSelectedImage(img.imageUrl)}
                                         aria-label="Chọn ảnh"
                                     >
@@ -227,18 +227,18 @@ export default function AdminVehicleRequestDetails() {
 
                                 {images.length < 4
                                     ? Array.from({ length: 4 - images.length }).map((_, index) => (
-                                        <div className="thumb placeholder" key={`empty-${index}`} aria-hidden="true" />
+                                        <div className="request-thumb placeholder" key={`empty-${index}`} aria-hidden="true" />
                                     ))
                                     : null}
 
-                                <div className="thumb placeholder" aria-hidden="true">
+                                <div className="request-thumb placeholder" aria-hidden="true">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M14 2H8C6.89543 2 6 2.89543 6 4V20C6 21.1046 6.89543 22 8 22H16C17.1046 22 18 21.1046 18 20V6L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
                                         <path d="M14 2V6H18" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
                                     </svg>
                                 </div>
 
-                                <div className="thumb placeholder" aria-hidden="true">
+                                <div className="request-thumb placeholder" aria-hidden="true">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M12 5V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                                         <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -249,115 +249,115 @@ export default function AdminVehicleRequestDetails() {
 
                         <div className="request-card">
                             <div className="request-card-title">Thông số xe</div>
-                            <div className="spec-table">
-                                <div className="spec-cell">
-                                    <div className="spec-label">Hãng xe</div>
-                                    <div className="spec-value">{vehicle.brandName || '—'}</div>
+                            <div className="request-spec-table">
+                                <div className="request-spec-cell">
+                                    <div className="request-spec-label">Hãng xe</div>
+                                    <div className="request-spec-value">{vehicle.brandName || '—'}</div>
                                 </div>
-                                <div className="spec-cell">
-                                    <div className="spec-label">Mẫu xe</div>
-                                    <div className="spec-value">{vehicle.modelName || '—'}</div>
+                                <div className="request-spec-cell">
+                                    <div className="request-spec-label">Mẫu xe</div>
+                                    <div className="request-spec-value">{vehicle.modelName || '—'}</div>
                                 </div>
-                                <div className="spec-cell">
-                                    <div className="spec-label">Loại xe</div>
-                                    <div className="spec-value">{vehicle.carTypeName || '—'}</div>
+                                <div className="request-spec-cell">
+                                    <div className="request-spec-label">Loại xe</div>
+                                    <div className="request-spec-value">{vehicle.carTypeName || '—'}</div>
                                 </div>
-                                <div className="spec-cell">
-                                    <div className="spec-label">Năm sản xuất</div>
-                                    <div className="spec-value">{vehicle.year || '—'}</div>
+                                <div className="request-spec-cell">
+                                    <div className="request-spec-label">Năm sản xuất</div>
+                                    <div className="request-spec-value">{vehicle.year || '—'}</div>
                                 </div>
-                                <div className="spec-cell">
-                                    <div className="spec-label">Nhiên liệu</div>
-                                    <div className="spec-value">{formatEnum(vehicle.fuelType)}</div>
+                                <div className="request-spec-cell">
+                                    <div className="request-spec-label">Nhiên liệu</div>
+                                    <div className="request-spec-value">{formatEnum(vehicle.fuelType)}</div>
                                 </div>
-                                <div className="spec-cell">
-                                    <div className="spec-label">Hộp số</div>
-                                    <div className="spec-value">{formatEnum(vehicle.transmission)}</div>
+                                <div className="request-spec-cell">
+                                    <div className="request-spec-label">Hộp số</div>
+                                    <div className="request-spec-value">{formatEnum(vehicle.transmission)}</div>
                                 </div>
-                                <div className="spec-cell">
-                                    <div className="spec-label">Số chỗ</div>
-                                    <div className="spec-value">{formatSeats(vehicle.seatCount)}</div>
+                                <div className="request-spec-cell">
+                                    <div className="request-spec-label">Số chỗ</div>
+                                    <div className="request-spec-value">{formatSeats(vehicle.seatCount)}</div>
                                 </div>
-                                <div className="spec-cell">
-                                    <div className="spec-label">Mức tiêu thụ</div>
-                                    <div className="spec-value">{formatFuelConsumption(vehicle.fuelConsumption)}</div>
+                                <div className="request-spec-cell">
+                                    <div className="request-spec-label">Mức tiêu thụ</div>
+                                    <div className="request-spec-value">{formatFuelConsumption(vehicle.fuelConsumption)}</div>
                                 </div>
-                                <div className="spec-cell">
-                                    <div className="spec-label">Biển số</div>
-                                    <div className="spec-value">{vehicle.licensePlate || '—'}</div>
+                                <div className="request-spec-cell">
+                                    <div className="request-spec-label">Biển số</div>
+                                    <div className="request-spec-value">{vehicle.licensePlate || '—'}</div>
                                 </div>
-                                <div className="spec-cell">
-                                    <div className="spec-label">Số km hiện tại</div>
-                                    <div className="spec-value">{formatKm(vehicle.currentKm)}</div>
+                                <div className="request-spec-cell">
+                                    <div className="request-spec-label">Số km hiện tại</div>
+                                    <div className="request-spec-value">{formatKm(vehicle.currentKm)}</div>
                                 </div>
-                                <div className="spec-cell">
-                                    <div className="spec-label">Giá thuê</div>
-                                    <div className="spec-value">{formatPrice(vehicle.pricePerDay)}</div>
+                                <div className="request-spec-cell">
+                                    <div className="request-spec-label">Giá thuê</div>
+                                    <div className="request-spec-value">{formatPrice(vehicle.pricePerDay)}</div>
                                 </div>
                             </div>
                         </div>
 
                         <div className="request-card">
                             <div className="request-card-title">Tiện ích &amp; mô tả</div>
-                            <div className="feature-block">
-                                <div className="feature-subtitle">Tiện nghi</div>
-                                <div className="amenities-row">
+                            <div className="request-feature-block">
+                                <div className="request-feature-subtitle">Tiện nghi</div>
+                                <div className="request-amenities-row">
                                     {(Array.isArray(vehicle.features) ? vehicle.features : []).length === 0 ? (
-                                        <div className="amenities-empty">Không có dữ liệu tính năng.</div>
+                                        <div className="request-amenities-empty">Không có dữ liệu tính năng.</div>
                                     ) : (
                                         (Array.isArray(vehicle.features) ? vehicle.features : []).map((feature) => (
-                                            <span key={feature.id || feature.name} className="amenity-pill">
+                                            <span key={feature.id || feature.name} className="request-amenity-pill">
                                                 <span>{feature?.name || 'Tính năng'}</span>
                                             </span>
                                         ))
                                     )}
                                 </div>
                             </div>
-                            <div className="feature-block">
-                                <div className="feature-subtitle">Mô tả từ chủ xe</div>
-                                <div className="feature-description">{vehicle?.description || 'Chưa có mô tả.'}</div>
+                            <div className="request-feature-block">
+                                <div className="request-feature-subtitle">Mô tả từ chủ xe</div>
+                                <div className="request-feature-description">{vehicle?.description || 'Chưa có mô tả.'}</div>
                             </div>
                         </div>
                     </div>
 
                     <div className="request-right">
                         <div className="request-card request-owner-card">
-                            <div className="owner-top">
+                            <div className="request-owner-top">
                                 <div className="owner-avatar">{initialsFrom(ownerName)}</div>
-                                <div className="owner-meta">
-                                    <div className="owner-name">
+                                <div className="request-owner-meta">
+                                    <div className="request-owner-name">
                                         {ownerName}
-                                        {owner?.isVerified ? <span className="owner-verified" title="Đã xác thực">✓</span> : null}
+                                        {owner?.isVerified ? <span className="request-owner-verified" title="Đã xác thực">✓</span> : null}
                                     </div>
-                                    <div className="owner-sub">Tham gia từ: {ownerJoinedAt}</div>
+                                    <div className="request-owner-sub">Tham gia từ: {ownerJoinedAt}</div>
                                 </div>
                             </div>
 
-                            <div className="owner-lines">
-                                <div className="owner-line">
-                                    <span className="owner-line-icon" aria-hidden="true">✉</span>
+                            <div className="request-owner-lines">
+                                <div className="request-owner-line">
+                                    <span className="request-owner-line-icon" aria-hidden="true">✉</span>
                                     <span>{ownerEmail}</span>
                                 </div>
-                                <div className="owner-line">
-                                    <span className="owner-line-icon" aria-hidden="true">☎</span>
+                                <div className="request-owner-line">
+                                    <span className="request-owner-line-icon" aria-hidden="true">☎</span>
                                     <span>{ownerPhone}</span>
                                 </div>
-                                <div className="owner-line">
-                                    <span className="owner-line-icon" aria-hidden="true">⌂</span>
+                                <div className="request-owner-line">
+                                    <span className="request-owner-line-icon" aria-hidden="true">⌂</span>
                                     <span>{ownerLocation}</span>
                                 </div>
                             </div>
 
-                            <Link className="owner-profile-btn" to={vehicle?.ownerId ? `/owners/${vehicle.ownerId}` : '/owners/0'}>
+                            <Link className="request-owner-profile-btn" to={vehicle?.ownerId ? `/owners/${vehicle.ownerId}` : '/owners/0'}>
                                 Xem hồ sơ đầy đủ
                             </Link>
                         </div>
 
                         <div className="request-card">
                             <div className="request-card-title">Xử lý của quản trị viên</div>
-                            <div className="reviewer-sub">Ghi chú xử lý</div>
+                            <div className="request-reviewer-sub">Ghi chú xử lý</div>
                             <textarea
-                                className="reviewer-textarea"
+                                className="request-reviewer-textarea"
                                 placeholder="Nhập lý do duyệt hoặc từ chối..."
                                 value={reviewComment}
                                 onChange={(e) => setReviewComment(e.target.value)}
@@ -366,7 +366,7 @@ export default function AdminVehicleRequestDetails() {
 
                             <button
                                 type="button"
-                                className="reviewer-btn approve"
+                                className="request-reviewer-btn approve"
                                 onClick={onApprove}
                                 disabled={!canAct || actionLoading}
                             >
@@ -374,18 +374,18 @@ export default function AdminVehicleRequestDetails() {
                             </button>
                             <button
                                 type="button"
-                                className="reviewer-btn reject"
+                                className="request-reviewer-btn reject"
                                 onClick={onReject}
                                 disabled={!canAct || actionLoading}
                             >
                                 Từ chối yêu cầu
                             </button>
 
-                            <div className="reviewer-hint">Thao tác này sẽ được ghi log và chủ xe sẽ nhận thông báo qua email.</div>
+                            <div className="request-reviewer-hint">Thao tác này sẽ được ghi log và chủ xe sẽ nhận thông báo qua email.</div>
 
                             <button
                                 type="button"
-                                className="reviewer-back"
+                                className="request-reviewer-back"
                                 onClick={() => navigate('/admin/vehicles')}
                             >
                                 Quay lại danh sách

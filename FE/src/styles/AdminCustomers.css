@@ -1,0 +1,450 @@
+.admin-customers-page {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.admin-customers-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    padding: 20px 24px;
+    border-radius: 20px;
+    border: 1px solid #e5e7eb;
+}
+
+.admin-customers-header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-customers-header h1 {
+    font-size: 1.56rem;
+    margin: 0;
+}
+
+.admin-customers-header p {
+    color: #6b7280;
+    margin: 4px 0 0;
+}
+
+.admin-customers-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+}
+
+.admin-customers-stat-card {
+    background: #ffffff;
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+}
+
+.admin-customers-stat-card p {
+    margin: 0;
+    color: #6b7280;
+    font-size: 0.86rem;
+}
+
+.admin-customers-stat-card h3 {
+    margin: 8px 0 0;
+    font-size: 1.34rem;
+}
+
+.admin-customers-table-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.admin-customers-table-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.admin-customers-view-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.admin-customers-view-tab {
+    border: 0;
+    background: transparent;
+    color: #7c8ea8;
+    font-size: 1.05rem;
+    font-weight: 600;
+    padding: 12px 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    transition: color 0.2s ease;
+}
+
+.admin-customers-view-tab::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -1px;
+    width: 100%;
+    height: 2px;
+    background: #f59e0b;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.22s ease;
+}
+
+.admin-customers-view-tab.active {
+    color: #d97706;
+}
+
+.admin-customers-view-tab.active::after {
+    transform: scaleX(1);
+}
+
+.admin-customers-view-tab:hover {
+    color: #c26f08;
+}
+
+.admin-customers-view-badge {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.admin-customers-table-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.admin-customers-table-header p {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.admin-customers-search-box {
+    min-width: 320px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 14px;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    background: #f3f4f6;
+    color: #94a3b8;
+}
+
+.admin-customers-search-box input {
+    width: 300px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 0;
+    background: transparent;
+    outline: none;
+}
+
+.admin-customers-table-wrapper {
+    overflow-x: auto;
+}
+
+.admin-customers-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 860px;
+}
+
+.admin-customers-table th,
+.admin-customers-table td {
+    text-align: left;
+    padding: 14px 12px;
+    font-size: 0.92rem;
+    border-bottom: 1px solid #eef2f7;
+    vertical-align: top;
+}
+
+.admin-customers-table th {
+    color: #6b7280;
+    font-weight: 600;
+}
+
+.admin-customers-customer-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-customers-customer-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    background: #e0e7ff;
+    color: #4338ca;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+}
+
+.admin-customers-customer-name {
+    margin: 0;
+    font-weight: 700;
+}
+
+.admin-customers-customer-email {
+    margin: 2px 0 0;
+}
+
+.admin-customers-customer-meta {
+    margin: 2px 0 0;
+    font-size: 0.78rem;
+    color: #94a3b8;
+}
+
+.admin-customers-muted {
+    margin: 2px 0 0;
+    color: #6b7280;
+}
+
+.admin-customers-price {
+    margin: 0;
+    font-weight: 700;
+}
+
+.admin-customers-status-pill {
+    margin-top: 6px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+}
+
+.admin-customers-status-pill.active {
+    background: #ecfdf3;
+    color: #0f766e;
+}
+
+.admin-customers-status-pill.inactive {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.admin-customers-status-pill.license-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.admin-customers-status-pill.license-approved {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.admin-customers-status-pill.license-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.admin-customers-status-pill.license-unsubmitted {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.admin-customers-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.admin-customers-icon-action {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid #dbe3ee;
+    background: #ffffff;
+    color: #334155;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.admin-customers-icon-action:hover {
+    color: #0f172a;
+    border-color: #94a3b8;
+    background: #f8fafc;
+}
+
+.admin-customers-btn {
+    border-radius: 10px;
+    padding: 7px 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.admin-customers-btn-primary {
+    border: 1px solid #1d4ed8;
+    background: #1d4ed8;
+    color: #ffffff;
+}
+
+.admin-customers-btn-outline {
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    color: #111827;
+}
+
+.admin-customers-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.admin-customers-table-empty {
+    padding: 24px 0;
+    text-align: center;
+    color: #6b7280;
+}
+
+.admin-customers-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: grid;
+    place-items: center;
+    z-index: 999;
+    padding: 24px;
+}
+
+.admin-customers-modal-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 20px 24px 24px;
+    width: min(580px, 100%);
+    border: 1px solid #e5e7eb;
+}
+
+.admin-customers-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.admin-customers-modal-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.admin-customers-modal-header p {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.admin-customers-modal-form {
+    margin-top: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.admin-customers-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.admin-customers-modal-form label,
+.admin-customers-review-note-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.86rem;
+    color: #374151;
+}
+
+.admin-customers-modal-form input,
+.admin-customers-review-note-field textarea {
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #f9fafb;
+    font: inherit;
+}
+
+.admin-customers-full-width {
+    grid-column: span 2;
+}
+
+.admin-customers-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.admin-customers-license-review-summary {
+    margin-top: 16px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px;
+    display: grid;
+    gap: 6px;
+    font-size: 0.9rem;
+}
+
+.admin-customers-review-note-field {
+    margin-top: 12px;
+}
+
+.admin-customers-review-note-field textarea {
+    resize: vertical;
+}
+
+@media (max-width: 900px) {
+
+    .admin-customers-header,
+    .admin-customers-table-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .admin-customers-search-box input {
+        width: 100%;
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .admin-customers-search-box {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .admin-customers-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-customers-full-width {
+        grid-column: span 1;
+    }
+}

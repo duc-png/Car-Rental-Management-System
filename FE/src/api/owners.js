@@ -31,3 +31,19 @@ export const getOwnerPublicProfile = async (ownerId) => {
         return null;
     }
 };
+
+export const getOwnerPerformance = async (ownerId) => {
+    if (!ownerId) return null;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/owners/${ownerId}/performance`);
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.status}`);
+        }
+        const data = await response.json();
+        return data.result || null;
+    } catch (error) {
+        console.error('[v0] Error fetching owner performance:', error);
+        return null;
+    }
+};
