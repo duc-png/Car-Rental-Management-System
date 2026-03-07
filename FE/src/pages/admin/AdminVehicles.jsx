@@ -11,7 +11,7 @@ const APPROVED_STATUSES = new Set(['AVAILABLE', 'RENTED', 'MAINTENANCE'])
 const formatPrice = (value) => {
     if (value == null) return '—'
     try {
-        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))
+        return `${Math.round(Number(value)).toLocaleString('vi-VN')} VNĐ`
     } catch {
         return String(value)
     }

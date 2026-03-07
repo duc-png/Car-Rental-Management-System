@@ -28,7 +28,7 @@ const CUSTOMER_VIEW = {
 
 const formatCurrency = (value) => {
     const amount = Number(value || 0)
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount)
+    return `${Math.round(amount).toLocaleString('vi-VN')} VNĐ`
 }
 
 const formatDate = (value) => {

@@ -6,7 +6,7 @@ import '../../styles/OwnerPublicProfile.css';
 
 const formatCurrency = (value) => {
     const amount = Number(value || 0);
-    return `${amount.toLocaleString('vi-VN')} ₫/ngày`;
+    return `${amount.toLocaleString('vi-VN')} VNĐ/ngày`;
 };
 
 const formatDate = (value) => {

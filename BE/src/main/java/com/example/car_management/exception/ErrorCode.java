@@ -49,18 +49,39 @@ public enum ErrorCode {
     IMAGE_UPLOAD_FAILED(2014, "Invalid image file or upload failed", HttpStatus.BAD_REQUEST),
     VEHICLE_APPROVAL_REQUIRED(2015, "Vehicle is pending admin approval", HttpStatus.BAD_REQUEST),
     VEHICLE_IMMUTABLE_FIELDS(2016, "Core vehicle information cannot be changed after creation", HttpStatus.BAD_REQUEST),
-
+    
+    MAINTENANCE_NOT_FOUND(3001, "Maintenance record not found", HttpStatus.NOT_FOUND),
+    MAINTENANCE_ALREADY_EXISTS(3002, "Vehicle already has active maintenance", HttpStatus.BAD_REQUEST),
+    MAINTENANCE_INVALID_STATUS_TRANSITION(3003, "Invalid maintenance status transition", HttpStatus.BAD_REQUEST),
+    MAINTENANCE_CANNOT_MODIFY_COMPLETED(3004, "Cannot modify completed or cancelled maintenance", HttpStatus.BAD_REQUEST),
+    VEHICLE_NOT_AVAILABLE_FOR_MAINTENANCE(3005, "Vehicle is not available for maintenance", HttpStatus.BAD_REQUEST),
+    VEHICLE_OWNERSHIP_REQUIRED(3006, "You do not own this vehicle", HttpStatus.FORBIDDEN),
+    
     // ===== Booking =====
-    BOOKING_NOT_FOUND(3001, "Booking not found", HttpStatus.NOT_FOUND),
-    BOOKING_DATE_CONFLICT(3002, "Vehicle is already booked for this period", HttpStatus.BAD_REQUEST),
-    INVALID_STATUS_TRANSITION(3003, "Invalid booking status transition", HttpStatus.BAD_REQUEST),
-    PAYMENT_ERROR(3004, "Payment processing error", HttpStatus.INTERNAL_SERVER_ERROR),
-    DEPOSIT_NOT_PAID(3005, "Deposit has not been paid yet", HttpStatus.BAD_REQUEST),
-    FULL_PAYMENT_NOT_COMPLETED(3006, "Full payment has not been completed yet", HttpStatus.BAD_REQUEST),
+    BOOKING_NOT_FOUND(3007, "Booking not found", HttpStatus.NOT_FOUND),
+    BOOKING_NOT_ONGOING(3008, "Booking is not in ONGOING status", HttpStatus.BAD_REQUEST),
+    BOOKING_ALREADY_INSPECTED(3009, "Booking already has return inspection", HttpStatus.BAD_REQUEST),
+    BOOKING_NOT_INSPECTED(3010, "Booking has not been inspected yet", HttpStatus.BAD_REQUEST),
+    INVALID_ODOMETER_READING(3011, "Odometer end must be greater than or equal to start", HttpStatus.BAD_REQUEST),
+    BOOKING_DATE_CONFLICT(3012, "Vehicle is already booked for this period", HttpStatus.BAD_REQUEST),
+    INVALID_STATUS_TRANSITION(3013, "Invalid booking status transition", HttpStatus.BAD_REQUEST),
+    PAYMENT_ERROR(3014, "Payment processing error", HttpStatus.INTERNAL_SERVER_ERROR),
+    DEPOSIT_NOT_PAID(3015, "Deposit has not been paid yet", HttpStatus.BAD_REQUEST),
+    FULL_PAYMENT_NOT_COMPLETED(3016, "Full payment has not been completed yet", HttpStatus.BAD_REQUEST),
 
     // ===== Chat =====
     CHAT_CONVERSATION_NOT_FOUND(4001, "Chat conversation not found", HttpStatus.NOT_FOUND),
-    CANNOT_CHAT_OWN_VEHICLE(4002, "You cannot start chat with your own vehicle", HttpStatus.BAD_REQUEST);
+    CANNOT_CHAT_OWN_VEHICLE(4002, "You cannot start chat with your own vehicle", HttpStatus.BAD_REQUEST),
+    
+    // Dispute
+    DISPUTE_NOT_FOUND(5001, "Dispute not found", HttpStatus.NOT_FOUND),
+    DISPUTE_ALREADY_EXISTS(5002, "Active dispute already exists for this booking", HttpStatus.BAD_REQUEST),
+    DISPUTE_ALREADY_RESOLVED(5003, "Dispute is already resolved", HttpStatus.BAD_REQUEST),
+    CANNOT_CREATE_DISPUTE(5004, "Cannot create dispute at this stage", HttpStatus.BAD_REQUEST),
+    
+    // Message
+    MESSAGE_NOT_FOUND(6001, "Message not found", HttpStatus.NOT_FOUND),
+    CANNOT_SEND_MESSAGE(6002, "Cannot send message to this dispute", HttpStatus.BAD_REQUEST);
     // ===== Cloudinary / Image =====
     // IMAGE_UPLOAD_FAILED(2007, "Upload image failed", HttpStatus.BAD_REQUEST);
     //

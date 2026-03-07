@@ -810,7 +810,7 @@ export default function CarDetails() {
                     <aside className="booking-sidebar">
                         <div className="detail-booking-card">
                             <div className="price-head-row">
-                                <span className="old-price">{formatVndNumber(pricePerDay)}đ</span>
+                                <span className="old-price">{formatVndNumber(pricePerDay)}</span>
                                 <span className="per-day">/ ngày</span>
                                 <span className="discount-pill">-{discountPercent}%</span>
                             </div>
@@ -870,7 +870,7 @@ export default function CarDetails() {
                                             <span>Giao xe tận nơi</span>
                                             <b>{deliveryAddressLabel || `Phạm vi tối đa ${maxDeliveryDistanceKm}km`}</b>
                                         </div>
-                                        <strong>{extraFeePerKm > 0 ? `${formatVndNumber(extraFeePerKm)}đ/km` : 'Miễn phí'}</strong>
+                                        <strong>{extraFeePerKm > 0 ? `${extraFeePerKm.toLocaleString('vi-VN')} VNĐ/km` : 'Miễn phí'}</strong>
                                     </label>
                                 ) : (
                                     <div className="pickup-option pickup-option-disabled" role="status" aria-live="polite">
@@ -929,7 +929,7 @@ export default function CarDetails() {
 
                             <div className="booking-final-total">
                                 <span>Thành tiền</span>
-                                <b>{formatVndNumber(totalPrice)}đ</b>
+                                <b>{formatVndNumber(totalPrice)}</b>
                             </div>
 
                             <button
@@ -976,7 +976,7 @@ export default function CarDetails() {
                                         </span>
                                     </p>
                                     <div className="related-footer">
-                                        <p>{Number(item.pricePerDay || 0).toLocaleString('vi-VN')}đ <small>/ngày</small></p>
+                                        <p>{Number(item.pricePerDay || 0).toLocaleString('vi-VN')} VNĐ <small>/ngày</small></p>
                                         <span className="related-arrow">→</span>
                                     </div>
                                 </div>

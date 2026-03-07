@@ -81,7 +81,7 @@ export const getMonthGrid = (baseMonthDate) => {
 
 export const formatVndNumber = (value) => {
     const numeric = Number(value || 0);
-    return Math.round(numeric).toLocaleString('vi-VN');
+    return `${Math.round(numeric).toLocaleString('vi-VN')} VNĐ`;
 };
 
 export const formatVndK = (value) => {

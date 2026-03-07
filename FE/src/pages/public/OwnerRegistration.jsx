@@ -793,7 +793,7 @@ function OwnerRegistration() {
                         <h2>Thông tin cho thuê</h2>
                         <div className="form-grid">
                             <label className="owner-rental-field-full">
-                                Giá thuê (₫/ngày)
+                                Giá thuê (VNĐ/ngày)
                                 <input
                                     type="number"
                                     min="1"

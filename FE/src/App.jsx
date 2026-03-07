@@ -33,6 +33,10 @@ import AdminVehicleRequestDetails from './pages/admin/AdminVehicleRequestDetails
 import AdminOwnerRegistrations from './pages/admin/AdminOwnerRegistrations'
 import AdminOwnerRegistrationDetails from './pages/admin/AdminOwnerRegistrationDetails'
 import AdminCustomerLicenseReview from './pages/admin/AdminCustomerLicenseReview'
+import MaintenanceDashboard from './pages/MaintenanceDashboard'
+import Customers from './pages/Customers'
+import OwnerAnalytics from './pages/OwnerAnalytics'
+import AdminReports from './pages/AdminReports'
 import { useAuth } from './hooks/useAuth'
 import './styles/App.css'
 import './index.css'
@@ -124,6 +128,8 @@ function AppLayout() {
           <Route path="/owner/feedback" element={<OwnerResponseDashboard />} />
           <Route path="/owner/booking-calendar" element={<OwnerBookingCalendar />} />
           <Route path="/owner/wallet" element={<OwnerWallet />} />
+          <Route path="/owner/maintenance" element={<MaintenanceDashboard />} />
+          <Route path="/owner/analytics" element={<OwnerAnalytics />} />
           <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
@@ -133,6 +139,7 @@ function AppLayout() {
             <Route path="owner-registrations/:id" element={<AdminOwnerRegistrationDetails />} />
             <Route path="customers" element={<AdminCustomers />} />
             <Route path="customers/:id/license-review" element={<AdminCustomerLicenseReview />} />
+            <Route path="reports" element={<AdminReports />} />
           </Route>
         </Routes>
       </main>
