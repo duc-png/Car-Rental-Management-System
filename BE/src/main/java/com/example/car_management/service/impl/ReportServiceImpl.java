@@ -171,7 +171,7 @@ public class ReportServiceImpl implements ReportService {
         if (role == UserRole.ADMIN) {
             return new ReportContext(null);
         }
-        if (role == UserRole.EXPERT) {
+        if (role == UserRole.CAR_OWNER) {
             return new ReportContext(user.getId());
         }
         throw new AppException(ErrorCode.FORBIDDEN_RESOURCE);
@@ -180,7 +180,7 @@ public class ReportServiceImpl implements ReportService {
     /** Only Car Owner (EXPERT). */
     private ReportContext resolveReportContextForOwnerOnly() {
         UserEntity user = getCurrentUser();
-        if (user.getRoleId() != UserRole.EXPERT) {
+        if (user.getRoleId() != UserRole.CAR_OWNER) {
             throw new AppException(ErrorCode.FORBIDDEN_RESOURCE);
         }
         return new ReportContext(user.getId());
