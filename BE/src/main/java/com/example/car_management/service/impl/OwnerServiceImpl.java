@@ -1,9 +1,12 @@
 package com.example.car_management.service.impl;
 
 import com.example.car_management.dto.response.OwnerProfileResponse;
+import com.example.car_management.dto.response.OwnerPerformanceResponse;
 import com.example.car_management.dto.response.OwnerPublicProfileResponse;
 import com.example.car_management.dto.response.OwnerReceivedReviewResponse;
 import com.example.car_management.dto.response.VehicleResponse;
+import com.example.car_management.entity.ChatConversationEntity;
+import com.example.car_management.entity.ChatMessageEntity;
 import com.example.car_management.entity.UserEntity;
 import com.example.car_management.entity.VehicleEntity;
 import com.example.car_management.entity.VehicleReviewEntity;
@@ -14,6 +17,8 @@ import com.example.car_management.exception.AppException;
 import com.example.car_management.exception.ErrorCode;
 import com.example.car_management.mapper.VehicleMapper;
 import com.example.car_management.repository.BookingRepository;
+import com.example.car_management.repository.ChatConversationRepository;
+import com.example.car_management.repository.ChatMessageRepository;
 import com.example.car_management.repository.OwnerRegistrationRepository;
 import com.example.car_management.repository.UserRepository;
 import com.example.car_management.repository.VehicleImageRepository;
@@ -28,7 +33,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -41,6 +50,8 @@ public class OwnerServiceImpl implements OwnerService {
         private final VehicleRepository vehicleRepository;
         private final VehicleImageRepository vehicleImageRepository;
         private final VehicleReviewRepository reviewRepository;
+        private final ChatConversationRepository chatConversationRepository;
+        private final ChatMessageRepository chatMessageRepository;
 
         @Override
         @Transactional(readOnly = true)
@@ -64,6 +75,24 @@ public class OwnerServiceImpl implements OwnerService {
                 UserEntity owner = userRepository.findById(ownerId)
                                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
                 return toProfile(owner);
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public OwnerPerformanceResponse getOwnerPerformance(Integer ownerId) {
+                UserEntity owner = userRepository.findById(ownerId)
+                                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+                OwnerProfileResponse profile = toProfile(owner);
+                return OwnerPerformanceResponse.builder()
+                                .ownerId(profile.getOwnerId())
+                                .avgRating(profile.getAvgRating())
+                                .totalReviews(profile.getTotalReviews())
+                                .totalTrips(profile.getTotalTrips())
+                                .responseRate(profile.getResponseRate())
+                                .responseTimeMinutes(profile.getResponseTimeMinutes())
+                                .approvalRate(profile.getApprovalRate())
+                                .build();
         }
 
         @Override
@@ -144,6 +173,16 @@ public class OwnerServiceImpl implements OwnerService {
 
                 long trips = bookingRepository.countOwnerTripsByStatus(owner.getId(), BookingStatus.COMPLETED);
 
+                long totalOwnerBookings = bookingRepository.countOwnerBookings(owner.getId());
+                long approvedOwnerBookings = bookingRepository.countOwnerBookingsByStatuses(
+                                owner.getId(),
+                                List.of(BookingStatus.CONFIRMED, BookingStatus.ONGOING, BookingStatus.COMPLETED));
+                int approvalRate = totalOwnerBookings > 0
+                                ? (int) Math.round((approvedOwnerBookings * 100.0) / totalOwnerBookings)
+                                : 0;
+
+                ResponseMetrics responseMetrics = calculateResponseMetrics(owner.getId());
+
                 var approvedRegistration = ownerRegistrationRepository
                                 .findFirstByApprovedOwner_IdAndStatusOrderByReviewedAtAsc(owner.getId(),
                                                 OwnerRegistrationStatus.APPROVED)
@@ -158,12 +197,108 @@ public class OwnerServiceImpl implements OwnerService {
                                 .fullName(owner.getFullName())
                                 .phone(owner.getPhone())
                                 .email(owner.getEmail())
+                                .avatar(owner.getAvatar())
                                 .isVerified(owner.getIsVerified())
                                 .joinedAt(joinedAt)
                                 .avgRating(round1(avg))
                                 .totalReviews(reviews)
                                 .totalTrips(trips)
+                                .responseRate(responseMetrics.responseRate())
+                                .responseTimeMinutes(responseMetrics.responseTimeMinutes())
+                                .approvalRate(approvalRate)
                                 .build();
+        }
+
+        private ResponseMetrics calculateResponseMetrics(Integer ownerId) {
+                List<ChatConversationEntity> conversations = chatConversationRepository.findByOwnerId(ownerId);
+                if (conversations.isEmpty()) {
+                        return new ResponseMetrics(0, 0);
+                }
+
+                List<ChatMessageEntity> messages = chatMessageRepository
+                                .findByConversation_Owner_IdOrderByConversation_IdAscCreatedAtAsc(ownerId);
+                if (messages.isEmpty()) {
+                        return new ResponseMetrics(0, 0);
+                }
+
+                Map<Integer, Integer> conversationCustomerIdMap = conversations.stream()
+                                .collect(Collectors.toMap(
+                                                ChatConversationEntity::getId,
+                                                c -> c.getCustomer() != null ? c.getCustomer().getId() : null,
+                                                (left, right) -> left,
+                                                HashMap::new));
+
+                Map<Integer, Instant> firstCustomerMessageAt = new HashMap<>();
+                Map<Integer, Instant> firstOwnerReplyAt = new HashMap<>();
+
+                for (ChatMessageEntity message : messages) {
+                        Integer conversationId = message.getConversation() != null ? message.getConversation().getId()
+                                        : null;
+                        Integer senderId = message.getSender() != null ? message.getSender().getId() : null;
+                        Instant createdAt = message.getCreatedAt();
+
+                        if (conversationId == null || senderId == null || createdAt == null) {
+                                continue;
+                        }
+
+                        Integer customerId = conversationCustomerIdMap.get(conversationId);
+                        if (customerId == null) {
+                                continue;
+                        }
+
+                        if (senderId.equals(customerId)) {
+                                firstCustomerMessageAt.putIfAbsent(conversationId, createdAt);
+                                continue;
+                        }
+
+                        if (!senderId.equals(ownerId)) {
+                                continue;
+                        }
+
+                        Instant customerFirstAt = firstCustomerMessageAt.get(conversationId);
+                        if (customerFirstAt == null) {
+                                continue;
+                        }
+
+                        if (createdAt.isAfter(customerFirstAt)) {
+                                firstOwnerReplyAt.putIfAbsent(conversationId, createdAt);
+                        }
+                }
+
+                long conversationsWithCustomerMessage = firstCustomerMessageAt.size();
+                long respondedConversations = firstOwnerReplyAt.size();
+
+                int responseRate = conversationsWithCustomerMessage > 0
+                                ? (int) Math.round((respondedConversations * 100.0) / conversationsWithCustomerMessage)
+                                : 0;
+
+                long totalResponseMinutes = 0;
+                long responseSamples = 0;
+                for (Map.Entry<Integer, Instant> entry : firstOwnerReplyAt.entrySet()) {
+                        Integer conversationId = entry.getKey();
+                        Instant ownerFirstReplyAt = entry.getValue();
+                        Instant customerFirstAt = firstCustomerMessageAt.get(conversationId);
+                        if (ownerFirstReplyAt == null || customerFirstAt == null) {
+                                continue;
+                        }
+
+                        long minutes = Duration.between(customerFirstAt, ownerFirstReplyAt).toMinutes();
+                        if (minutes < 0) {
+                                continue;
+                        }
+
+                        totalResponseMinutes += minutes;
+                        responseSamples += 1;
+                }
+
+                int responseTimeMinutes = responseSamples > 0
+                                ? (int) Math.round(totalResponseMinutes / (double) responseSamples)
+                                : 0;
+
+                return new ResponseMetrics(responseRate, responseTimeMinutes);
+        }
+
+        private record ResponseMetrics(int responseRate, int responseTimeMinutes) {
         }
 
         private double round1(double v) {

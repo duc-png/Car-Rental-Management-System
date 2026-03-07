@@ -14,10 +14,16 @@ public class OwnerProfileResponse {
     private String fullName;
     private String phone;
     private String email;
+    private String avatar;
     private Boolean isVerified;
     private Instant joinedAt;
 
     private Double avgRating;
     private Long totalReviews;
     private Long totalTrips;
+
+    // Performance metrics computed from database records.
+    private Integer responseRate;
+    private Integer responseTimeMinutes;
+    private Integer approvalRate;
 }

@@ -1,0 +1,197 @@
+.owner-calendar-page {
+    background: #f6f8fc;
+}
+
+.owner-calendar-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+    padding: 14px;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+}
+
+.owner-calendar-toolbar .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.owner-calendar-toolbar label {
+    font-weight: 600;
+    color: #334155;
+}
+
+.owner-calendar-toolbar select,
+.owner-calendar-toolbar button {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 8px 12px;
+    background: #ffffff;
+    color: #0f172a;
+}
+
+.owner-calendar-toolbar button {
+    cursor: pointer;
+}
+
+.owner-calendar-toolbar .month-switcher strong {
+    min-width: 140px;
+    text-align: center;
+    text-transform: capitalize;
+}
+
+.owner-calendar-loading {
+    padding: 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #475569;
+}
+
+.owner-calendar-grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: minmax(280px, 420px) 1fr;
+}
+
+.owner-calendar-card,
+.owner-calendar-events {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.owner-booking-calendar .calendar-day-confirmed {
+    background: #e2fbe8;
+    color: #106a3d;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.owner-booking-calendar .calendar-day-ongoing {
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.owner-booking-calendar .calendar-day-completed {
+    background: #e2e8f0;
+    color: #334155;
+    border-radius: 999px;
+    font-weight: 700;
+}
+
+.calendar-legend {
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: #334155;
+    font-size: 13px;
+}
+
+.calendar-legend .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #24b36b;
+}
+
+.calendar-legend .dot.confirmed {
+    background: #22c55e;
+}
+
+.calendar-legend .dot.ongoing {
+    background: #2563eb;
+}
+
+.calendar-legend .dot.completed {
+    background: #64748b;
+}
+
+.owner-calendar-events h3 {
+    margin: 0 0 12px;
+    color: #0f172a;
+}
+
+.empty-events {
+    color: #64748b;
+}
+
+.events-list {
+    display: grid;
+    gap: 10px;
+    max-height: 540px;
+    overflow: auto;
+    padding-right: 4px;
+}
+
+.event-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px;
+    background: #f8fafc;
+}
+
+.event-card header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.event-card p {
+    margin: 0 0 4px;
+    color: #334155;
+    font-size: 14px;
+}
+
+.event-actions {
+    margin-top: 8px;
+}
+
+.event-actions button {
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 6px 10px;
+    background: #ffffff;
+    color: #0f172a;
+    cursor: pointer;
+}
+
+.status-pill {
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.status-pill.confirmed {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-pill.ongoing {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.status-pill.completed {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+@media (max-width: 1024px) {
+    .owner-calendar-grid {
+        grid-template-columns: 1fr;
+    }
+}

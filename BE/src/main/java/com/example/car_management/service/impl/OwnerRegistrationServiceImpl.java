@@ -71,11 +71,15 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
     @Transactional
     public OwnerRegistrationRequestResponse submit(CreateOwnerRegistrationRequest request,
             List<MultipartFile> images) {
+        // Chuan hoa key truoc khi check trung de tranh sai lech do hoa/thuong va khoang
+        // trang.
         String normalizedEmail = normalizeEmail(request.getOwner().getEmail());
         String normalizedLicensePlate = normalizeLicensePlate(request.getVehicle().getLicensePlate());
 
+        // Bat buoc co anh va gioi han so luong anh theo rule dang ky.
         validateImages(images);
 
+        // Check ho so neu email/bien so da ton tai o user/xe that hoac dang pending.
         if (userRepository.existsByEmail(normalizedEmail)) {
             throw new AppException(ErrorCode.EMAIL_EXISTED);
         }
@@ -130,6 +134,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
                 .createdAt(Instant.now())
                 .build();
 
+        // Luu ho so, luu anh va thong bao admin co ho so moi can duyet.
         OwnerRegistration saved = ownerRegistrationRepository.save(entity);
         saveImages(saved, images);
         notificationService.notifyAdminsOwnerRegistrationSubmitted(saved);
@@ -139,6 +144,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
     @Override
     @Transactional(readOnly = true)
     public List<OwnerRegistrationRequestResponse> listForAdmin(OwnerRegistrationStatus status) {
+        // Admin co the xem tat ca ho so hoac loc theo trang thai de xu ly backlog.
         List<OwnerRegistration> entities = (status == null)
                 ? ownerRegistrationRepository.findAllByOrderByCreatedAtDesc()
                 : ownerRegistrationRepository.findAllByStatusOrderByCreatedAtDesc(status);
@@ -149,6 +155,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
     @Override
     @Transactional(readOnly = true)
     public OwnerRegistrationRequestResponse getDetailForAdmin(Integer requestId) {
+        // Tra ve day du chi tiet ho so de admin tham dinh truoc khi approve/cancel.
         OwnerRegistration entity = ownerRegistrationRepository.findById(requestId)
                 .orElseThrow(() -> new AppException(ErrorCode.OWNER_REGISTRATION_NOT_FOUND));
         return toResponse(entity);
@@ -157,11 +164,13 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
     @Override
     @Transactional
     public OwnerRegistrationRequestResponse approve(Integer requestId, AdminOwnerRegistrationDecisionRequest request) {
+        // Buoc 1: lay ho so va dam bao dang o trang thai cho duyet.
         OwnerRegistration entity = ownerRegistrationRepository.findById(requestId)
                 .orElseThrow(() -> new AppException(ErrorCode.OWNER_REGISTRATION_NOT_FOUND));
 
         assertPending(entity);
 
+        // Buoc 2: check lai rang buoc duy nhat truoc khi tao account/xe that.
         if (userRepository.existsByEmail(entity.getEmail())) {
             throw new AppException(ErrorCode.EMAIL_EXISTED);
         }
@@ -181,9 +190,11 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
                 .roleId(UserRole.CAR_OWNER)
                 .build();
 
+        // Buoc 3: tao tai khoan chu xe tu thong tin dang ky.
         UserEntity savedOwner = userRepository.save(owner);
         Instant vehicleReviewedAt = Instant.now();
 
+        // Buoc 4: tao xe that va dua vao trang thai AVAILABLE sau khi admin duyet.
         VehicleModelEntity model = resolveOrCreateModel(entity.getBrandName(), entity.getModelName());
         boolean deliveryEnabled = entity.getDeliveryEnabled() == null
                 || Boolean.TRUE.equals(entity.getDeliveryEnabled());
@@ -221,9 +232,13 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
                 .build();
 
         VehicleEntity savedVehicle = vehicleRepository.save(vehicle);
+        // Dong bo fallback cho truong hop da ton tai ban ghi cung bien so dang pending
+        // approval.
         enforceRegistrationVehicleApproved(savedOwner.getId(), entity.getLicensePlate(), vehicleReviewedAt);
+        // Sao chep bo anh dang ky sang anh xe van hanh.
         copyRegistrationImagesToVehicle(entity.getId(), savedVehicle);
 
+        // Buoc 5: cap nhat ket qua duyet vao ho so dang ky.
         entity.setStatus(OwnerRegistrationStatus.APPROVED);
         entity.setAdminNote(request != null ? request.getNote() : null);
         entity.setReviewedAt(Instant.now());
@@ -231,6 +246,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
         entity.setApprovedOwner(savedOwner);
 
         OwnerRegistration savedRegistration = ownerRegistrationRepository.save(entity);
+        // Buoc 6: thong bao ket qua cho owner (email + notification trong he thong).
         ownerRegistrationNotificationService.sendApprovedEmail(savedRegistration);
         notificationService.notifyOwnerVehicleApproved(savedVehicle);
         return toResponse(savedRegistration);
@@ -265,6 +281,8 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
             throw new AppException(ErrorCode.INVALID_KEY);
         }
 
+        // Tai su dung model da co; neu chua co thi tao moi brand/type/model theo du
+        // lieu dang ky.
         return vehicleModelRepository.findByNameIgnoreCaseAndBrand_NameIgnoreCase(modelName, brandName)
                 .orElseGet(() -> {
                     BrandEntity brand = brandRepository.findByNameIgnoreCase(brandName)
@@ -310,6 +328,8 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
             return null;
         }
 
+        // Tach city/district tu address string de tao location phu hop cho xe vua duoc
+        // duyet.
         String normalizedAddress = normalizeAddressDetail(addressDetailRaw);
         List<String> parts = Arrays.stream(normalizedAddress.split(","))
                 .map(String::trim)
@@ -351,6 +371,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
     @Override
     @Transactional
     public OwnerRegistrationRequestResponse cancel(Integer requestId, AdminOwnerRegistrationDecisionRequest request) {
+        // Huy ho so chi hop le khi ho so con PENDING.
         OwnerRegistration entity = ownerRegistrationRepository.findById(requestId)
                 .orElseThrow(() -> new AppException(ErrorCode.OWNER_REGISTRATION_NOT_FOUND));
 
@@ -362,6 +383,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
         entity.setReviewedBy(getCurrentUser());
 
         OwnerRegistration savedRegistration = ownerRegistrationRepository.save(entity);
+        // Gui thong bao tu choi qua email cho nguoi dang ky.
         ownerRegistrationNotificationService.sendRejectedEmail(savedRegistration);
         return toResponse(savedRegistration);
     }
@@ -459,6 +481,7 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
     }
 
     private void saveImages(OwnerRegistration request, List<MultipartFile> images) {
+        // Upload tung anh len cloud va danh dau anh dau tien la anh dai dien.
         List<OwnerRegistrationImage> toSave = new java.util.ArrayList<>();
         for (int i = 0; i < images.size(); i++) {
             MultipartFile file = images.get(i);

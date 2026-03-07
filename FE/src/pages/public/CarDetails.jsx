@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Heart } from 'lucide-react';
 import { getCarById, getCarsList } from '../../api/cars';
-import { getOwnerById } from '../../api/owners';
+import { getOwnerById, getOwnerPerformance } from '../../api/owners';
 import { createBooking } from '../../api/bookings';
 import { startConversationByVehicle } from '../../api/chat';
+import { addMyFavoriteVehicle, getMyFavoriteVehicles, removeMyFavoriteVehicle } from '../../api/customers';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'sonner';
 import MapModal from '../../components/booking/MapModal';
@@ -62,7 +64,9 @@ export default function CarDetails() {
     const [contactLoading, setContactLoading] = useState(false);
 
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, token } = useAuth();
+    const [favoriteLoading, setFavoriteLoading] = useState(false);
+    const [isFavorite, setIsFavorite] = useState(false);
 
     const specsRef = useRef(null);
     const docsRef = useRef(null);
@@ -98,8 +102,16 @@ export default function CarDetails() {
                 ? await getOwnerById(selectedVehicle.ownerId)
                 : null;
 
+            const ownerPerformance = selectedVehicle?.ownerId
+                ? await getOwnerPerformance(selectedVehicle.ownerId)
+                : null;
+
+            const mergedOwner = ownerDetail
+                ? { ...ownerDetail, ...(ownerPerformance || {}) }
+                : ownerPerformance;
+
             setCar(selectedVehicle);
-            setOwner(ownerDetail);
+            setOwner(mergedOwner);
             setRelatedCars(vehiclesList.filter(item => item.id !== selectedVehicle.id).slice(0, 4));
             setError(null);
         } catch {
@@ -118,6 +130,31 @@ export default function CarDetails() {
         setIsCustomAddressModalOpen(false);
         fetchCarDetails();
     }, [fetchCarDetails]);
+
+    useEffect(() => {
+        const checkFavorite = async () => {
+            if (!token || !car?.id) {
+                setIsFavorite(false);
+                return;
+            }
+
+            const roleScope = String(user?.role || user?.scope || '');
+            if (!roleScope.includes('ROLE_USER')) {
+                setIsFavorite(false);
+                return;
+            }
+
+            try {
+                const payload = await getMyFavoriteVehicles(token);
+                const ids = (payload?.result || []).map((item) => item.id);
+                setIsFavorite(ids.includes(car.id));
+            } catch {
+                setIsFavorite(false);
+            }
+        };
+
+        checkFavorite();
+    }, [car?.id, token, user?.role, user?.scope]);
 
     useEffect(() => {
         if (!car?.id) return;
@@ -390,13 +427,47 @@ export default function CarDetails() {
         setReturnDate(normalized);
     };
 
-    const handleBooking = () => {
+    const handleBooking = async () => {
         if (!user) {
             toast.error('Vui lòng đăng nhập để đặt xe!');
             navigate('/login');
             return;
         }
-        setIsTimeModalOpen(true);
+
+        if (!car?.id) {
+            toast.error('Không tìm thấy xe để đặt.');
+            return;
+        }
+
+        const resolvedReturn = returnDate || new Date(pickupDate.getTime() + DAY_MS);
+
+        const [pickupHour, pickupMin] = pickupTime.split(':').map(Number);
+        const [returnHour, returnMin] = returnTime.split(':').map(Number);
+
+        const startDt = new Date(pickupDate);
+        startDt.setHours(pickupHour, pickupMin, 0, 0);
+
+        const endDt = new Date(resolvedReturn);
+        endDt.setHours(returnHour, returnMin, 0, 0);
+
+        if (endDt.getTime() <= startDt.getTime()) {
+            toast.error('Thoi gian tra xe phai sau thoi gian nhan xe.');
+            return;
+        }
+
+        const pad = (n) => String(n).padStart(2, '0');
+        const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+
+        setBookingLoading(true);
+        try {
+            await createBooking(car.id, fmt(startDt), fmt(endDt));
+            toast.success('Đặt xe thành công! Vui lòng chờ chủ xe duyệt.');
+            navigate('/my-bookings');
+        } catch (err) {
+            toast.error(err.message || 'Đặt xe thất bại. Vui lòng thử lại!');
+        } finally {
+            setBookingLoading(false);
+        }
     };
 
     const handleContactOwner = async () => {
@@ -431,39 +502,44 @@ export default function CarDetails() {
         }
     };
 
-    const applyTimeSelection = async () => {
+    const handleToggleFavorite = async () => {
+        if (!user) {
+            toast.error('Vui long dang nhap de luu xe yeu thich!');
+            navigate('/login');
+            return;
+        }
+
+        const roleScope = String(user?.role || user?.scope || '');
+        if (!roleScope.includes('ROLE_USER')) {
+            toast.error('Tinh nang yeu thich chi danh cho tai khoan khach hang.');
+            return;
+        }
+
+        if (!car?.id) return;
+
+        setFavoriteLoading(true);
+        try {
+            if (isFavorite) {
+                await removeMyFavoriteVehicle(token, car.id);
+                setIsFavorite(false);
+                toast.success('Da xoa xe khoi danh sach yeu thich');
+            } else {
+                await addMyFavoriteVehicle(token, car.id);
+                setIsFavorite(true);
+                toast.success('Da them xe vao danh sach yeu thich');
+            }
+        } catch (error) {
+            toast.error(error?.message || 'Khong the cap nhat danh sach yeu thich');
+        } finally {
+            setFavoriteLoading(false);
+        }
+    };
+
+    const applyTimeSelection = () => {
         if (!returnDate) {
             setReturnDate(new Date(pickupDate.getTime() + DAY_MS));
         }
         setIsTimeModalOpen(false);
-
-        // If booking was triggered from the CHỌN THUÊ button, submit now
-        if (!user) return;
-
-        const resolvedReturn = returnDate || new Date(pickupDate.getTime() + DAY_MS);
-
-        const [pickupHour, pickupMin] = pickupTime.split(':').map(Number);
-        const [returnHour, returnMin] = returnTime.split(':').map(Number);
-
-        const startDt = new Date(pickupDate);
-        startDt.setHours(pickupHour, pickupMin, 0, 0);
-
-        const endDt = new Date(resolvedReturn);
-        endDt.setHours(returnHour, returnMin, 0, 0);
-
-        const pad = (n) => String(n).padStart(2, '0');
-        const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
-
-        setBookingLoading(true);
-        try {
-            await createBooking(car.id, fmt(startDt), fmt(endDt));
-            toast.success('Đặt xe thành công! Vui lòng chờ chủ xe duyệt.');
-            navigate('/my-bookings');
-        } catch (err) {
-            toast.error(err.message || 'Đặt xe thất bại. Vui lòng thử lại!');
-        } finally {
-            setBookingLoading(false);
-        }
     };
 
     return (
@@ -536,7 +612,19 @@ export default function CarDetails() {
                                     <span className="car-status-pill">Sẵn sàng</span>
                                     <span className="car-rating-pill">⭐ {ownerRating} ({ownerTrips} chuyến)</span>
                                 </div>
-                                <h1>{car.brandName} {car.modelName}{car.year ? ` ${car.year}` : ''}</h1>
+                                <div className="car-title-row">
+                                    <h1>{car.brandName} {car.modelName}{car.year ? ` ${car.year}` : ''}</h1>
+                                    <button
+                                        type="button"
+                                        className={`title-favorite-btn ${isFavorite ? 'active' : ''}`}
+                                        onClick={handleToggleFavorite}
+                                        disabled={favoriteLoading}
+                                        aria-label={isFavorite ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}
+                                        title={isFavorite ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}
+                                    >
+                                        <Heart size={19} fill={isFavorite ? 'currentColor' : 'none'} />
+                                    </button>
+                                </div>
                                 <p>📍 {addressText || 'Chưa cập nhật địa chỉ'}</p>
                                 <div className="quick-spec-grid">
                                     <div className="quick-spec-item">
@@ -852,6 +940,7 @@ export default function CarDetails() {
                             >
                                 {bookingLoading ? 'Đang đặt xe...' : 'CHỌN THUÊ'}
                             </button>
+
                         </div>
                     </aside>
                 </div>
@@ -1000,8 +1089,8 @@ export default function CarDetails() {
 
                         <div className="detail-time-modal-footer">
                             <p>{pickupTime}, {formatDateShort(pickupDate)} - {returnTime}, {formatDateShort(returnDate || pickupDate)} • Thuê {selectedDays} ngày</p>
-                            <button type="button" onClick={applyTimeSelection} disabled={bookingLoading}>
-                                {bookingLoading ? 'Đang đặt xe...' : 'Xác nhận thuê xe'}
+                            <button type="button" onClick={applyTimeSelection}>
+                                Xác nhận thời gian
                             </button>
                         </div>
                     </div>

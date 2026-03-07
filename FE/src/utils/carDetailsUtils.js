@@ -1,3 +1,5 @@
+import { calculateOwnerPerformanceStats } from './ownerPerformanceStats';
+
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const FALLBACK_CAR = {
@@ -168,11 +170,7 @@ export const calculatePricing = ({ pricePerDay, selectedDays, enableExtraInsuran
     };
 };
 
-export const getOwnerPerformanceStats = (owner) => ({
-    responseRate: owner?.isVerified ? '90%' : '80%',
-    responseTime: owner?.isVerified ? '5 phút' : '15 phút',
-    approvalRate: owner?.isVerified ? '88%' : '75%',
-});
+export const getOwnerPerformanceStats = (owner) => calculateOwnerPerformanceStats(owner);
 
 const normalizeAddressText = (value) => String(value || '').trim().replace(/\s+/g, ' ');
 

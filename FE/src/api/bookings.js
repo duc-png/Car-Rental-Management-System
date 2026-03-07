@@ -96,3 +96,29 @@ export const updateBookingStatus = async (id, status, extraData = {}) => {
 export const cancelBooking = async (id) => {
     return updateBookingStatus(id, 'CANCELLED');
 };
+
+const formatLocalDateTime = (date) => {
+    const pad = (value) => String(value).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+};
+
+export const getOwnerBookingCalendar = async (fromDate, toDate, vehicleId) => {
+    if (!(fromDate instanceof Date) || Number.isNaN(fromDate.getTime())) {
+        throw new Error('fromDate không hợp lệ');
+    }
+    if (!(toDate instanceof Date) || Number.isNaN(toDate.getTime())) {
+        throw new Error('toDate không hợp lệ');
+    }
+
+    const query = new URLSearchParams({
+        from: formatLocalDateTime(fromDate),
+        to: formatLocalDateTime(toDate),
+    });
+
+    if (vehicleId != null && vehicleId !== 'all') {
+        query.set('vehicleId', String(vehicleId));
+    }
+
+    const data = await authFetch(`${API_BASE_URL}/bookings/owner/calendar?${query.toString()}`);
+    return data.result || [];
+};

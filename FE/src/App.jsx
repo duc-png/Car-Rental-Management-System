@@ -8,6 +8,7 @@ import Footer from './components/layout/Footer'
 import Home from './pages/public/Home'
 import Cars from './pages/public/Cars'
 import MyBookings from './pages/user/MyBookings'
+import CustomerProfile from './pages/user/CustomerProfile'
 import ChatPage from './pages/user/ChatPage'
 import CarDetails from './pages/public/CarDetails'
 import Login from './pages/auth/Login'
@@ -17,6 +18,8 @@ import CarOwnerFleet from './pages/owner/CarOwnerFleet'
 import OwnerVehicleDetails from './pages/owner/OwnerVehicleDetails'
 import OwnerVehicleEdit from './pages/owner/OwnerVehicleEdit'
 import OwnerResponseDashboard from './pages/owner/OwnerResponseDashboard'
+import OwnerBookingCalendar from './pages/owner/OwnerBookingCalendar'
+import OwnerWallet from './pages/owner/OwnerWallet'
 import OwnerPublicProfile from './pages/public/OwnerPublicProfile'
 import OwnerRegistration from './pages/public/OwnerRegistration'
 import ManageRentals from './pages/ManageRentals'
@@ -29,6 +32,7 @@ import AdminVehicles from './pages/admin/AdminVehicles'
 import AdminVehicleRequestDetails from './pages/admin/AdminVehicleRequestDetails'
 import AdminOwnerRegistrations from './pages/admin/AdminOwnerRegistrations'
 import AdminOwnerRegistrationDetails from './pages/admin/AdminOwnerRegistrationDetails'
+import AdminCustomerLicenseReview from './pages/admin/AdminCustomerLicenseReview'
 import { useAuth } from './hooks/useAuth'
 import './styles/App.css'
 import './index.css'
@@ -105,6 +109,7 @@ function AppLayout() {
           <Route path="/owners/:ownerId" element={<OwnerPublicProfile />} />
           <Route path="/become-owner" element={<OwnerRegistration />} />
           <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/profile" element={<CustomerProfile />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/manage-rentals" element={<ManageRentals />} />
           <Route path="/booking/:id/payment-success" element={<PaymentSuccess />} />
@@ -117,6 +122,8 @@ function AppLayout() {
           <Route path="/owner/vehicles/:id" element={<OwnerVehicleDetails />} />
           <Route path="/owner/vehicles/:id/edit" element={<OwnerVehicleEdit />} />
           <Route path="/owner/feedback" element={<OwnerResponseDashboard />} />
+          <Route path="/owner/booking-calendar" element={<OwnerBookingCalendar />} />
+          <Route path="/owner/wallet" element={<OwnerWallet />} />
           <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />
@@ -125,6 +132,7 @@ function AppLayout() {
             <Route path="owner-registrations" element={<AdminOwnerRegistrations />} />
             <Route path="owner-registrations/:id" element={<AdminOwnerRegistrationDetails />} />
             <Route path="customers" element={<AdminCustomers />} />
+            <Route path="customers/:id/license-review" element={<AdminCustomerLicenseReview />} />
           </Route>
         </Routes>
       </main>

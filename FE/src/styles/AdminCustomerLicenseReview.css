@@ -1,0 +1,298 @@
+.admin-license-review-page {
+    padding: 18px;
+    max-width: 1260px;
+    margin: 0 auto;
+}
+
+.admin-license-review-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.admin-license-review-breadcrumb {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #6b7280;
+    font-weight: 700;
+}
+
+.admin-license-review-breadcrumb a {
+    color: #6b7280;
+    text-decoration: none;
+}
+
+.admin-license-review-header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-license-review-status {
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.admin-license-review-status.pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.admin-license-review-status.approved {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.admin-license-review-status.rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.admin-license-review-status.draft {
+    background: #e5e7eb;
+    color: #334155;
+}
+
+.admin-license-review-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 16px;
+    align-items: start;
+}
+
+.admin-license-review-main-card,
+.admin-license-review-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+}
+
+.admin-license-review-main-header {
+    padding: 12px 14px;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.admin-license-review-main-header h2 {
+    margin: 0;
+    font-size: 0.94rem;
+    color: #334155;
+}
+
+.admin-license-review-image-wrap {
+    padding: 14px;
+    background: #f1f5f9;
+    border-radius: 0 0 14px 14px;
+}
+
+.admin-license-review-image-wrap img,
+.admin-license-review-image-empty {
+    width: 100%;
+    min-height: 580px;
+    max-height: 720px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    object-fit: cover;
+}
+
+.admin-license-review-image-empty {
+    display: grid;
+    place-items: center;
+    color: #64748b;
+    font-weight: 700;
+    padding: 20px;
+    text-align: center;
+}
+
+.admin-license-review-side {
+    display: grid;
+    gap: 12px;
+}
+
+.admin-license-review-card {
+    padding: 14px;
+}
+
+.admin-license-review-card h3 {
+    margin: 0 0 12px;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #a16207;
+}
+
+.admin-license-review-user-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.admin-license-review-user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    background: #0f172a;
+    color: #fbbf24;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+}
+
+.admin-license-review-user-row .name {
+    margin: 0;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.admin-license-review-user-row .sub {
+    margin: 2px 0 0;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.admin-license-review-line {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #334155;
+    font-size: 0.86rem;
+}
+
+.admin-license-review-line+.admin-license-review-line {
+    margin-top: 8px;
+}
+
+.admin-license-review-card label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    font-weight: 700;
+}
+
+.admin-license-ocr-field {
+    margin-bottom: 12px;
+}
+
+.admin-license-ocr-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.admin-license-ocr-divider {
+    border-top: 1px solid #d8dee8;
+    margin: 4px 0 12px;
+}
+
+.admin-license-review-card input,
+.admin-license-review-card textarea,
+.admin-license-review-card select {
+    margin-top: 6px;
+    width: 100%;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: 10px 12px;
+    font: inherit;
+    color: #0f172a;
+}
+
+.admin-license-review-card select {
+    appearance: auto;
+    cursor: default;
+}
+
+.admin-license-review-card select:disabled {
+    opacity: 1;
+}
+
+.admin-license-admin-note {
+    margin-top: 6px;
+}
+
+.admin-license-review-card textarea {
+    resize: vertical;
+}
+
+.admin-license-review-actions {
+    margin-top: 4px;
+    display: grid;
+    gap: 10px;
+}
+
+.admin-license-review-actions button {
+    border-radius: 10px;
+    border: 1px solid transparent;
+    padding: 10px 12px;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.admin-license-review-actions .approve {
+    background: #059669;
+    color: #ffffff;
+}
+
+.admin-license-review-actions .request {
+    background: #ffffff;
+    color: #a16207;
+    border-color: #fbbf24;
+}
+
+.admin-license-review-actions .reject {
+    background: #be123c;
+    color: #ffffff;
+}
+
+.admin-license-review-actions button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.admin-license-review-warning {
+    margin-top: 10px;
+    border-radius: 10px;
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 10px 12px;
+    display: inline-flex;
+    gap: 8px;
+    align-items: flex-start;
+    font-size: 0.77rem;
+    line-height: 1.4;
+}
+
+.admin-license-review-state {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 22px;
+    text-align: center;
+    color: #64748b;
+    font-weight: 700;
+}
+
+@media (max-width: 1050px) {
+    .admin-license-review-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-license-review-image-wrap img,
+    .admin-license-review-image-empty {
+        min-height: 340px;
+    }
+
+    .admin-license-ocr-row {
+        grid-template-columns: 1fr;
+    }
+}

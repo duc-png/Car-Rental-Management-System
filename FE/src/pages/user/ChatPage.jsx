@@ -16,6 +16,25 @@ const formatTime = (value) => {
     })
 }
 
+const ROLE_LABELS = {
+    USER: 'Khách Hàng',
+    ROLE_USER: 'Khách Hàng',
+    CAR_OWNER: 'Chủ xe',
+    ROLE_CAR_OWNER: 'Chủ xe',
+    ADMIN: 'Quản trị viên',
+    ROLE_ADMIN: 'Quản trị viên',
+}
+
+const getRoleLabel = (role) => ROLE_LABELS[String(role || '').toUpperCase()] || 'Khách Hàng'
+
+const getConversationRoleLabel = (conversation, myUserId) => {
+    const customerId = Number(conversation?.customerId)
+    const ownerId = Number(conversation?.ownerId)
+    if (Number(myUserId) === customerId) return 'Chủ xe'
+    if (Number(myUserId) === ownerId) return 'Khách Hàng'
+    return getRoleLabel(conversation?.otherUserRole)
+}
+
 export default function ChatPage() {
     const [searchParams] = useSearchParams()
     const location = useLocation()
@@ -238,7 +257,10 @@ export default function ChatPage() {
                                         className={`chat-conversation-item ${isActive ? 'active' : ''}`}
                                         onClick={() => setActiveConversationId(Number(item?.id) || null)}
                                     >
-                                        <strong>{item?.otherUserName || 'Chủ xe'}</strong>
+                                        <div className="chat-conversation-top">
+                                            <strong>{item?.otherUserName || 'Chủ xe'}</strong>
+                                            <em className="chat-conversation-role">{getConversationRoleLabel(item, myUserId)}</em>
+                                        </div>
                                         <span>{item?.vehicleName || 'Xe'}</span>
                                         <small>{item?.lastMessage || 'Chưa có tin nhắn'}</small>
                                     </button>

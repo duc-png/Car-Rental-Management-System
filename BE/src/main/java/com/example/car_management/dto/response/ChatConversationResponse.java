@@ -19,6 +19,7 @@ public class ChatConversationResponse {
 
     private Integer otherUserId;
     private String otherUserName;
+    private String otherUserRole;
 
     private String vehicleName;
 

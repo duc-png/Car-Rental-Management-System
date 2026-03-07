@@ -1,0 +1,864 @@
+.customer-profile-card {
+    border: 1px solid #e5e7eb;
+    background: #f8fafc;
+    border-radius: 14px;
+    padding: 18px;
+}
+
+.customer-password-card {
+    margin-top: 14px;
+}
+
+.customer-profile-card h3 {
+    margin: 0 0 12px;
+    color: #111827;
+}
+
+.account-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.account-title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.account-title-wrap h3 {
+    margin: 0;
+}
+
+.account-edit-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.account-trip-badge {
+    min-width: 108px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #fff;
+    color: #16a34a;
+    padding: 12px 10px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.account-trip-badge b {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.account-trip-badge span {
+    color: #64748b;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.account-layout-grid {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 18px;
+}
+
+.account-left-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+}
+
+.account-left-panel strong {
+    font-size: 1.85rem;
+    color: #0f172a;
+    line-height: 1.1;
+}
+
+.account-left-panel p {
+    margin: 0;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.account-point-pill {
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    background: #fff;
+    color: #111827;
+    font-weight: 700;
+    padding: 8px 12px;
+}
+
+.customer-profile-avatar.large {
+    width: 122px;
+    height: 122px;
+    background: #808080;
+    position: relative;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.customer-profile-avatar.large.clickable {
+    cursor: pointer;
+}
+
+.customer-profile-avatar.large.clickable:focus-visible {
+    outline: 3px solid rgba(22, 163, 74, 0.35);
+    outline-offset: 2px;
+}
+
+.account-avatar-wrap {
+    position: relative;
+    display: inline-block;
+    width: 122px;
+    height: 122px;
+}
+
+.account-avatar-input-hidden {
+    display: none;
+}
+
+.avatar-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    display: grid;
+    place-items: center;
+    z-index: 1100;
+    padding: 16px;
+}
+
+.avatar-modal-card {
+    width: min(560px, 100%);
+    background: #fff;
+    border-radius: 14px;
+    position: relative;
+    padding: 42px 22px 22px;
+    text-align: center;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+}
+
+.avatar-modal-card h3 {
+    margin: 0 0 18px;
+    font-size: 2rem;
+    color: #111827;
+}
+
+.avatar-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    border: 1px solid #d1d5db;
+    background: #f8fafc;
+    color: #0f172a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.avatar-modal-select {
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 24px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(90deg, #57c96d 0%, #84e0a0 100%);
+    cursor: pointer;
+}
+
+.avatar-modal-preview-wrap {
+    position: relative;
+    width: min(460px, 100%);
+    aspect-ratio: 1 / 1;
+    margin: 18px auto 10px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: grab;
+    user-select: none;
+    touch-action: none;
+    max-height: min(52vh, 420px);
+}
+
+.avatar-modal-preview-wrap:active {
+    cursor: grabbing;
+}
+
+.avatar-modal-preview {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform-origin: center center;
+}
+
+.avatar-modal-grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        linear-gradient(to right,
+            transparent 0,
+            transparent 33.333%,
+            rgba(241, 245, 249, 0.72) 33.333%,
+            rgba(241, 245, 249, 0.72) calc(33.333% + 1px),
+            transparent calc(33.333% + 1px),
+            transparent 66.666%,
+            rgba(241, 245, 249, 0.72) 66.666%,
+            rgba(241, 245, 249, 0.72) calc(66.666% + 1px),
+            transparent calc(66.666% + 1px),
+            transparent 100%),
+        linear-gradient(to bottom,
+            transparent 0,
+            transparent 33.333%,
+            rgba(241, 245, 249, 0.72) 33.333%,
+            rgba(241, 245, 249, 0.72) calc(33.333% + 1px),
+            transparent calc(33.333% + 1px),
+            transparent 66.666%,
+            rgba(241, 245, 249, 0.72) 66.666%,
+            rgba(241, 245, 249, 0.72) calc(66.666% + 1px),
+            transparent calc(66.666% + 1px),
+            transparent 100%);
+}
+
+.avatar-modal-hint {
+    margin: 0 0 12px;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.avatar-modal-submit {
+    width: 100%;
+    border: 0;
+    border-radius: 8px;
+    padding: 14px;
+    font-weight: 700;
+    color: #fff;
+    background: #57c96d;
+    cursor: pointer;
+}
+
+.avatar-modal-select:disabled,
+.avatar-modal-submit:disabled,
+.avatar-modal-close:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.account-info-modal-card {
+    width: min(560px, 100%);
+    background: #fff;
+    border-radius: 14px;
+    position: relative;
+    padding: 42px 22px 22px;
+    border: 1px solid #e2e8f0;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+}
+
+.account-info-modal-card h3 {
+    margin: 0 0 18px;
+    font-size: 2rem;
+    color: #111827;
+    text-align: center;
+}
+
+.account-info-field {
+    display: block;
+    margin-bottom: 14px;
+}
+
+.account-info-field span {
+    display: block;
+    margin-bottom: 8px;
+    color: #64748b;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.account-info-field input,
+.account-info-field select {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 1rem;
+    color: #0f172a;
+    outline: none;
+    background: #fff;
+}
+
+.account-info-field input:focus,
+.account-info-field select:focus {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+.account-email-otp-form {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed #e2e8f0;
+}
+
+.account-modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.account-modal-actions .avatar-modal-select,
+.account-modal-actions .avatar-modal-submit {
+    width: 100%;
+}
+
+.account-modal-actions .avatar-modal-select {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.license-modal-card {
+    width: min(980px, 100%);
+    padding: 28px 20px 14px;
+}
+
+.license-modal-card h3 {
+    margin-bottom: 14px;
+    font-size: 1.85rem;
+    text-transform: uppercase;
+    text-align: left;
+}
+
+.license-modal-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 16px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.license-modal-left {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.license-modal-preview-shell {
+    border: 1px solid #f2d9b8;
+    border-radius: 10px;
+    background: #f7e7d2;
+    padding: 12px;
+}
+
+.license-modal-preview-shell .driver-license-preview,
+.license-modal-preview-shell .driver-license-upload-placeholder {
+    min-height: 190px;
+    max-height: 280px;
+}
+
+.license-modal-ocr-btn {
+    margin: 0;
+}
+
+.license-modal-right {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.license-modal-right .account-info-field {
+    margin-bottom: 12px;
+}
+
+.license-modal-right .account-info-field span {
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 0.82rem;
+}
+
+.license-modal-note {
+    margin: 2px 0 0;
+    border: 1px solid #f1e2c2;
+    border-radius: 10px;
+    padding: 10px 12px;
+    color: #6b7280;
+    background: #fffaf0;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.license-modal-actions {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.license-modal-actions .avatar-modal-select,
+.license-modal-actions .avatar-modal-submit {
+    width: auto;
+    min-width: 118px;
+    padding: 10px 18px;
+}
+
+.license-modal-actions .avatar-modal-select {
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.account-right-panel {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+}
+
+.account-summary-box {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 6px;
+}
+
+.account-summary-box span {
+    display: block;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 4px;
+}
+
+.account-summary-box b {
+    color: #0f172a;
+    font-size: 1.08rem;
+}
+
+.account-field-row {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 12px;
+    align-items: center;
+    border-bottom: 1px dashed #e5e7eb;
+    padding: 12px 0;
+}
+
+.account-field-row:last-child {
+    border-bottom: 0;
+}
+
+.account-field-row label {
+    color: #64748b;
+    font-size: 0.92rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.account-field-row strong {
+    color: #0f172a;
+    justify-self: end;
+}
+
+.account-field-value-wrap {
+    justify-self: end;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.account-inline-edit {
+    border: 1px solid #d1d5db;
+    background: #fff;
+    color: #0f172a;
+    border-radius: 999px;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+}
+
+.account-inline-edit:hover {
+    background: #f8fafc;
+}
+
+.account-field-row input {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 9px 11px;
+    outline: none;
+}
+
+.account-field-row input:focus {
+    border-color: #16a34a;
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.14);
+}
+
+.account-verified {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: #16a34a;
+    font-size: 0.72rem;
+    background: #dcfce7;
+    border-radius: 999px;
+    padding: 3px 8px;
+}
+
+.account-verified.unverified {
+    color: #b45309;
+    background: #fef3c7;
+}
+
+.customer-profile-avatar {
+    width: 82px;
+    height: 82px;
+    border-radius: 50%;
+    background: #16a34a;
+    color: #fff;
+    font-size: 1.8rem;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.customer-profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.customer-profile-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.customer-profile-grid label {
+    display: block;
+    color: #334155;
+    font-weight: 600;
+    font-size: 0.92rem;
+}
+
+.customer-profile-grid input {
+    width: 100%;
+    margin-top: 6px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 10px 12px;
+    outline: none;
+}
+
+.customer-profile-grid input:focus {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+.customer-profile-full {
+    grid-column: 1 / -1;
+}
+
+.customer-profile-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+.customer-profile-actions button {
+    border: 0;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-weight: 700;
+    background: #16a34a;
+    color: #fff;
+    cursor: pointer;
+}
+
+.customer-profile-actions .btn-secondary {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+.customer-profile-actions button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.customer-profile-note {
+    margin: 0 0 10px;
+    color: #64748b;
+}
+
+.customer-profile-error {
+    margin-top: 10px;
+    color: #dc2626;
+}
+
+.driver-license-card {
+    margin-top: 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #fff;
+    padding: 16px;
+}
+
+.driver-license-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.driver-license-title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.driver-license-title-wrap h3 {
+    margin: 0;
+}
+
+.driver-license-status {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #ef4444;
+    background: #fee2e2;
+    border-radius: 999px;
+    padding: 4px 10px;
+}
+
+.driver-license-status.done {
+    color: #166534;
+    background: #dcfce7;
+}
+
+.driver-license-status.pending {
+    color: #92400e;
+    background: #fef3c7;
+}
+
+.driver-license-status.rejected {
+    color: #991b1b;
+    background: #fee2e2;
+}
+
+.driver-license-edit-btn {
+    border: 1px solid #d1d5db;
+    background: #fff;
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.driver-license-note {
+    margin: 10px 0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.93rem;
+}
+
+.driver-license-note.warning {
+    background: #fef3c7;
+    color: #78350f;
+}
+
+.driver-license-note.success {
+    background: #dcfce7;
+    color: #14532d;
+}
+
+.driver-license-note.rejected {
+    background: #fee2e2;
+    color: #7f1d1d;
+}
+
+.driver-license-note.approved-time {
+    background: #e0f2fe;
+    color: #0c4a6e;
+}
+
+.driver-license-layout {
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.driver-license-upload-box h4,
+.driver-license-info h4 {
+    margin: 0 0 10px;
+    color: #0f172a;
+}
+
+.driver-license-upload-placeholder {
+    min-height: 220px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #16a34a;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+}
+
+.driver-license-preview {
+    width: 100%;
+    min-height: 220px;
+    max-height: 320px;
+    object-fit: contain;
+    border: 1px solid #dbe2ea;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.driver-license-ocr-btn {
+    width: 100%;
+    margin-bottom: 12px;
+    border: 1px dashed #22c55e;
+    background: #f0fdf4;
+    color: #166534;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.driver-license-ocr-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.driver-license-info label {
+    display: block;
+    margin-bottom: 10px;
+    color: #64748b;
+    font-weight: 700;
+}
+
+.driver-license-info input {
+    width: 100%;
+    margin-top: 6px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+@media (max-width: 900px) {
+    .customer-profile-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .account-layout-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .account-right-panel {
+        padding: 10px;
+    }
+
+    .account-field-row {
+        grid-template-columns: 1fr;
+    }
+
+    .account-field-row strong {
+        justify-self: start;
+    }
+
+    .account-field-value-wrap {
+        justify-self: start;
+    }
+
+    .account-summary-box {
+        grid-template-columns: 1fr;
+    }
+
+    .avatar-modal-card {
+        padding: 38px 16px 16px;
+    }
+
+    .avatar-modal-card h3 {
+        font-size: 1.65rem;
+    }
+
+    .avatar-modal-preview-wrap {
+        width: 100%;
+        max-height: 44vh;
+    }
+
+    .driver-license-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .driver-license-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .license-modal-card {
+        padding: 24px 14px 12px;
+    }
+
+    .license-modal-card h3 {
+        font-size: 1.35rem;
+        margin-bottom: 10px;
+    }
+
+    .license-modal-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .license-modal-preview-shell .driver-license-preview,
+    .license-modal-preview-shell .driver-license-upload-placeholder {
+        min-height: 150px;
+        max-height: 220px;
+    }
+
+    .license-modal-actions {
+        justify-content: stretch;
+    }
+
+    .license-modal-actions .avatar-modal-select,
+    .license-modal-actions .avatar-modal-submit {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+}

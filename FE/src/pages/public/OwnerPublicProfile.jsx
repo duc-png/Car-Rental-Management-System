@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getOwnerPublicProfile } from '../../api/owners';
+import { getOwnerPerformance, getOwnerPublicProfile } from '../../api/owners';
+import { calculateOwnerPerformanceStats } from '../../utils/ownerPerformanceStats';
 import '../../styles/OwnerPublicProfile.css';
 
 const formatCurrency = (value) => {
@@ -31,7 +32,14 @@ function OwnerPublicProfile() {
                     setProfile(null);
                     return;
                 }
-                setProfile(data);
+
+                const perf = await getOwnerPerformance(ownerId);
+                const mergedOwner = {
+                    ...(data.owner || {}),
+                    ...(perf || {}),
+                };
+
+                setProfile({ ...data, owner: mergedOwner });
                 setError('');
                 // eslint-disable-next-line no-unused-vars
             } catch (e) {
@@ -47,6 +55,7 @@ function OwnerPublicProfile() {
     const owner = profile?.owner || null;
     const vehicles = profile?.vehicles || [];
     const receivedReviews = profile?.receivedReviews || [];
+    const ownerStats = useMemo(() => calculateOwnerPerformanceStats(owner), [owner]);
 
     const ownerDisplayName = useMemo(() => {
         if (!owner?.fullName) return 'Chưa cập nhật';
@@ -76,7 +85,11 @@ function OwnerPublicProfile() {
 
                     <div className="owner-public-main">
                         <div className="owner-public-identity">
-                            <div className="owner-public-avatar">{(ownerDisplayName || 'A').charAt(0).toUpperCase()}</div>
+                            <div className="owner-public-avatar">
+                                {owner?.avatar
+                                    ? <img src={owner.avatar} alt={ownerDisplayName} className="owner-public-avatar-image" />
+                                    : (ownerDisplayName || 'A').charAt(0).toUpperCase()}
+                            </div>
                             <div>
                                 <h3>{ownerDisplayName}</h3>
                                 {/* <p>{owner?.isVerified ? 'Tài khoản đã xác thực' : 'Tài khoản chưa xác thực'}</p> */}
@@ -86,15 +99,15 @@ function OwnerPublicProfile() {
                         <div className="owner-public-metrics">
                             <div>
                                 <span>Tỉ lệ phản hồi</span>
-                                <b>{owner?.isVerified ? '90%' : '80%'}</b>
+                                <b>{ownerStats.responseRate}</b>
                             </div>
                             <div>
                                 <span>Phản hồi trong</span>
-                                <b>{owner?.isVerified ? '5 phút' : '15 phút'}</b>
+                                <b>{ownerStats.responseTime}</b>
                             </div>
                             <div>
                                 <span>Tỉ lệ đồng ý</span>
-                                <b>{owner?.isVerified ? '87%' : '75%'}</b>
+                                <b>{ownerStats.approvalRate}</b>
                             </div>
                         </div>
                     </div>

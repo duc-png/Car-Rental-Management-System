@@ -56,6 +56,29 @@ export const getVehicleDetail = async (vehicleId) => {
     return data || null;
 };
 
+const formatLocalDateTime = (date) => {
+    const pad = (value) => String(value).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+};
+
+export const getVehicleCalendar = async (vehicleId, from, to) => {
+    if (!vehicleId) return null;
+    if (!(from instanceof Date) || Number.isNaN(from.getTime())) {
+        throw new Error('Invalid from date');
+    }
+    if (!(to instanceof Date) || Number.isNaN(to.getTime())) {
+        throw new Error('Invalid to date');
+    }
+
+    const query = new URLSearchParams({
+        from: formatLocalDateTime(from),
+        to: formatLocalDateTime(to),
+    });
+
+    const data = await requestJson(`${API_BASE_URL}/vehicles/${vehicleId}/calendar?${query.toString()}`);
+    return data || null;
+};
+
 export const createOwnerVehicle = async (payload) => {
     if (!payload?.ownerId) throw new Error('Missing ownerId');
     const data = await requestJson(`${API_BASE_URL}/vehicles`, {

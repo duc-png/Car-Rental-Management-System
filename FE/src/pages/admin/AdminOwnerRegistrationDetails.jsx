@@ -186,7 +186,7 @@ export default function AdminOwnerRegistrationDetails() {
             ) : (
                 <div className="owner-reg-details-grid">
                     <div className="owner-reg-left">
-                        <div className="owner-reg-card owner-reg-media-card">
+                        <div className="owner-reg-details-card owner-reg-media-card">
                             <div className={`owner-reg-main-image ${selectedImage ? '' : 'empty'}`.trim()}>
                                 {selectedImage ? (
                                     <img src={selectedImage} alt={registrationTitle(data)} />
@@ -236,8 +236,8 @@ export default function AdminOwnerRegistrationDetails() {
                             </div>
                         </div>
 
-                        <div className="owner-reg-card">
-                            <div className="owner-reg-card-title">Thông số xe</div>
+                        <div className="owner-reg-details-card">
+                            <div className="owner-reg-details-card-title">Thông số xe</div>
                             <div className="owner-reg-spec-table">
                                 <div className="spec-cell">
                                     <div className="spec-label">Hãng xe</div>
@@ -274,8 +274,8 @@ export default function AdminOwnerRegistrationDetails() {
                             </div>
                         </div>
 
-                        <div className="owner-reg-card">
-                            <div className="owner-reg-card-title">Mô tả từ chủ xe</div>
+                        <div className="owner-reg-details-card">
+                            <div className="owner-reg-details-card-title">Mô tả từ chủ xe</div>
                             <div className="owner-reg-desc">
                                 {data.description?.trim() ? data.description : 'Chưa có mô tả.'}
                             </div>
@@ -283,9 +283,9 @@ export default function AdminOwnerRegistrationDetails() {
                     </div>
 
                     <div className="owner-reg-right">
-                        <div className="owner-reg-card">
-                            <div className="owner-reg-card-title">Người đăng ký</div>
-                            <div className="owner-reg-applicant">
+                        <div className="owner-reg-details-card">
+                            <div className="owner-reg-details-card-title">Người đăng ký</div>
+                            <div className="owner-reg-details-applicant">
                                 <div className="line">
                                     <span className="label">Họ và tên</span>
                                     <span className="value">{data.fullName || '—'}</span>
@@ -301,9 +301,9 @@ export default function AdminOwnerRegistrationDetails() {
                             </div>
                         </div>
 
-                        <div className="owner-reg-card">
-                            <div className="owner-reg-card-title">Thông tin yêu cầu</div>
-                            <div className="owner-reg-applicant">
+                        <div className="owner-reg-details-card">
+                            <div className="owner-reg-details-card-title">Thông tin yêu cầu</div>
+                            <div className="owner-reg-details-applicant">
                                 <div className="line">
                                     <span className="label">Ngày gửi</span>
                                     <span className="value">{formatDateTime(data.createdAt)}</span>
@@ -323,11 +323,11 @@ export default function AdminOwnerRegistrationDetails() {
                             </div>
                         </div>
 
-                        <div className="owner-reg-card">
-                            <div className="owner-reg-card-title">Xử lý của quản trị viên</div>
-                            <div className="owner-reg-reviewer-sub">Ghi chú admin</div>
+                        <div className="owner-reg-details-card">
+                            <div className="owner-reg-details-card-title">Xử lý của quản trị viên</div>
+                            <div className="owner-reg-details-reviewer-sub">Ghi chú admin</div>
                             <textarea
-                                className="owner-reg-textarea"
+                                className="owner-reg-details-textarea"
                                 placeholder="Nhập ghi chú duyệt/hủy..."
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
@@ -336,7 +336,7 @@ export default function AdminOwnerRegistrationDetails() {
 
                             <button
                                 type="button"
-                                className="owner-reg-btn approve"
+                                className="owner-reg-details-btn approve"
                                 onClick={onApprove}
                                 disabled={!canAct || actionLoading}
                             >
@@ -345,7 +345,7 @@ export default function AdminOwnerRegistrationDetails() {
 
                             <button
                                 type="button"
-                                className="owner-reg-btn cancel"
+                                className="owner-reg-details-btn cancel"
                                 onClick={onCancel}
                                 disabled={!canAct || actionLoading}
                             >
@@ -354,7 +354,7 @@ export default function AdminOwnerRegistrationDetails() {
 
                             <button
                                 type="button"
-                                className="owner-reg-back"
+                                className="owner-reg-details-back"
                                 onClick={() => navigate('/admin/owner-registrations')}
                             >
                                 Quay lại danh sách

@@ -22,6 +22,8 @@ public class VehicleController {
 
         private final VehicleService vehicleService;
 
+        // Flow tao xe: controller nhan request va service se tao ban ghi xe voi trang
+        // thai PENDING_APPROVAL, sau do thong bao cho admin duyet.
         @PostMapping
         public ResponseEntity<ApiResponse<VehicleResponse>> create(@Valid @RequestBody CreateVehicleRequest req) {
                 VehicleResponse data = vehicleService.createVehicle(req);
@@ -44,6 +46,8 @@ public class VehicleController {
                                 .code(1000).message("Success").result(data).build());
         }
 
+        // Flow cap nhat xe: service xac thuc ownerId, chan sua immutable fields, roi
+        // cap nhat cac truong duoc phep.
         @PutMapping("/{id}")
         public ResponseEntity<ApiResponse<VehicleResponse>> update(
                         @PathVariable Integer id,
@@ -54,6 +58,7 @@ public class VehicleController {
                                 .code(1000).message("Success").result(data).build());
         }
 
+        // API cho chu xe xoa xe cua minh.
         @DeleteMapping("/{id}")
         public ResponseEntity<ApiResponse<Object>> delete(
                         @PathVariable Integer id,
@@ -63,6 +68,8 @@ public class VehicleController {
                                 .code(1000).message("Deleted").build());
         }
 
+        // Flow doi trang thai xe: owner chi duoc doi trang thai khai thac, khong duoc
+        // tu dua xe ve PENDING_APPROVAL/REJECTED.
         @PatchMapping("/{id}/status")
         public ResponseEntity<ApiResponse<VehicleResponse>> updateStatus(
                         @PathVariable Integer id,
@@ -93,6 +100,8 @@ public class VehicleController {
                                 .code(1000).message("Success").result(data).build());
         }
 
+        // Flow them anh URL: service validate ownership, xu ly set main (neu co) va
+        // luu batch anh moi.
         @PostMapping("/{id}/images")
         public ResponseEntity<ApiResponse<List<VehicleImageResponse>>> addImages(
                         @PathVariable Integer id,
@@ -103,6 +112,7 @@ public class VehicleController {
                                 .code(1000).message("Success").result(data).build());
         }
 
+        // API cho chu xe dat anh dai dien (main image) cho xe.
         @PatchMapping("/{id}/images/{imageId}/main")
         public ResponseEntity<ApiResponse<List<VehicleImageResponse>>> setMain(
                         @PathVariable Integer id,
@@ -113,6 +123,7 @@ public class VehicleController {
                                 .code(1000).message("Success").result(data).build());
         }
 
+        // API cho chu xe xoa anh cua xe.
         @DeleteMapping("/{id}/images/{imageId}")
         public ResponseEntity<ApiResponse<Object>> deleteImage(
                         @PathVariable Integer id,
@@ -123,6 +134,9 @@ public class VehicleController {
                                 .code(1000).message("Deleted").build());
         }
 
+        // Flow upload anh file: upload len cloud, luu URL vao DB, co the dat anh dau
+        // tien
+        // lam main.
         @PostMapping(value = "/{id}/images/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
         public ResponseEntity<?> uploadImages(
                         @PathVariable Integer id,
@@ -132,7 +146,8 @@ public class VehicleController {
                 return ResponseEntity.ok(vehicleService.uploadImages(id, ownerId, files, setFirstAsMain));
         }
 
-        // ADMIN duyệt
+        // Flow duyet xe: chi nhan xe dang PENDING_APPROVAL, set AVAILABLE + reviewedAt
+        // va gui thong bao cho chu xe.
         @PatchMapping("/{id}/approve")
         @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ADMIN')")
         public ResponseEntity<ApiResponse<VehicleResponse>> approve(@PathVariable Integer id) {
@@ -141,7 +156,8 @@ public class VehicleController {
                                 .code(1000).message("Approved").result(data).build());
         }
 
-        // ADMIN từ chối
+        // Flow tu choi xe: chi nhan xe dang PENDING_APPROVAL, set REJECTED va gui ly do
+        // cho chu xe.
         @PatchMapping("/{id}/reject")
         @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ADMIN')")
         public ResponseEntity<ApiResponse<VehicleResponse>> reject(

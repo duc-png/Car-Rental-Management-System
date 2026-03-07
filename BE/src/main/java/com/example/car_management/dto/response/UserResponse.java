@@ -18,6 +18,7 @@ public class UserResponse {
     private String email;
     private String phone;
     private String licenseNumber;
+    private String avatar;
     private String address;
     private Boolean isVerified;
     private Boolean isActive;

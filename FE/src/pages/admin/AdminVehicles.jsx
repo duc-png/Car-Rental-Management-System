@@ -233,7 +233,7 @@ export default function AdminVehicles() {
     const endRange = Math.min(currentPage * PAGE_SIZE, filtered.length)
 
     return (
-        <>
+        <section className="admin-vehicles-page">
             <div className="approval-header">
                 <div>
                     <h1>Duyệt xe</h1>
@@ -303,7 +303,7 @@ export default function AdminVehicles() {
                 </div>
             </div>
 
-            {error && <div className="admin-alert">{error}</div>}
+            {error && <div className="admin-vehicles-alert">{error}</div>}
 
             <div className="approval-card">
                 <div className="approval-filters">
@@ -377,22 +377,22 @@ export default function AdminVehicles() {
                                     return (
                                         <tr key={vehicle.id}>
                                             <td>
-                                                <div className="vehicle-cell">
-                                                    <div className="vehicle-thumb">
+                                                <div className="admin-vehicles-vehicle-cell">
+                                                    <div className="admin-vehicles-vehicle-thumb">
                                                         {imageUrl ? (
                                                             <img src={imageUrl} alt={vehicleName(vehicle)} loading="lazy" />
                                                         ) : null}
                                                     </div>
-                                                    <div className="vehicle-meta">
+                                                    <div className="admin-vehicles-vehicle-meta">
                                                         <div className="name">{vehicleName(vehicle)}</div>
                                                         <div className="sub">{vehicleSubtitle(vehicle)}</div>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td>
-                                                <div className="owner-cell">
-                                                    <div className="owner-avatar">{initialsFrom(ownerName)}</div>
-                                                    <div className="owner-meta">
+                                                <div className="admin-vehicles-owner-cell">
+                                                    <div className="admin-vehicles-owner-avatar">{initialsFrom(ownerName)}</div>
+                                                    <div className="admin-vehicles-owner-meta">
                                                         <div className="name">{ownerName}</div>
                                                         <div className="email">{ownerEmail || '—'}</div>
                                                     </div>
@@ -402,15 +402,15 @@ export default function AdminVehicles() {
                                             <td style={{ fontWeight: 800 }}>{formatPrice(vehicle.pricePerDay)}</td>
                                             <td>{formatDate(dateValue)}</td>
                                             <td>
-                                                <span className={`status-pill status-${bucket}`}>{statusLabel(vehicle.status)}</span>
+                                                <span className={`admin-vehicles-status-pill status-${bucket}`}>{statusLabel(vehicle.status)}</span>
                                             </td>
                                             <td>
-                                                <div className="action-buttons">
+                                                <div className="admin-vehicles-action-buttons">
                                                     {canAct ? (
                                                         <>
                                                             <button
                                                                 type="button"
-                                                                className="action-icon success"
+                                                                className="admin-vehicles-action-icon success"
                                                                 onClick={() => onApprove(vehicle.id)}
                                                                 aria-label="Duyệt"
                                                             >
@@ -420,7 +420,7 @@ export default function AdminVehicles() {
                                                             </button>
                                                             <button
                                                                 type="button"
-                                                                className="action-icon danger"
+                                                                className="admin-vehicles-action-icon danger"
                                                                 onClick={() => onReject(vehicle.id)}
                                                                 aria-label="Từ chối"
                                                             >
@@ -433,7 +433,7 @@ export default function AdminVehicles() {
                                                     ) : null}
                                                     <Link
                                                         to={`/admin/vehicles/${vehicle.id}`}
-                                                        className="action-icon"
+                                                        className="admin-vehicles-action-icon"
                                                         aria-label="Xem"
                                                         title="Xem"
                                                     >
@@ -455,8 +455,8 @@ export default function AdminVehicles() {
                 {!loading && filtered.length > 0 && (
                     <div className="approval-footer">
                         <p>Hiển thị {showRange} đến {endRange} trên tổng {filtered.length} yêu cầu</p>
-                        <div className="pagination">
-                            <button className="page-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>
+                        <div className="admin-vehicles-pagination">
+                            <button className="admin-vehicles-page-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1}>
                                 ‹
                             </button>
                             {Array.from({ length: totalPages }).slice(0, 5).map((_, index) => {
@@ -464,20 +464,20 @@ export default function AdminVehicles() {
                                 return (
                                     <button
                                         key={p}
-                                        className={`page-btn ${p === currentPage ? 'active' : ''}`}
+                                        className={`admin-vehicles-page-btn ${p === currentPage ? 'active' : ''}`}
                                         onClick={() => setPage(p)}
                                     >
                                         {p}
                                     </button>
                                 )
                             })}
-                            <button className="page-btn" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
+                            <button className="admin-vehicles-page-btn" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages}>
                                 ›
                             </button>
                         </div>
                     </div>
                 )}
             </div>
-        </>
+        </section>
     )
 }

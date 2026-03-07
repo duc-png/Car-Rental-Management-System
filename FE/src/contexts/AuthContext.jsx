@@ -1,6 +1,8 @@
 import { createContext, useCallback, useEffect, useRef, useState } from 'react'
 import { jwtDecode } from 'jwt-decode'
 import { login as apiLogin, logout as apiLogout, refreshToken as apiRefreshToken } from '../api/auth'
+import { getMyCustomerProfile } from '../api/customers'
+import { getOwnerById } from '../api/owners'
 
 // Tạo Context để lưu thông tin authentication
 export const AuthContext = createContext()
@@ -47,6 +49,11 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('token')
         localStorage.removeItem('user')
     }, [clearRefreshTimer])
+
+    const hasRole = useCallback((currentUser, roleName) => {
+        const scope = String(currentUser?.role || currentUser?.scope || '')
+        return scope.includes(`ROLE_${roleName}`) || scope.includes(roleName)
+    }, [])
 
     const extractTokenValue = (payload) => {
         if (!payload) return null
@@ -150,6 +157,61 @@ export function AuthProvider({ children }) {
         return refreshingPromiseRef.current
     }, [applyToken, clearAuthData, scheduleRefresh])
 
+    const refreshProfile = useCallback(async () => {
+        const userId = user?.userId
+        if (!token || !userId) {
+            return
+        }
+
+        try {
+            if (hasRole(user, 'CAR_OWNER')) {
+                const owner = await getOwnerById(userId)
+                if (!owner) return
+
+                setUser((prev) => {
+                    const nextFullName = owner.fullName || prev?.fullName
+                    const nextAvatar = owner.avatar || prev?.avatar || ''
+                    if (prev?.fullName === nextFullName && (prev?.avatar || '') === nextAvatar) {
+                        return prev
+                    }
+
+                    return {
+                        ...prev,
+                        fullName: nextFullName,
+                        avatar: nextAvatar
+                    }
+                })
+                return
+            }
+
+            if (hasRole(user, 'USER')) {
+                const profilePayload = await getMyCustomerProfile(token)
+                const profile = profilePayload?.result
+                if (!profile) return
+
+                setUser((prev) => {
+                    const nextFullName = profile.fullName || prev?.fullName
+                    const nextAvatar = profile.avatar || prev?.avatar || ''
+                    if (prev?.fullName === nextFullName && (prev?.avatar || '') === nextAvatar) {
+                        return prev
+                    }
+
+                    return {
+                        ...prev,
+                        fullName: nextFullName,
+                        avatar: nextAvatar
+                    }
+                })
+            }
+        } catch (error) {
+            console.error('Cannot hydrate profile info', error)
+        }
+    }, [hasRole, token, user?.role, user?.scope, user?.userId])
+
+    useEffect(() => {
+        refreshProfile()
+    }, [refreshProfile])
+
     // Khi app khởi động, kiểm tra xem có token đã lưu không
     useEffect(() => {
         const bootstrapAuth = async () => {
@@ -248,7 +310,8 @@ export function AuthProvider({ children }) {
         isAuthenticated: !!user, // true nếu có user
         loading,
         login,
-        logout
+        logout,
+        refreshProfile
     }
 
     return (

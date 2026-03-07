@@ -11,6 +11,7 @@ function Register() {
         password: '',
         confirmPassword: '',
         phone: '',
+        avatar: '',
         agreeToTerms: false
     })
     const [showPassword, setShowPassword] = useState(false)
@@ -83,7 +84,8 @@ function Register() {
                     email: formData.email,
                     password: formData.password,
                     phone: formData.phone,
-                    licenseNumber: '' // Optional
+                    licenseNumber: '', // Optional
+                    avatar: formData.avatar?.trim() || null
                 })
 
                 // 2. Đăng ký thành công -> Gọi hàm login từ AuthContext (file chung)
@@ -171,6 +173,21 @@ function Register() {
                                 />
                             </div>
                             {errors.phone && <span className="error-message">{errors.phone}</span>}
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="avatar">Avatar URL (Optional)</label>
+                            <div className="input-wrapper">
+                                <span className="input-icon">🖼️</span>
+                                <input
+                                    type="url"
+                                    id="avatar"
+                                    name="avatar"
+                                    value={formData.avatar}
+                                    onChange={handleChange}
+                                    placeholder="https://..."
+                                />
+                            </div>
                         </div>
 
                         <div className="form-row">

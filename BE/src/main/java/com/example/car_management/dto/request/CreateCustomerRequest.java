@@ -28,6 +28,8 @@ public class CreateCustomerRequest {
 
     private String licenseNumber;
 
+    private String avatar;
+
     private String address;
 
     private String password;

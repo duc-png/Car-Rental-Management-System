@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.Instant;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -31,8 +33,8 @@ public class UserEntity {
     @Column(length = 20)
     private String phone;
 
-    @Column(name = "license_number", length = 50)
-    private String licenseNumber;
+    @Column(length = 500)
+    private String avatar;
 
     @Column(length = 255)
     private String address;
@@ -49,4 +51,9 @@ public class UserEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "role_id", length = 20)
     private UserRole roleId;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "customer_favorites", joinColumns = @JoinColumn(name = "customer_id"), inverseJoinColumns = @JoinColumn(name = "vehicle_id"))
+    @Builder.Default
+    private Set<VehicleEntity> favoriteVehicles = new LinkedHashSet<>();
 }
