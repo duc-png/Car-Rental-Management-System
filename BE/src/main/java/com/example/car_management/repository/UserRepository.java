@@ -12,9 +12,9 @@ import java.util.Optional;
 import java.util.List;
 
 public interface UserRepository extends JpaRepository<UserEntity, Integer> {
-  Optional<UserEntity> findByEmail(String email);
-
-  boolean existsByEmail(String email);
+    Optional<UserEntity> findByEmail(String email);
+    UserEntity findById(Long id);
+    boolean existsByEmail(String email);
 
   List<UserEntity> findByRoleId(UserRole roleId);
 

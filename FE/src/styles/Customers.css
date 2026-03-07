@@ -82,6 +82,11 @@
     color: #1e1b4b;
 }
 
+.admin-nav a.nav-item {
+    text-decoration: none;
+    display: block;
+}
+
 .admin-profile {
     margin-top: auto;
     display: flex;

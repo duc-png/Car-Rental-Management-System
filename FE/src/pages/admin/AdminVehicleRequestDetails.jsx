@@ -48,7 +48,7 @@ const formatPrice = (value) => {
     if (value == null) return '—'
     const amount = Number(value)
     if (!Number.isFinite(amount)) return String(value)
-    return `${amount.toLocaleString('vi-VN')}đ/ngày`
+    return `${amount.toLocaleString('vi-VN')} VNĐ/ngày`
 }
 
 const formatFuelConsumption = (value) => {

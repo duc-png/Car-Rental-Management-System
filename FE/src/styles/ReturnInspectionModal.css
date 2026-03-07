@@ -1,0 +1,314 @@
+/* Return Inspection Modal - Dark Theme */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 16px;
+    backdrop-filter: blur(4px);
+}
+
+.return-inspection-modal {
+    background: #1e293b;
+    border-radius: 20px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.return-inspection-modal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    position: sticky;
+    top: 0;
+    background: #1e293b;
+    z-index: 10;
+}
+
+.return-inspection-modal .modal-header h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    color: #f1f5f9;
+    font-weight: 700;
+}
+
+.return-inspection-modal .close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #94a3b8;
+    padding: 0;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+}
+
+.return-inspection-modal .close-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.return-inspection-modal .booking-summary {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    color: white;
+    padding: 16px 24px;
+    margin: 0;
+}
+
+.return-inspection-modal .booking-summary h4 {
+    margin: 0 0 8px 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.return-inspection-modal .booking-summary p {
+    margin: 4px 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.return-inspection-modal form {
+    padding: 24px;
+}
+
+.return-inspection-modal .form-section {
+    margin-bottom: 24px;
+}
+
+.return-inspection-modal .form-section h3 {
+    font-size: 1rem;
+    color: #f1f5f9;
+    margin: 0 0 16px 0;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #6366f1;
+    font-weight: 600;
+}
+
+.return-inspection-modal .form-group {
+    margin-bottom: 16px;
+}
+
+.return-inspection-modal .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.return-inspection-modal .form-group input,
+.return-inspection-modal .form-group select,
+.return-inspection-modal .form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.2s;
+    box-sizing: border-box;
+    background: #0f172a;
+    color: #f1f5f9;
+}
+
+.return-inspection-modal .form-group input::placeholder,
+.return-inspection-modal .form-group textarea::placeholder {
+    color: #64748b;
+}
+
+.return-inspection-modal .form-group input:focus,
+.return-inspection-modal .form-group select:focus,
+.return-inspection-modal .form-group textarea:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.return-inspection-modal .form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.return-inspection-modal .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.return-inspection-modal .fee-preview {
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.return-inspection-modal .fee-preview h3 {
+    margin: 0 0 16px 0;
+    color: #f1f5f9;
+    font-size: 1rem;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.return-inspection-modal .fee-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: #cbd5e1;
+}
+
+.return-inspection-modal .fee-row:last-child {
+    border-bottom: none;
+}
+
+.return-inspection-modal .fee-row.total {
+    border-top: 2px solid #6366f1;
+    margin-top: 8px;
+    padding-top: 12px;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.return-inspection-modal .fee-row.grand-total {
+    font-size: 1.2rem;
+    color: #10b981;
+    font-weight: 700;
+}
+
+.return-inspection-modal .fee-amount {
+    color: #f87171;
+    font-weight: 600;
+}
+
+.return-inspection-modal .modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.return-inspection-modal .modal-actions .btn-cancel {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+}
+
+.return-inspection-modal .modal-actions .btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #f1f5f9;
+}
+
+.return-inspection-modal .btn-submit {
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    border: none;
+    color: white;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.return-inspection-modal .btn-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+}
+
+.return-inspection-modal .btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .modal-overlay {
+        padding: 0;
+        align-items: flex-end;
+    }
+    
+    .return-inspection-modal {
+        max-height: 95vh;
+        border-radius: 20px 20px 0 0;
+        max-width: 100%;
+    }
+    
+    .return-inspection-modal .modal-header {
+        padding: 16px 20px;
+    }
+    
+    .return-inspection-modal .modal-header h2 {
+        font-size: 1.2rem;
+    }
+    
+    .return-inspection-modal form {
+        padding: 20px;
+    }
+    
+    .return-inspection-modal .form-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+    
+    .return-inspection-modal .modal-actions {
+        flex-direction: column-reverse;
+    }
+    
+    .return-inspection-modal .modal-actions button,
+    .return-inspection-modal .modal-actions .btn-cancel,
+    .return-inspection-modal .btn-submit {
+        width: 100%;
+        padding: 14px;
+    }
+    
+    .return-inspection-modal .booking-summary {
+        padding: 14px 20px;
+    }
+    
+    .return-inspection-modal .booking-summary h4 {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .return-inspection-modal .form-group input,
+    .return-inspection-modal .form-group select,
+    .return-inspection-modal .form-group textarea {
+        padding: 10px 12px;
+        font-size: 0.95rem;
+    }
+    
+    .return-inspection-modal .fee-preview {
+        padding: 16px;
+    }
+    
+    .return-inspection-modal .fee-row {
+        font-size: 0.9rem;
+    }
+}

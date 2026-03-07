@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
+import DateTimePicker from './booking/DateTimePicker';
 import '../styles/BookingModal.css';
 
 export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [showDateTimePicker, setShowDateTimePicker] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [totalPrice, setTotalPrice] = useState(0);
@@ -44,6 +46,12 @@ export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
             setBookedDates([]);
         }
     }, [isOpen, car?.id]);
+
+    const handleDateTimeConfirm = ({ pickupDate, returnDate }) => {
+        setStartDate(pickupDate.toISOString().slice(0, 16));
+        setEndDate(returnDate.toISOString().slice(0, 16));
+        setShowDateTimePicker(false);
+    };
 
     // Calculate total price when dates change
     useEffect(() => {
@@ -144,7 +152,7 @@ export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
                                 <span>{car?.fuelType}</span>
                             </div>
                             <div className="car-price-tag">
-                                {car?.pricePerDay?.toLocaleString('vi-VN')} ₫ / ngày
+                                {car?.pricePerDay?.toLocaleString('vi-VN')} VNĐ / ngày
                             </div>
                         </div>
                     </div>
@@ -185,35 +193,37 @@ export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
 
                         <form onSubmit={handleSubmit} className="booking-form">
                             <div className="dates-grid">
-                                <div className="form-group">
-                                    <label htmlFor="startDate">Ngày nhận xe</label>
-                                    <input
-                                        type="datetime-local"
-                                        id="startDate"
-                                        value={startDate}
-                                        onChange={(e) => setStartDate(e.target.value)}
-                                        min={today}
-                                        required
-                                    />
-                                </div>
-
-                                <div className="form-group">
-                                    <label htmlFor="endDate">Ngày trả xe</label>
-                                    <input
-                                        type="datetime-local"
-                                        id="endDate"
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                        min={startDate || today}
-                                        required
-                                    />
+                                <div className="form-group form-group-datetime">
+                                    <label>Ngày giờ nhận & trả xe</label>
+                                    <button
+                                        type="button"
+                                        className="datetime-trigger"
+                                        onClick={() => setShowDateTimePicker(true)}
+                                    >
+                                        <span className="datetime-trigger-icon">📅</span>
+                                        <span className="datetime-trigger-text">
+                                            {startDate && endDate
+                                                ? `${new Date(startDate).toLocaleString('vi-VN')} → ${new Date(endDate).toLocaleString('vi-VN')}`
+                                                : 'Chọn ngày giờ nhận xe & trả xe'}
+                                        </span>
+                                        <span className="datetime-trigger-arrow">▼</span>
+                                    </button>
                                 </div>
                             </div>
+
+                            <DateTimePicker
+                                isOpen={showDateTimePicker}
+                                onClose={() => setShowDateTimePicker(false)}
+                                onConfirm={handleDateTimeConfirm}
+                                initialPickup={startDate ? new Date(startDate) : null}
+                                initialReturn={endDate ? new Date(endDate) : null}
+                                rentalType="day"
+                            />
 
                             <div className="price-summary">
                                 <div className="price-row">
                                     <span>Đơn giá thuê:</span>
-                                    <span>{car?.pricePerDay?.toLocaleString('vi-VN')} ₫</span>
+                                    <span>{car?.pricePerDay?.toLocaleString('vi-VN')} VNĐ</span>
                                 </div>
                                 <div className="price-row">
                                     <span>Số ngày thuê:</span>
@@ -225,7 +235,7 @@ export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
                                 </div>
                                 <div className="price-row total">
                                     <span>Tổng cộng:</span>
-                                    <span className="total-price">{totalPrice.toLocaleString('vi-VN')} ₫</span>
+                                    <span className="total-price">{totalPrice.toLocaleString('vi-VN')} VNĐ</span>
                                 </div>
                             </div>
 
@@ -241,7 +251,7 @@ export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
                                     ) : (
                                         <>
                                             <span>Xác nhận đặt xe</span>
-                                            <span className="total-badge">{totalPrice > 0 ? totalPrice.toLocaleString('vi-VN') + ' ₫' : ''}</span>
+                                            <span className="total-badge">{totalPrice > 0 ? totalPrice.toLocaleString('vi-VN') + ' VNĐ' : ''}</span>
                                         </>
                                     )}
                                 </button>

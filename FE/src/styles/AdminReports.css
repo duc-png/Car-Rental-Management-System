@@ -1,0 +1,203 @@
+/* Report content styles – used inside .admin-content (same layout as Customers) */
+
+.reports-header {
+    background: #ffffff;
+    padding: 20px 24px;
+    border-radius: 20px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+    margin-bottom: 24px;
+}
+
+.reports-breadcrumb {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-bottom: 4px;
+}
+
+.reports-header h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.reports-header p {
+    color: #6b7280;
+    font-size: 0.95rem;
+}
+
+.reports-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-end;
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.reports-presets {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.presets-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.preset-btn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #475569;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.preset-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+.report-chart-wrap {
+    width: 100%;
+    margin-bottom: 24px;
+    min-height: 320px;
+}
+
+.reports-filters label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.reports-filters input,
+.reports-filters select {
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    min-width: 160px;
+}
+
+.reports-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+
+.reports-tabs button {
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: none;
+    background: #fff;
+    color: #374151;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.reports-tabs button:hover {
+    background: #f9fafb;
+}
+
+.reports-tabs button.active {
+    background: #0f172a;
+    color: #fff;
+}
+
+.reports-content {
+    min-height: 200px;
+}
+
+.reports-loading {
+    padding: 48px;
+    text-align: center;
+    color: #6b7280;
+}
+
+.report-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.report-card h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.revenue-summary {
+    margin-bottom: 24px;
+    padding: 20px;
+    background: #f0fdf4;
+    border-radius: 12px;
+    border: 1px solid #bbf7d0;
+}
+
+.revenue-summary p {
+    font-size: 0.85rem;
+    color: #166534;
+    margin-bottom: 4px;
+}
+
+.revenue-summary h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #166534;
+}
+
+.reports-content .period {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 8px;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 320px;
+}
+
+.report-table th,
+.report-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.report-table th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+.report-table td {
+    font-size: 0.9rem;
+}
+
+.report-empty {
+    color: #6b7280;
+    font-size: 0.9rem;
+    padding: 16px 0;
+}
