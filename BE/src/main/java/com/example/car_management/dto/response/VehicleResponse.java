@@ -1,0 +1,56 @@
+package com.example.car_management.dto.response;
+
+import com.example.car_management.entity.enums.FuelType;
+import com.example.car_management.entity.enums.Transmission;
+import com.example.car_management.entity.enums.VehicleStatus;
+import lombok.*;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class VehicleResponse {
+    private Integer id;
+    private Integer ownerId;
+    private Integer modelId;
+
+    private String modelName;
+    private String brandName;
+    private String carTypeName;
+
+    private String licensePlate;
+    private String color;
+    private Integer seatCount;
+    private Transmission transmission;
+    private FuelType fuelType;
+
+    private BigDecimal pricePerDay;
+    private VehicleStatus status;
+
+    private Instant createdAt;
+    private Instant reviewedAt;
+
+    private String description;
+    private Integer year;
+    private Float fuelConsumption;
+
+    private Integer currentKm;
+
+    private Boolean deliveryEnabled;
+    private Integer freeDeliveryWithinKm;
+    private Integer maxDeliveryDistanceKm;
+    private BigDecimal extraFeePerKm;
+
+    private Integer locationId;
+    private String city;
+    private String district;
+    private String addressDetail;
+
+    private List<VehicleImageResponse> images;
+    private List<VehicleFeatureResponse> features;
+}

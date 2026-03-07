@@ -1,0 +1,416 @@
+.approval-header {
+    margin-top: 18px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.approval-header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 6px;
+}
+
+.approval-header p {
+    color: #64748b;
+}
+
+.approval-header-actions {
+    display: inline-flex;
+    align-items: center;
+}
+
+.approval-stats {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.approval-stat-card {
+    background: #ffffff;
+    border: 1px solid #eef2f7;
+    border-radius: 18px;
+    padding: 18px 18px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.approval-stat-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.approval-stat-label {
+    font-size: 0.74rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 800;
+}
+
+.approval-stat-value {
+    font-size: 1.9rem;
+    font-weight: 900;
+    color: #0f172a;
+}
+
+.approval-stat-badge {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #0f172a;
+    flex: 0 0 auto;
+}
+
+.approval-stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    background: #f1f5f9;
+    color: #0f172a;
+    flex: 0 0 auto;
+}
+
+.approval-stat-card.stat-pending .approval-stat-icon {
+    background: rgba(245, 158, 11, 0.16);
+    color: #d97706;
+}
+
+.approval-stat-card.stat-pending .approval-stat-badge {
+    background: rgba(245, 158, 11, 0.14);
+    color: #b45309;
+}
+
+.approval-stat-card.stat-approved .approval-stat-icon {
+    background: rgba(34, 197, 94, 0.16);
+    color: #16a34a;
+}
+
+.approval-stat-card.stat-approved .approval-stat-badge {
+    background: rgba(34, 197, 94, 0.14);
+    color: #15803d;
+}
+
+.approval-stat-card.stat-rejected .approval-stat-icon {
+    background: rgba(239, 68, 68, 0.14);
+    color: #ef4444;
+}
+
+.approval-stat-card.stat-rejected .approval-stat-badge {
+    background: rgba(239, 68, 68, 0.12);
+    color: #b91c1c;
+}
+
+.approval-stat-card.stat-total .approval-stat-icon {
+    background: rgba(37, 99, 235, 0.14);
+    color: #2563eb;
+}
+
+.approval-stat-card.stat-total .approval-stat-badge {
+    background: rgba(37, 99, 235, 0.12);
+    color: #1d4ed8;
+}
+
+.approval-filters {
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 18px;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.approval-filters .filter-search {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.approval-filters .filter-search svg {
+    color: #94a3b8;
+    flex: 0 0 auto;
+}
+
+.approval-filters .filter-search input {
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 100%;
+    font-weight: 500;
+}
+
+.approval-filters .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+}
+
+.approval-select {
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-weight: 600;
+    color: #111827;
+    height: 44px;
+}
+
+.approval-card {
+    margin-top: 18px;
+    background: #ffffff;
+    border: 1px solid #eef2f7;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.approval-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.approval-table th,
+.approval-table td {
+    padding: 14px 14px;
+    border-bottom: 1px solid #eef2f7;
+    text-align: left;
+    font-size: 0.92rem;
+}
+
+.approval-table th {
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+    font-weight: 800;
+    background: #f8fafc;
+}
+
+.admin-vehicles-vehicle-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 260px;
+}
+
+.admin-vehicles-vehicle-thumb {
+    width: 48px;
+    height: 36px;
+    border-radius: 10px;
+    background: #0f172a;
+    overflow: hidden;
+    flex: 0 0 auto;
+}
+
+.admin-vehicles-vehicle-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.admin-vehicles-vehicle-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.admin-vehicles-vehicle-meta .name {
+    font-weight: 800;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-vehicles-vehicle-meta .sub {
+    color: #64748b;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-vehicles-owner-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 240px;
+}
+
+.admin-vehicles-owner-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    color: #475569;
+    flex: 0 0 auto;
+}
+
+.admin-vehicles-owner-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.admin-vehicles-owner-meta .name {
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-vehicles-owner-meta .email {
+    font-size: 0.8rem;
+    color: #64748b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-vehicles-status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 0.78rem;
+    white-space: nowrap;
+}
+
+.admin-vehicles-status-pill.status-pending {
+    background: rgba(234, 179, 8, 0.18);
+    color: #a16207;
+}
+
+.admin-vehicles-status-pill.status-approved {
+    background: rgba(34, 197, 94, 0.16);
+    color: #15803d;
+}
+
+.admin-vehicles-status-pill.status-rejected {
+    background: rgba(239, 68, 68, 0.16);
+    color: #b91c1c;
+}
+
+.admin-vehicles-action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.admin-vehicles-action-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    color: #64748b;
+}
+
+.admin-vehicles-action-icon:hover {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.admin-vehicles-action-icon.danger {
+    color: #ef4444;
+}
+
+.admin-vehicles-action-icon.success {
+    color: #22c55e;
+}
+
+.admin-vehicles-action-icon:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.approval-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 14px;
+}
+
+.approval-footer p {
+    color: #64748b;
+    font-size: 0.88rem;
+}
+
+.admin-vehicles-pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-vehicles-page-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.admin-vehicles-page-btn.active {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #ffffff;
+}
+
+.admin-vehicles-page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+    .approval-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .approval-filters .filter-group {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+    }
+}
+
+.admin-vehicles-alert {
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    color: #991b1b;
+    border-radius: 12px;
+    padding: 10px 12px;
+}
