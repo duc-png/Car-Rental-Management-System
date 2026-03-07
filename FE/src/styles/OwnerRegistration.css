@@ -303,6 +303,23 @@
     font-size: 0.92rem;
 }
 
+.owner-invalid-image-list {
+    margin-top: 10px;
+    color: #b91c1c;
+    font-family: 'Work Sans', Arial, sans-serif;
+    font-size: 0.84rem;
+}
+
+.owner-invalid-image-list p {
+    margin: 0 0 4px;
+    font-weight: 700;
+}
+
+.owner-invalid-image-list ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
 .image-dropzone {
     border: 1px dashed rgba(217, 107, 76, 0.5);
     border-radius: 16px;

@@ -105,7 +105,22 @@ function ManageRentals() {
         }
     }, [fetchRentals])
 
-    const confirmAndUpdate = (message, bookingId, status) => {
+    const confirmAndUpdate = (message, bookingId, status, booking = null) => {
+        // Check payment status before allowing certain actions
+        if (status === 'ONGOING' && booking) {
+            if (booking.paymentStatus !== 'DEPOSIT_PAID' && booking.paymentStatus !== 'FULLY_PAID') {
+                toast.error('❌ Không thể bắt đầu chuyến! Khách hàng chưa thanh toán cọc 15%', {
+                    duration: 5000,
+                    style: {
+                        background: '#ef4444',
+                        color: 'white',
+                        fontWeight: 600
+                    }
+                })
+                return
+            }
+        }
+
         if (window.confirm(message)) {
             handleStatusUpdate(bookingId, status)
         }
@@ -113,6 +128,19 @@ function ManageRentals() {
 
     // ========== Start Trip Modal ==========
     const openStartTripModal = (booking) => {
+        // Check payment status before opening modal
+        if (booking.paymentStatus !== 'DEPOSIT_PAID' && booking.paymentStatus !== 'FULLY_PAID') {
+            toast.error('❌ Không thể bắt đầu chuyến! Khách hàng chưa thanh toán cọc 15%', {
+                duration: 5000,
+                style: {
+                    background: '#ef4444',
+                    color: 'white',
+                    fontWeight: 600
+                }
+            })
+            return
+        }
+        
         setStartKm(booking.startKm || '')
         setStartFuelLevel(booking.startFuelLevel || FUEL_MAX)
         setStartTripModal(booking)
@@ -142,6 +170,19 @@ function ManageRentals() {
 
     // ========== Complete Trip Modal ==========
     const openCompleteTripModal = (booking) => {
+        // Check payment status before opening modal
+        if (booking.paymentStatus !== 'FULLY_PAID') {
+            toast.error('❌ Không thể hoàn thành chuyến! Khách hàng chưa thanh toán đủ 100%', {
+                duration: 5000,
+                style: {
+                    background: '#ef4444',
+                    color: 'white',
+                    fontWeight: 600
+                }
+            })
+            return
+        }
+        
         setEndKm(booking.startKm || '')
         setEndFuelLevel(FUEL_MAX)
         setOtherSurcharge('')
@@ -342,6 +383,38 @@ function ManageRentals() {
                                         <p><strong>Thời gian:</strong> {booking.startDate ? new Date(booking.startDate).toLocaleDateString('vi-VN') : 'N/A'} - {booking.endDate ? new Date(booking.endDate).toLocaleDateString('vi-VN') : 'N/A'}</p>
                                         <p><strong>Tổng tiền:</strong> {formatVndCurrency(booking.totalPrice)}</p>
                                         
+                                        {/* Payment Status Display */}
+                                        {booking.paymentStatus && (
+                                            <p>
+                                                <strong>Thanh toán:</strong> 
+                                                <span style={{
+                                                    marginLeft: '8px',
+                                                    padding: '4px 10px',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.85rem',
+                                                    fontWeight: 600,
+                                                    background: 
+                                                        booking.paymentStatus === 'FULLY_PAID' ? '#10b98144' :
+                                                        booking.paymentStatus === 'DEPOSIT_PAID' ? '#f59e0b44' :
+                                                        booking.paymentStatus === 'PENDING_DEPOSIT' ? '#ef444444' :
+                                                        booking.paymentStatus === 'PENDING_FULL_PAYMENT' ? '#f59e0b44' :
+                                                        '#64748b44',
+                                                    color:
+                                                        booking.paymentStatus === 'FULLY_PAID' ? '#10b981' :
+                                                        booking.paymentStatus === 'DEPOSIT_PAID' ? '#f59e0b' :
+                                                        booking.paymentStatus === 'PENDING_DEPOSIT' ? '#ef4444' :
+                                                        booking.paymentStatus === 'PENDING_FULL_PAYMENT' ? '#f59e0b' :
+                                                        '#64748b'
+                                                }}>
+                                                    {booking.paymentStatus === 'FULLY_PAID' ? '✅ Đã thanh toán đủ' :
+                                                     booking.paymentStatus === 'DEPOSIT_PAID' ? '⏳ Đã cọc 15%' :
+                                                     booking.paymentStatus === 'PENDING_DEPOSIT' ? '❌ Chưa cọc' :
+                                                     booking.paymentStatus === 'PENDING_FULL_PAYMENT' ? '⏳ Chờ thanh toán 85%' :
+                                                     booking.paymentStatus}
+                                                </span>
+                                            </p>
+                                        )}
+                                        
                                         {booking.totalAdditionalFees > 0 && (
                                             <p><strong>Phí phát sinh:</strong> <span style={{color: '#f87171', fontWeight: 600}}>+{formatVndCurrency(booking.totalAdditionalFees)}</span></p>
                                         )}
@@ -372,13 +445,21 @@ function ManageRentals() {
                                             <button
                                                 className="btn-view"
                                                 style={ACTION_BUTTON_STYLES.confirm}
-                                                onClick={() => confirmAndUpdate('Xác nhận đơn thuê này?', booking.id, 'CONFIRMED')}
+                                                onClick={() => confirmAndUpdate(
+                                                    '✅ Xác nhận đơn thuê này?\n\nSau khi xác nhận, khách hàng sẽ cần thanh toán cọc 15% để tiếp tục.', 
+                                                    booking.id, 
+                                                    'CONFIRMED'
+                                                )}
                                             >
                                                 Xác nhận
                                             </button>
                                             <button
                                                 className="btn-cancel"
-                                                onClick={() => confirmAndUpdate('Từ chối đơn thuê này?', booking.id, 'CANCELLED')}
+                                                onClick={() => confirmAndUpdate(
+                                                    '❌ Từ chối đơn thuê này?\n\nKhách hàng sẽ nhận được thông báo từ chối.', 
+                                                    booking.id, 
+                                                    'CANCELLED'
+                                                )}
                                             >
                                                 Từ chối
                                             </button>
@@ -386,23 +467,91 @@ function ManageRentals() {
                                     )}
 
                                     {booking.status === 'CONFIRMED' && (
-                                        <button
-                                            className="btn-view"
-                                            style={ACTION_BUTTON_STYLES.startTrip}
-                                            onClick={() => openStartTripModal(booking)}
-                                        >
-                                            Bắt đầu chuyến
-                                        </button>
+                                        <>
+                                            <button
+                                                className="btn-view"
+                                                style={ACTION_BUTTON_STYLES.startTrip}
+                                                onClick={() => openStartTripModal(booking)}
+                                            >
+                                                Bắt đầu chuyến
+                                            </button>
+                                            
+                                            {/* Warning if deposit not paid */}
+                                            {booking.paymentStatus !== 'DEPOSIT_PAID' && booking.paymentStatus !== 'FULLY_PAID' && (
+                                                <div style={{
+                                                    marginTop: '8px',
+                                                    padding: '10px 12px',
+                                                    background: '#fef3c7',
+                                                    border: '1px solid #fbbf24',
+                                                    borderRadius: '8px',
+                                                    fontSize: '0.85rem',
+                                                    color: '#92400e',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px'
+                                                }}>
+                                                    ⚠️ <strong>Khách chưa thanh toán cọc 15%</strong>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Show checkout URL if payment pending */}
+                                            {booking.paymentStatus === 'PENDING_DEPOSIT' && booking.checkoutUrl && (
+                                                <button
+                                                    className="btn-view"
+                                                    style={{ background: '#f59e0b', color: 'white', marginTop: '8px' }}
+                                                    onClick={() => {
+                                                        window.open(booking.checkoutUrl, '_blank')
+                                                        toast.info('Đã mở link thanh toán cho khách hàng')
+                                                    }}
+                                                >
+                                                    📧 Gửi link thanh toán
+                                                </button>
+                                            )}
+                                        </>
                                     )}
 
                                     {booking.status === 'ONGOING' && !booking.returnStatus && (
-                                        <button
-                                            className="btn-view"
-                                            style={ACTION_BUTTON_STYLES.completeTrip}
-                                            onClick={() => openCompleteTripModal(booking)}
-                                        >
-                                            Hoàn thành chuyến
-                                        </button>
+                                        <>
+                                            <button
+                                                className="btn-view"
+                                                style={ACTION_BUTTON_STYLES.completeTrip}
+                                                onClick={() => openCompleteTripModal(booking)}
+                                            >
+                                                Hoàn thành chuyến
+                                            </button>
+                                            
+                                            {/* Warning if full payment not completed */}
+                                            {booking.paymentStatus !== 'FULLY_PAID' && (
+                                                <div style={{
+                                                    marginTop: '8px',
+                                                    padding: '10px 12px',
+                                                    background: '#fee2e2',
+                                                    border: '1px solid #ef4444',
+                                                    borderRadius: '8px',
+                                                    fontSize: '0.85rem',
+                                                    color: '#991b1b',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px'
+                                                }}>
+                                                    🚫 <strong>Khách chưa thanh toán đủ 100%</strong>
+                                                </div>
+                                            )}
+                                            
+                                            {/* Show checkout URL if full payment pending */}
+                                            {booking.paymentStatus === 'PENDING_FULL_PAYMENT' && booking.checkoutUrl && (
+                                                <button
+                                                    className="btn-view"
+                                                    style={{ background: '#f59e0b', color: 'white', marginTop: '8px' }}
+                                                    onClick={() => {
+                                                        window.open(booking.checkoutUrl, '_blank')
+                                                        toast.info('Đã mở link thanh toán 85% còn lại')
+                                                    }}
+                                                >
+                                                    📧 Gửi link thanh toán 85%
+                                                </button>
+                                            )}
+                                        </>
                                     )}
 
                                     {booking.status === 'ONGOING' && booking.returnStatus === 'NOT_RETURNED' && (
@@ -428,7 +577,11 @@ function ManageRentals() {
                                     {['PENDING', 'CONFIRMED'].includes(booking.status) && (
                                         <button
                                             className="btn-cancel"
-                                            onClick={() => confirmAndUpdate('Bạn có chắc muốn hủy đơn thuê này?', booking.id, 'CANCELLED')}
+                                            onClick={() => confirmAndUpdate(
+                                                'Bạn có chắc chắn muốn hủy đơn thuê này không?\n\nHành động này không thể hoàn tác!', 
+                                                booking.id, 
+                                                'CANCELLED'
+                                            )}
                                         >
                                             Hủy đơn
                                         </button>
@@ -443,34 +596,50 @@ function ManageRentals() {
             {/* ========== Modal: Start Trip ========== */}
             {startTripModal && (
                 <div className="trip-modal-overlay" onClick={closeStartTripModal}>
-                    <div className="trip-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <button className="trip-modal-close" onClick={closeStartTripModal}>×</button>
-                        <h2 className="trip-modal-title">Bắt đầu chuyến đi</h2>
-                        <p className="trip-modal-subtitle">
-                            Ghi lại thông tin ODO và mức nhiên liệu tại thời điểm giao xe
-                        </p>
+                    <div className="trip-modal-content modern-popup" onClick={(e) => e.stopPropagation()}>
+                        <button className="trip-modal-close" onClick={closeStartTripModal} aria-label="Đóng">×</button>
+                        
+                        <div className="modal-header-section">
+                            <h2 className="trip-modal-title">Bắt đầu chuyến đi</h2>
+                            <p className="trip-modal-subtitle">
+                                Ghi lại số km và mức nhiên liệu khi giao xe cho khách hàng
+                            </p>
+                        </div>
 
                         <div className="trip-modal-body">
                             <div className="trip-modal-booking-info">
-                                <h3>{startTripModal.vehicleName}</h3>
-                                <p>{startTripModal.renterName}</p>
-                                <p>{new Date(startTripModal.startDate).toLocaleDateString('vi-VN')} – {new Date(startTripModal.endDate).toLocaleDateString('vi-VN')}</p>
+                                <div>
+                                    <h3>{startTripModal.vehicleName}</h3>
+                                    <p className="info-renter">{startTripModal.renterName}</p>
+                                    <p className="info-dates">
+                                        <span>{new Date(startTripModal.startDate).toLocaleDateString('vi-VN')}</span>
+                                        <span className="date-separator">→</span>
+                                        <span>{new Date(startTripModal.endDate).toLocaleDateString('vi-VN')}</span>
+                                    </p>
+                                </div>
                             </div>
 
                             <div className="form-group">
-                                <label>Số Km hiện tại (ODO)</label>
+                                <label className="form-label">
+                                    Số km hiện tại (ODO) <span className="required">*</span>
+                                </label>
                                 <input
                                     type="number"
+                                    className="form-input"
                                     value={startKm}
                                     onChange={(e) => setStartKm(e.target.value)}
                                     placeholder="Ví dụ: 43500"
                                 />
+                                <small className="form-hint">Ghi chính xác số km hiện tại trên đồng hồ xe</small>
                             </div>
 
                             <div className="form-group">
-                                <label>Mức nhiên liệu (%): {startFuelLevel}%</label>
+                                <label className="form-label">
+                                    Mức nhiên liệu: <strong>{startFuelLevel}%</strong>
+                                </label>
                                 <input
                                     type="range"
+                                    className="fuel-slider"
                                     min={FUEL_MIN}
                                     max={FUEL_MAX}
                                     value={startFuelLevel}
@@ -479,23 +648,34 @@ function ManageRentals() {
                                 <div className="fuel-level-bar">
                                     <div
                                         className="fuel-level-fill"
-                                        style={{ width: `${startFuelLevel}%` }}
+                                        style={{ 
+                                            width: `${startFuelLevel}%`,
+                                            background: startFuelLevel > 50 ? '#10b981' : startFuelLevel > 25 ? '#f59e0b' : '#ef4444'
+                                        }}
                                     />
                                 </div>
+                                <div className="fuel-level-labels">
+                                    <span>0%</span>
+                                    <span>25%</span>
+                                    <span>50%</span>
+                                    <span>75%</span>
+                                    <span>100%</span>
+                                </div>
+                                <small className="form-hint">Điều chỉnh thanh trượt theo mức nhiên liệu thực tế</small>
                             </div>
+                        </div>
 
-                            <div className="trip-modal-actions">
-                                <button className="trip-modal-btn-cancel" onClick={closeStartTripModal}>
-                                    Hủy
-                                </button>
-                                <button
-                                    className="trip-modal-btn-confirm"
-                                    onClick={handleStartTripConfirm}
-                                    disabled={!startKm || !isFuelLevelValid(startFuelLevel)}
-                                >
-                                    Xác nhận bắt đầu
-                                </button>
-                            </div>
+                        <div className="trip-modal-footer">
+                            <button className="btn-modal-cancel" onClick={closeStartTripModal}>
+                                Hủy
+                            </button>
+                            <button
+                                className="btn-modal-confirm"
+                                onClick={handleStartTripConfirm}
+                                disabled={!startKm || !isFuelLevelValid(startFuelLevel)}
+                            >
+                                Xác nhận giao xe
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -504,39 +684,55 @@ function ManageRentals() {
             {/* ========== Modal: Complete Trip ========== */}
             {completeTripModal && (
                 <div className="trip-modal-overlay" onClick={closeCompleteTripModal}>
-                    <div className="trip-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <button className="trip-modal-close" onClick={closeCompleteTripModal}>×</button>
-                        <h2 className="trip-modal-title">Hoàn thành chuyến đi</h2>
-                        <p className="trip-modal-subtitle">
-                            Ghi lại thông tin ODO và mức nhiên liệu tại thời điểm trả xe
-                        </p>
+                    <div className="trip-modal-content modern-popup large" onClick={(e) => e.stopPropagation()}>
+                        <button className="trip-modal-close" onClick={closeCompleteTripModal} aria-label="Đóng">×</button>
+                        
+                        <div className="modal-header-section">
+                            <h2 className="trip-modal-title">Hoàn thành chuyến đi</h2>
+                            <p className="trip-modal-subtitle">
+                                Ghi lại số km, mức nhiên liệu và tính toán các phụ phí (nếu có)
+                            </p>
+                        </div>
 
                         <div className="trip-modal-body">
                             <div className="trip-modal-booking-info">
-                                <h3>{completeTripModal.vehicleName}</h3>
-                                <p>{completeTripModal.renterName}</p>
-                                <p>{new Date(completeTripModal.startDate).toLocaleDateString('vi-VN')} – {new Date(completeTripModal.endDate).toLocaleDateString('vi-VN')}</p>
+                                <div>
+                                    <h3>{completeTripModal.vehicleName}</h3>
+                                    <p className="info-renter">{completeTripModal.renterName}</p>
+                                    <p className="info-dates">
+                                        <span>{new Date(completeTripModal.startDate).toLocaleDateString('vi-VN')}</span>
+                                        <span className="date-separator">→</span>
+                                        <span>{new Date(completeTripModal.endDate).toLocaleDateString('vi-VN')}</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="info-badge">
+                                Số km lúc giao xe: <strong>{completeTripModal.startKm?.toLocaleString('vi-VN') || 'N/A'} km</strong>
                             </div>
 
                             <div className="form-group">
-                                <label>Số Km lúc bắt đầu: {completeTripModal.startKm?.toLocaleString() || 'N/A'} km</label>
-                            </div>
-
-                            <div className="form-group">
-                                <label>Số Km lúc trả xe (ODO)</label>
+                                <label className="form-label">
+                                    Số km lúc trả xe (ODO) <span className="required">*</span>
+                                </label>
                                 <input
                                     type="number"
+                                    className="form-input"
                                     value={endKm}
                                     onChange={(e) => setEndKm(e.target.value)}
                                     placeholder="Ví dụ: 45800"
                                     min={completeTripModal.startKm || 0}
                                 />
+                                <small className="form-hint">Nhập số km hiện tại khi khách trả xe</small>
                             </div>
 
                             <div className="form-group">
-                                <label>Mức nhiên liệu lúc trả (%): {endFuelLevel}%</label>
+                                <label className="form-label">
+                                    Mức nhiên liệu lúc trả: <strong>{endFuelLevel}%</strong>
+                                </label>
                                 <input
                                     type="range"
+                                    className="fuel-slider"
                                     min={FUEL_MIN}
                                     max={FUEL_MAX}
                                     value={endFuelLevel}
@@ -545,51 +741,77 @@ function ManageRentals() {
                                 <div className="fuel-level-bar">
                                     <div
                                         className="fuel-level-fill"
-                                        style={{ width: `${endFuelLevel}%` }}
+                                        style={{ 
+                                            width: `${endFuelLevel}%`,
+                                            background: endFuelLevel > 50 ? '#10b981' : endFuelLevel > 25 ? '#f59e0b' : '#ef4444'
+                                        }}
                                     />
                                 </div>
+                                <div className="fuel-level-labels">
+                                    <span>0%</span>
+                                    <span>25%</span>
+                                    <span>50%</span>
+                                    <span>75%</span>
+                                    <span>100%</span>
+                                </div>
+                                <small className="form-hint">Ghi lại mức nhiên liệu còn lại khi trả xe</small>
                             </div>
 
                             {/* Over-KM calculation */}
                             {overKmInfo && (
                                 <div className={`surcharge-box ${overKmInfo.overKm > 0 ? 'warning' : 'ok'}`}>
-                                    <p><strong>Đã đi:</strong> {overKmInfo.drivenKm.toLocaleString()} km</p>
-                                    <p><strong>Định mức:</strong> {overKmInfo.allowedKm.toLocaleString()} km</p>
-                                    {overKmInfo.overKm > 0 ? (
-                                        <p className="surcharge-amount">
-                                            ⚠️ Lố <strong>{overKmInfo.overKm.toLocaleString()} km</strong> × 5.000đ = <strong>{formatVndCurrency(overKmInfo.overKmFee)}</strong>
-                                        </p>
-                                    ) : (
-                                        <p className="surcharge-ok">✅ Trong giới hạn cho phép</p>
-                                    )}
+                                    <div className="surcharge-header">
+                                        <span>Tính toán quãng đường đã đi</span>
+                                    </div>
+                                    <div className="surcharge-details">
+                                        <p><span>Đã đi:</span> <strong>{overKmInfo.drivenKm.toLocaleString('vi-VN')} km</strong></p>
+                                        <p><span>Định mức cho phép:</span> <strong>{overKmInfo.allowedKm.toLocaleString('vi-VN')} km</strong> <small>({overKmInfo.rentalDays} ngày × 300km)</small></p>
+                                        {overKmInfo.overKm > 0 ? (
+                                            <p className="surcharge-amount">
+                                                Vượt quá <strong>{overKmInfo.overKm.toLocaleString('vi-VN')} km</strong> × 5.000 VNĐ/km = <strong>{formatVndCurrency(overKmInfo.overKmFee)}</strong>
+                                            </p>
+                                        ) : (
+                                            <p className="surcharge-ok">Trong giới hạn cho phép - Không phụ phí</p>
+                                        )}
+                                    </div>
                                 </div>
                             )}
 
                             <div className="form-group">
-                                <label>Phụ phí khác (VNĐ) - trầy xước, dọn vệ sinh...</label>
+                                <label className="form-label">
+                                    Phụ phí khác (VNĐ)
+                                </label>
                                 <input
                                     type="number"
+                                    className="form-input"
                                     value={otherSurcharge}
                                     onChange={(e) => setOtherSurcharge(e.target.value)}
-                                    placeholder="0"
+                                    placeholder="Ví dụ: 200000"
                                     min="0"
                                 />
+                                <small className="form-hint">Nhập 0 hoặc để trống nếu không có phụ phí bổ sung (đơn vị: VNĐ)</small>
                             </div>
 
                             <div className="form-group">
-                                <label>Ghi chú tình trạng xe</label>
+                                <label className="form-label">
+                                    Ghi chú tình trạng xe
+                                </label>
                                 <textarea
+                                    className="form-textarea"
                                     value={returnNotes}
                                     onChange={(e) => setReturnNotes(e.target.value)}
-                                    placeholder="Ví dụ: Xe bình thường, không trầy xước..."
+                                    placeholder="Ví dụ: Xe trả về trong tình trạng tốt, không có vấn đề gì..."
                                     rows={3}
                                 />
+                                <small className="form-hint">Ghi chú chi tiết về tình trạng xe khi trả (nếu có)</small>
                             </div>
 
                             {/* Total surcharge */}
                             <div className="total-surcharge-box">
-                                <span>Tổng phụ phí</span>
-                                <span className="total-amount">{formatVndCurrency(totalSurcharge)}</span>
+                                <div className="total-info">
+                                    <span className="total-label">Tổng phụ phí cần thu</span>
+                                    <span className="total-amount">{formatVndCurrency(totalSurcharge)}</span>
+                                </div>
                             </div>
                         </div>
 
@@ -597,7 +819,11 @@ function ManageRentals() {
                             <button className="btn-modal-cancel" onClick={closeCompleteTripModal}>
                                 Huỷ
                             </button>
-                            <button className="btn-modal-confirm complete" onClick={submitCompleteTrip}>
+                            <button 
+                                className="btn-modal-confirm complete" 
+                                onClick={submitCompleteTrip}
+                                disabled={!endKm || !isFuelLevelValid(endFuelLevel)}
+                            >
                                 Xác nhận trả xe
                             </button>
                         </div>

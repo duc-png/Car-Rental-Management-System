@@ -230,7 +230,7 @@ function DeliveryLocationModal({
                         </div>
                         <div>
                             <span>Phí giao nhận xe</span>
-                            <b>{formatVndNumber(feePerKmValue)}đ/km</b>
+                            <b>{formatVndNumber(feePerKmValue)}/km</b>
                         </div>
                     </div>
                 </div>

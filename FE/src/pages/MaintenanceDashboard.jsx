@@ -378,7 +378,7 @@ function MaintenanceDashboard() {
                 <div className="stat-content">
                   <p className="stat-label">Tổng chi phí</p>
                   <h3 className="stat-value stat-value-large">{stats.totalCost.toLocaleString('vi-VN')}</h3>
-                  <p className="stat-sublabel">₫ VND</p>
+                  <p className="stat-sublabel">VNĐ</p>
                 </div>
               </div>
             </section>
@@ -586,7 +586,7 @@ function MaintenanceDashboard() {
                         />
                       </div>
                       <div className="form-group">
-                        <label>Đơn giá (₫)</label>
+                        <label>Đơn giá (VNĐ)</label>
                         <input
                           type="number"
                           placeholder="0"
@@ -615,7 +615,7 @@ function MaintenanceDashboard() {
                       <div className="cost-preview">
                         <span>Tổng cộng:</span>
                         <span className="cost-total">
-                          {(Number(newCostItem.unitPrice) * Number(newCostItem.quantity)).toLocaleString('vi-VN')} ₫
+                          {(Number(newCostItem.unitPrice) * Number(newCostItem.quantity)).toLocaleString('vi-VN')} VNĐ
                         </span>
                       </div>
                     )}
@@ -700,7 +700,7 @@ function MaintenanceDashboard() {
                           <div className="record-cost">
                             <span className="cost-label">Chi phí:</span>
                             <span className="cost-value">
-                              {Number(r.totalCost || 0).toLocaleString('vi-VN')} ₫
+                              {Number(r.totalCost || 0).toLocaleString('vi-VN')} VNĐ
                             </span>
                           </div>
                           {r.description && (
@@ -768,7 +768,7 @@ function MaintenanceDashboard() {
                       <div className="info-item">
                         <dt>Tổng chi phí</dt>
                         <dd className="cost-highlight">
-                          {Number(selectedRecord.totalCost || 0).toLocaleString('vi-VN')} ₫
+                          {Number(selectedRecord.totalCost || 0).toLocaleString('vi-VN')} VNĐ
                         </dd>
                       </div>
                     </dl>
@@ -800,11 +800,11 @@ function MaintenanceDashboard() {
                                   <p className="cost-item-description">{item.description}</p>
                                 )}
                                 <p className="cost-item-calc">
-                                  {item.quantity} × {Number(item.unitPrice || 0).toLocaleString('vi-VN')} ₫
+                                  {item.quantity} × {Number(item.unitPrice || 0).toLocaleString('vi-VN')} VNĐ
                                 </p>
                               </div>
                               <p className="cost-item-total">
-                                {Number(item.totalPrice || 0).toLocaleString('vi-VN')} ₫
+                                {Number(item.totalPrice || 0).toLocaleString('vi-VN')} VNĐ
                               </p>
                             </div>
                           ))}

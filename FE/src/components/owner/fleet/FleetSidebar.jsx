@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Car, ChartSpline, LayoutGrid, LogOut, ReceiptText, Settings, UsersRound } from 'lucide-react'
+import { Car, ChartSpline, LayoutGrid, LogOut, MessageSquareText, ReceiptText, Settings, UsersRound } from 'lucide-react'
 import '../../../styles/FleetSidebar.css'
 
 function FleetSidebar({ user, onLogout }) {
@@ -10,6 +10,7 @@ function FleetSidebar({ user, onLogout }) {
     const isOverviewRoute = location.pathname === '/owner/overview'
     const isVehiclesRoute = location.pathname.startsWith('/owner/fleet') || location.pathname.startsWith('/owner/vehicles')
     const isRentalRoute = location.pathname.startsWith('/manage-rentals')
+    const isFeedbackRoute = location.pathname.startsWith('/owner/feedback')
 
     const navItems = [
         {
@@ -32,6 +33,13 @@ function FleetSidebar({ user, onLogout }) {
             icon: ReceiptText,
             label: 'Đơn thuê',
             active: isRentalRoute,
+        },
+        {
+            key: 'feedback',
+            to: '/owner/feedback',
+            icon: MessageSquareText,
+            label: 'Phản hồi khách',
+            active: isFeedbackRoute,
         },
         {
             key: 'customers',

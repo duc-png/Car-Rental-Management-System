@@ -10,5 +10,5 @@ export const getBookingStatusLabel = (status) => BOOKING_STATUS_LABELS[status] |
 
 export const formatVndCurrency = (amount) => {
     const value = Number(amount || 0)
-    return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value)
+    return `${Math.round(value).toLocaleString('vi-VN')} VNĐ`
 }

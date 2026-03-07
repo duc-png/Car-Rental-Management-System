@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { getReturnInspection, confirmReturnFees, FUEL_LEVELS } from '../api/returns'
 import { createDispute } from '../api/disputes'
+import { formatVndCurrency } from '../utils/bookingUtils'
 import '../styles/ReturnConfirmationModal.css'
 
 function ReturnConfirmationModal({ booking, onClose, onSuccess, onDispute }) {
@@ -161,7 +162,7 @@ function ReturnConfirmationModal({ booking, onClose, onSuccess, onDispute }) {
                                 <small>{inspection?.lateFeeBreakdown}</small>
                             </div>
                             <span className={inspection?.lateFee > 0 ? 'fee-amount negative' : 'fee-amount'}>
-                                ${inspection?.lateFee?.toFixed(2) || '0.00'}
+                                {formatVndCurrency(inspection?.lateFee || 0)}
                             </span>
                         </div>
 
@@ -171,7 +172,7 @@ function ReturnConfirmationModal({ booking, onClose, onSuccess, onDispute }) {
                                 <small>{inspection?.fuelFeeBreakdown}</small>
                             </div>
                             <span className={inspection?.fuelFee > 0 ? 'fee-amount negative' : 'fee-amount'}>
-                                ${inspection?.fuelFee?.toFixed(2) || '0.00'}
+                                {formatVndCurrency(inspection?.fuelFee || 0)}
                             </span>
                         </div>
 
@@ -180,23 +181,23 @@ function ReturnConfirmationModal({ booking, onClose, onSuccess, onDispute }) {
                                 <span>Damage Fee</span>
                             </div>
                             <span className={inspection?.damageFee > 0 ? 'fee-amount negative' : 'fee-amount'}>
-                                ${inspection?.damageFee?.toFixed(2) || '0.00'}
+                                {formatVndCurrency(inspection?.damageFee || 0)}
                             </span>
                         </div>
 
                         <div className="fee-item total-additional">
                             <span>Total Additional Fees</span>
-                            <span className="fee-amount">${inspection?.totalAdditionalFees?.toFixed(2) || '0.00'}</span>
+                            <span className="fee-amount">{formatVndCurrency(inspection?.totalAdditionalFees || 0)}</span>
                         </div>
 
                         <div className="fee-item original">
                             <span>Original Rental</span>
-                            <span>${inspection?.originalPrice?.toFixed(2) || '0.00'}</span>
+                            <span>{formatVndCurrency(inspection?.originalPrice || 0)}</span>
                         </div>
 
                         <div className="fee-item grand-total">
                             <span>Grand Total</span>
-                            <span>${inspection?.finalTotal?.toFixed(2) || '0.00'}</span>
+                            <span>{formatVndCurrency(inspection?.finalTotal || 0)}</span>
                         </div>
                     </div>
                 </div>

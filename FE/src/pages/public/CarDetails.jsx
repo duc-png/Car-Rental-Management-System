@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getCarById, getCarsList } from '../../api/cars';
 import { getOwnerById } from '../../api/owners';
 import { createBooking } from '../../api/bookings';
+import { startConversationByVehicle } from '../../api/chat';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'sonner';
 import MapModal from '../../components/booking/MapModal';
@@ -58,6 +59,7 @@ export default function CarDetails() {
     const [deliveryDistanceKm, setDeliveryDistanceKm] = useState(0);
     const [deliveryFeeVnd, setDeliveryFeeVnd] = useState(0);
     const [bookingLoading, setBookingLoading] = useState(false);
+    const [contactLoading, setContactLoading] = useState(false);
 
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -397,6 +399,38 @@ export default function CarDetails() {
         setIsTimeModalOpen(true);
     };
 
+    const handleContactOwner = async () => {
+        if (!user) {
+            toast.error('Vui lòng đăng nhập tài khoản khách hàng để liên hệ chủ xe!');
+            navigate('/login');
+            return;
+        }
+
+        const roleScope = String(user?.role || user?.scope || '');
+        if (!roleScope.includes('ROLE_USER')) {
+            toast.error('Tính năng liên hệ hiện chỉ dành cho tài khoản khách hàng.');
+            return;
+        }
+
+        if (!car?.id) {
+            toast.error('Không tìm thấy xe để tạo hội thoại.');
+            return;
+        }
+
+        setContactLoading(true);
+        try {
+            const conversation = await startConversationByVehicle(car.id);
+            if (!conversation?.id) {
+                throw new Error('Không thể tạo hội thoại.');
+            }
+            navigate(`/chat?conversationId=${conversation.id}&fromDetails=1`);
+        } catch (error) {
+            toast.error(error?.message || 'Không thể liên hệ chủ xe lúc này.');
+        } finally {
+            setContactLoading(false);
+        }
+    };
+
     const applyTimeSelection = async () => {
         if (!returnDate) {
             setReturnDate(new Date(pickupDate.getTime() + DAY_MS));
@@ -671,7 +705,14 @@ export default function CarDetails() {
                                         <b>{ownerApprovalRate}</b>
                                     </div>
                                 </div>
-                                <button type="button" className="owner-contact-btn">Liên hệ</button>
+                                <button
+                                    type="button"
+                                    className="owner-contact-btn"
+                                    onClick={handleContactOwner}
+                                    disabled={contactLoading}
+                                >
+                                    {contactLoading ? 'Đang mở chat...' : 'Liên hệ'}
+                                </button>
                             </div>
                             <p className="owner-review-note">⭐ {ownerRating} • {ownerReviews} đánh giá</p>
                         </section>
@@ -681,7 +722,7 @@ export default function CarDetails() {
                     <aside className="booking-sidebar">
                         <div className="detail-booking-card">
                             <div className="price-head-row">
-                                <span className="old-price">{formatVndNumber(pricePerDay)}đ</span>
+                                <span className="old-price">{formatVndNumber(pricePerDay)}</span>
                                 <span className="per-day">/ ngày</span>
                                 <span className="discount-pill">-{discountPercent}%</span>
                             </div>
@@ -741,7 +782,7 @@ export default function CarDetails() {
                                             <span>Giao xe tận nơi</span>
                                             <b>{deliveryAddressLabel || `Phạm vi tối đa ${maxDeliveryDistanceKm}km`}</b>
                                         </div>
-                                        <strong>{extraFeePerKm > 0 ? `${formatVndNumber(extraFeePerKm)}đ/km` : 'Miễn phí'}</strong>
+                                        <strong>{extraFeePerKm > 0 ? `${extraFeePerKm.toLocaleString('vi-VN')} VNĐ/km` : 'Miễn phí'}</strong>
                                     </label>
                                 ) : (
                                     <div className="pickup-option pickup-option-disabled" role="status" aria-live="polite">
@@ -800,7 +841,7 @@ export default function CarDetails() {
 
                             <div className="booking-final-total">
                                 <span>Thành tiền</span>
-                                <b>{formatVndNumber(totalPrice)}đ</b>
+                                <b>{formatVndNumber(totalPrice)}</b>
                             </div>
 
                             <button
@@ -846,7 +887,7 @@ export default function CarDetails() {
                                         </span>
                                     </p>
                                     <div className="related-footer">
-                                        <p>{Number(item.pricePerDay || 0).toLocaleString('vi-VN')}đ <small>/ngày</small></p>
+                                        <p>{Number(item.pricePerDay || 0).toLocaleString('vi-VN')} VNĐ <small>/ngày</small></p>
                                         <span className="related-arrow">→</span>
                                     </div>
                                 </div>

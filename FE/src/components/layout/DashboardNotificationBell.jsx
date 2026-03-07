@@ -35,7 +35,7 @@ export default function DashboardNotificationBell({ className = '' }) {
         }
 
         load()
-        const timer = window.setInterval(load, 30000)
+        const timer = window.setInterval(load, 5000) // set time refresh every 5 seconds notification 
 
         return () => {
             isMounted = false

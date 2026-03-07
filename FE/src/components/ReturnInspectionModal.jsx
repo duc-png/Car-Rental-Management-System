@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { submitReturnInspection, FUEL_LEVELS } from '../api/returns'
+import { formatVndCurrency } from '../utils/bookingUtils'
 import '../styles/ReturnInspectionModal.css'
 
 function ReturnInspectionModal({ booking, onClose, onSuccess }) {
@@ -42,7 +43,7 @@ function ReturnInspectionModal({ booking, onClose, onSuccess }) {
         const diffMs = actualReturn - scheduledEnd
         const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
         const chargeableHours = Math.max(0, diffHours - 1) // 1 hour grace period
-        return chargeableHours * 5 // $5 per hour
+        return chargeableHours * 50000 // 50.000 VNĐ per hour
     }
 
     const calculateFuelFee = () => {
@@ -50,7 +51,7 @@ function ReturnInspectionModal({ booking, onClose, onSuccess }) {
         const endLevel = FUEL_LEVELS.find(f => f.value === formData.fuelLevelEnd)?.percentage || 0
         const diff = startLevel - endLevel
         if (diff <= 0) return 0
-        return diff * 0.5 // $0.50 per percent
+        return diff * 5000 // 5.000 VNĐ per percent
     }
 
     const handleSubmit = async (e) => {
@@ -99,8 +100,8 @@ function ReturnInspectionModal({ booking, onClose, onSuccess }) {
                 <div className="booking-summary">
                     <h4>{booking.vehicleName || `Vehicle #${booking.vehicleId}`}</h4>
                     <p>Renter: {booking.renterName || 'N/A'}</p>
-                    <p>Scheduled End: {booking.endDate ? new Date(booking.endDate).toLocaleString() : 'N/A'}</p>
-                    <p>Original Price: ${(booking.totalPrice || 0).toFixed(2)}</p>
+                    <p>Scheduled End: {booking.endDate ? new Date(booking.endDate).toLocaleString('vi-VN') : 'N/A'}</p>
+                    <p>Original Price: {formatVndCurrency(booking.totalPrice || 0)}</p>
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -194,15 +195,15 @@ function ReturnInspectionModal({ booking, onClose, onSuccess }) {
                         </div>
 
                         <div className="form-group">
-                            <label>Damage Fee ($)</label>
+                            <label>Damage Fee (VNĐ)</label>
                             <input
                                 type="number"
                                 name="damageFee"
                                 value={formData.damageFee}
                                 onChange={handleChange}
-                                placeholder="0.00"
+                                placeholder="0"
                                 min="0"
-                                step="0.01"
+                                step="1000"
                             />
                         </div>
 
@@ -223,28 +224,28 @@ function ReturnInspectionModal({ booking, onClose, onSuccess }) {
                         <div className="fee-row">
                             <span>Late Fee:</span>
                             <span className={preview.lateFee > 0 ? 'fee-amount' : ''}>
-                                ${preview.lateFee.toFixed(2)}
+                                {formatVndCurrency(preview.lateFee)}
                             </span>
                         </div>
                         <div className="fee-row">
                             <span>Fuel Fee:</span>
                             <span className={preview.fuelFee > 0 ? 'fee-amount' : ''}>
-                                ${preview.fuelFee.toFixed(2)}
+                                {formatVndCurrency(preview.fuelFee)}
                             </span>
                         </div>
                         <div className="fee-row">
                             <span>Damage Fee:</span>
                             <span className={preview.damageFee > 0 ? 'fee-amount' : ''}>
-                                ${preview.damageFee.toFixed(2)}
+                                {formatVndCurrency(preview.damageFee)}
                             </span>
                         </div>
                         <div className="fee-row total">
                             <span>Total Additional Fees:</span>
-                            <span>${preview.total.toFixed(2)}</span>
+                            <span>{formatVndCurrency(preview.total)}</span>
                         </div>
                         <div className="fee-row grand-total">
                             <span>Grand Total:</span>
-                            <span>${((booking.totalPrice || 0) + preview.total).toFixed(2)}</span>
+                            <span>{formatVndCurrency((booking.totalPrice || 0) + preview.total)}</span>
                         </div>
                     </div>
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { getDisputeByBooking, resolveDispute, acceptResolution } from '../api/disputes'
 import { getMessagesByDispute, sendMessage, markMessagesAsRead } from '../api/messages'
+import { formatVndCurrency } from '../utils/bookingUtils'
 import '../styles/DisputeChatModal.css'
 
 function DisputeChatModal({ booking, isOwner, onClose, onResolved }) {
@@ -158,7 +159,7 @@ function DisputeChatModal({ booking, isOwner, onClose, onResolved }) {
                     </div>
                     <div className="info-row">
                         <span>Disputed Amount:</span>
-                        <strong className="amount">${dispute?.disputedAmount?.toFixed(2)}</strong>
+                        <strong className="amount">{formatVndCurrency(dispute?.disputedAmount || 0)}</strong>
                     </div>
                     <div className="info-row reason">
                         <span>Reason:</span>
@@ -169,7 +170,7 @@ function DisputeChatModal({ booking, isOwner, onClose, onResolved }) {
                             <h4>Resolution</h4>
                             <p className="resolution-notes">{dispute?.resolutionNotes}</p>
                             <div className="final-amount">
-                                Final Amount: <strong>${dispute?.finalAmount?.toFixed(2)}</strong>
+                                Final Amount: <strong>{formatVndCurrency(dispute?.finalAmount || 0)}</strong>
                             </div>
                         </div>
                     )}

@@ -152,7 +152,7 @@ export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
                                 <span>{car?.fuelType}</span>
                             </div>
                             <div className="car-price-tag">
-                                {car?.pricePerDay?.toLocaleString('vi-VN')} ₫ / ngày
+                                {car?.pricePerDay?.toLocaleString('vi-VN')} VNĐ / ngày
                             </div>
                         </div>
                     </div>
@@ -223,7 +223,7 @@ export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
                             <div className="price-summary">
                                 <div className="price-row">
                                     <span>Đơn giá thuê:</span>
-                                    <span>{car?.pricePerDay?.toLocaleString('vi-VN')} ₫</span>
+                                    <span>{car?.pricePerDay?.toLocaleString('vi-VN')} VNĐ</span>
                                 </div>
                                 <div className="price-row">
                                     <span>Số ngày thuê:</span>
@@ -235,7 +235,7 @@ export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
                                 </div>
                                 <div className="price-row total">
                                     <span>Tổng cộng:</span>
-                                    <span className="total-price">{totalPrice.toLocaleString('vi-VN')} ₫</span>
+                                    <span className="total-price">{totalPrice.toLocaleString('vi-VN')} VNĐ</span>
                                 </div>
                             </div>
 
@@ -251,7 +251,7 @@ export default function BookingModal({ car, isOpen, onClose, onSuccess }) {
                                     ) : (
                                         <>
                                             <span>Xác nhận đặt xe</span>
-                                            <span className="total-badge">{totalPrice > 0 ? totalPrice.toLocaleString('vi-VN') + ' ₫' : ''}</span>
+                                            <span className="total-badge">{totalPrice > 0 ? totalPrice.toLocaleString('vi-VN') + ' VNĐ' : ''}</span>
                                         </>
                                     )}
                                 </button>

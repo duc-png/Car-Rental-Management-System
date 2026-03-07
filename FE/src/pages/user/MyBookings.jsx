@@ -176,7 +176,7 @@ function MyBookings() {
                     <p>
                       <strong>Phí phát sinh:</strong>{' '}
                       <span style={{color: '#ef4444', fontWeight: 600}}>
-                        {booking.totalAdditionalFees?.toLocaleString('vi-VN')} ₫
+                        {formatVndCurrency(booking.totalAdditionalFees)}
                       </span>
                     </p>
                   )}

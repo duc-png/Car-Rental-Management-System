@@ -1,11 +1,18 @@
+import { buildInvalidImageFilesMessage, splitImageFiles } from '../utils/imageFileValidation';
+
 const API_BASE_URL = 'http://localhost:8080/api/v1';
 
 export const submitOwnerRegistration = async (payload, images) => {
     const formData = new FormData();
+    const { validFiles, invalidFiles } = splitImageFiles(images || []);
+
+    if (invalidFiles.length > 0) {
+        throw new Error(buildInvalidImageFilesMessage(invalidFiles));
+    }
 
     formData.append('data', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
 
-    (images || []).forEach((file) => {
+    validFiles.forEach((file) => {
         formData.append('images', file);
     });
 
