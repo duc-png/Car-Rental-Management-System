@@ -105,7 +105,6 @@ function MyBookings() {
     return status === 'PENDING' || status === 'CONFIRMED'
   }
 
-<<<<<<< HEAD
   const STEPS = [
     { key: 'PENDING', label: 'Đặt xe', icon: '📋' },
     { key: 'CONFIRMED', label: 'Chủ xe duyệt', icon: '✅' },
