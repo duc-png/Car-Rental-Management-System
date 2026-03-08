@@ -105,6 +105,48 @@ function MyBookings() {
     return status === 'PENDING' || status === 'CONFIRMED'
   }
 
+<<<<<<< HEAD
+  const STEPS = [
+    { key: 'PENDING', label: 'Đặt xe', icon: '📋' },
+    { key: 'CONFIRMED', label: 'Chủ xe duyệt', icon: '✅' },
+    { key: 'DEPOSIT_PAID', label: 'Đã đặt cọc', icon: '💰' },
+    { key: 'ONGOING', label: 'Đang thuê', icon: '🚗' },
+    { key: 'COMPLETED', label: 'Hoàn thành', icon: '🏁' },
+  ]
+
+  // Map booking status + paymentStatus → active step index
+  const getActiveStep = (status, paymentStatus) => {
+    if (status === 'CANCELLED') return -1
+    if (status === 'COMPLETED') return 4
+    if (status === 'ONGOING') return 3
+    if (paymentStatus === 'DEPOSIT_PAID' || paymentStatus === 'PENDING_FULL_PAYMENT' || paymentStatus === 'FULLY_PAID') return 2
+    if (status === 'CONFIRMED') return 1
+    return 0 // PENDING
+  }
+
+  const BookingSteps = ({ status, paymentStatus }) => {
+    const isCancelled = status === 'CANCELLED'
+    const activeStep = getActiveStep(status, paymentStatus)
+    return (
+      <div className={`booking-steps ${isCancelled ? 'cancelled' : ''}`}>
+        {STEPS.map((step, idx) => {
+          const isDone = !isCancelled && idx < activeStep
+          const isActive = !isCancelled && idx === activeStep
+          return (
+            <div key={step.key} className={`step-item ${isDone ? 'done' : ''} ${isActive ? 'active' : ''} ${isCancelled ? 'cancelled' : ''}`}>
+              <div className="step-circle">
+                {isDone ? '✓' : step.icon}
+              </div>
+              <span className="step-label">{step.label}</span>
+              {idx < STEPS.length - 1 && <div className={`step-line ${isDone ? 'done' : ''}`} />}
+            </div>
+          )
+        })}
+        {isCancelled && <div className="step-cancelled-badge">❌ Đã hủy</div>}
+      </div>
+    )
+  }
+
   const handleReviewFees = (booking) => {
     setSelectedBooking(booking)
     setShowConfirmModal(true)
@@ -171,11 +213,11 @@ function MyBookings() {
                   {booking.depositAmount && (
                     <p><strong>Tiền cọc (15%):</strong> {formatVndCurrency(booking.depositAmount)}</p>
                   )}
-                  
+
                   {booking.totalAdditionalFees > 0 && (
                     <p>
                       <strong>Phí phát sinh:</strong>{' '}
-                      <span style={{color: '#ef4444', fontWeight: 600}}>
+                      <span style={{ color: '#ef4444', fontWeight: 600 }}>
                         {formatVndCurrency(booking.totalAdditionalFees)}
                       </span>
                     </p>
@@ -186,9 +228,9 @@ function MyBookings() {
                     {getBookingStatusLabel(booking.status)}
                   </span>
                   {getReturnStatusLabel(booking.returnStatus) && (
-                    <span 
-                      className="status-badge" 
-                      style={{ 
+                    <span
+                      className="status-badge"
+                      style={{
                         background: getReturnStatusColor(booking.returnStatus),
                         marginLeft: '8px',
                         color: 'white'
@@ -199,6 +241,7 @@ function MyBookings() {
                   )}
                 </div>
               </div>
+              <BookingSteps status={booking.status} paymentStatus={booking.paymentStatus} />
               <div className="booking-actions">
                 {booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED'
                   && booking.paymentStatus === 'PENDING_DEPOSIT' && booking.checkoutUrl && (
@@ -224,7 +267,7 @@ function MyBookings() {
                 >
                   Xem xe
                 </button>
-                
+
                 {booking.returnStatus === 'FEES_CALCULATED' && (
                   <button
                     className="btn-view"
@@ -244,7 +287,7 @@ function MyBookings() {
                     {booking.returnStatus === 'RESOLVED' ? 'Xem kết quả' : 'Mở chat'}
                   </button>
                 )}
-                
+
                 {canCancel(booking.status) && (
                   <button
                     className="btn-cancel"

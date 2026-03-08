@@ -57,9 +57,6 @@ public class BookingService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         // 3. Check availability
-        // PENDING bookings must also block overlapping dates
-        // Only CONFIRMED/ONGOING block dates — multiple PENDING allowed (owner picks
-        // one)
         List<BookingStatus> activeStatuses = Arrays.asList(
                 BookingStatus.CONFIRMED,
                 BookingStatus.ONGOING);

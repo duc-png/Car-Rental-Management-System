@@ -29,6 +29,7 @@ public class SecurityConfig {
         };
 
         private final CustomJwtDecoder customJwtDecoder;
+        private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
         @Bean
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -56,6 +57,7 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST, "/api/v1/payments/payos-webhook").permitAll()
                                 // Allow Test PayOS
                                 .requestMatchers(HttpMethod.GET, "/api/v1/test-payos").permitAll()
+                                .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                                 .anyRequest()
                                 .authenticated());
 
@@ -72,6 +74,10 @@ public class SecurityConfig {
 
                 // Disable CSRF
                 http.csrf(AbstractHttpConfigurer::disable);
+
+                // OAuth2 Login (Google)
+                http.oauth2Login(oauth2 -> oauth2
+                                .successHandler(oAuth2SuccessHandler));
 
                 return http.build();
 
