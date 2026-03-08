@@ -14,6 +14,7 @@ import CarDetails from './pages/public/CarDetails'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import ForgotPassword from './pages/auth/ForgotPassword'
+import OAuth2Callback from './pages/auth/OAuth2Callback'
 import CarOwnerFleet from './pages/owner/CarOwnerFleet'
 import OwnerVehicleDetails from './pages/owner/OwnerVehicleDetails'
 import OwnerVehicleEdit from './pages/owner/OwnerVehicleEdit'
@@ -121,6 +122,7 @@ function AppLayout() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/oauth2/callback" element={<OAuth2Callback />} />
           <Route path="/owner/fleet" element={<CarOwnerFleet />} />
           <Route path="/owner/fleet/vehicles" element={<CarOwnerFleet />} />
           <Route path="/owner/vehicles/:id" element={<OwnerVehicleDetails />} />
