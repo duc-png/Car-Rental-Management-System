@@ -34,7 +34,7 @@ public class OwnerRegistrationNotificationServiceImpl implements OwnerRegistrati
         String body = "Xin chào " + safeName(registration.getFullName()) + ",\n\n"
                 + "Yêu cầu đăng ký chủ xe của bạn đã được admin chấp thuận.\n"
                 + "Biển số xe: " + safeValue(registration.getLicensePlate()) + "\n\n"
-                + "Bạn có thể đăng nhập và quản lý xe tại: " + frontendUrl + "\n\n"
+                + "Bạn có thể đăng nhập với vai trò chủ xe tại: " + frontendUrl + "/owner/login\n\n"
                 + "Trân trọng,\nCarRental";
 
         sendEmail(registration.getEmail(), subject, body);

@@ -12,6 +12,7 @@ import CustomerProfile from './pages/user/CustomerProfile'
 import ChatPage from './pages/user/ChatPage'
 import CarDetails from './pages/public/CarDetails'
 import Login from './pages/auth/Login'
+import OwnerLogin from './pages/auth/OwnerLogin'
 import Register from './pages/auth/Register'
 import ForgotPassword from './pages/auth/ForgotPassword'
 import CarOwnerFleet from './pages/owner/CarOwnerFleet'
@@ -119,6 +120,7 @@ function AppLayout() {
           <Route path="/booking/:id/payment-success" element={<PaymentSuccess />} />
           <Route path="/booking/:id/payment-cancel" element={<PaymentCancel />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/owner/login" element={<OwnerLogin />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/owner/fleet" element={<CarOwnerFleet />} />

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '../hooks/useAuth';
+import FleetSidebar from '../components/owner/fleet/FleetSidebar';
 import {
   getMaintenanceByVehicle,
   createMaintenanceRecord,
@@ -62,7 +63,6 @@ function MaintenanceDashboard() {
 
   const { token, user, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -88,7 +88,11 @@ function MaintenanceDashboard() {
   });
 
   const [activeTab, setActiveTab] = useState('create');
-  const [vehicleInfo, setVehicleInfo] = useState(null);
+
+  const roleText = String(user?.role || user?.scope || '');
+  const canAccessMaintenance =
+    roleText.includes('ROLE_CAR_OWNER') ||
+    roleText.includes('ROLE_ADMIN');
 
   const selectedRecord =
     selectedRecordId != null
@@ -108,7 +112,7 @@ function MaintenanceDashboard() {
       navigate('/login');
       return;
     }
-    if (!user?.role?.includes('ROLE_EXPERT')) {
+    if (!canAccessMaintenance) {
       navigate('/');
       return;
     }
@@ -127,7 +131,7 @@ function MaintenanceDashboard() {
     };
 
     load();
-  }, [token, user?.role, vehicleId, navigate]);
+  }, [token, canAccessMaintenance, vehicleId, navigate]);
 
   const handleLogout = async () => {
     await logout();
@@ -139,7 +143,6 @@ function MaintenanceDashboard() {
     try {
       if (newRecord.scheduledAt) {
         const picked = new Date(newRecord.scheduledAt);
-        const now = new Date();
         if (Number.isNaN(picked.getTime())) {
           toast.error('Thời gian bảo dưỡng không hợp lệ');
           return;
@@ -171,7 +174,7 @@ function MaintenanceDashboard() {
       toast.success('✅ Tạo hồ sơ bảo dưỡng thành công');
     } catch (error) {
       const errorMsg = error.message || 'Không thể tạo hồ sơ bảo dưỡng';
-      
+
       if (errorMsg.includes('already has active maintenance')) {
         toast.error('⚠️ Xe đang có lịch bảo dưỡng chưa hoàn thành');
       } else if (errorMsg.includes('not available')) {
@@ -199,7 +202,7 @@ function MaintenanceDashboard() {
       toast.success('✅ Cập nhật trạng thái thành công');
     } catch (error) {
       const errorMsg = error.message || 'Không thể cập nhật trạng thái';
-      
+
       if (errorMsg.includes('Invalid maintenance status transition')) {
         toast.error('⚠️ Chuyển trạng thái không hợp lệ');
       } else if (errorMsg.includes('Cannot modify completed')) {
@@ -236,7 +239,7 @@ function MaintenanceDashboard() {
       toast.success('✅ Thêm chi phí thành công');
     } catch (error) {
       const errorMsg = error.message || 'Không thể thêm chi phí';
-      
+
       if (errorMsg.includes('Cannot modify completed')) {
         toast.error('⚠️ Không thể thêm chi phí cho hồ sơ đã hoàn thành/hủy');
       } else if (errorMsg.includes('do not own')) {
@@ -249,57 +252,7 @@ function MaintenanceDashboard() {
 
   return (
     <div className="fleet-dashboard">
-      <aside className="fleet-sidebar">
-        <button
-          type="button"
-          className="fleet-brand"
-          onClick={() => navigate('/owner/fleet')}
-        >
-          <div className="brand-icon">CR</div>
-          <div>
-            <h3>CarRental System</h3>
-            <p>Maintenance</p>
-          </div>
-        </button>
-
-        <div className="fleet-nav">
-          <p className="nav-section">Navigation</p>
-          <button
-            type="button"
-            className={`nav-item ${location.pathname === '/owner/fleet' ? 'active' : ''}`}
-            onClick={() => navigate('/owner/fleet')}
-          >
-            Fleet
-          </button>
-          <button
-            type="button"
-            className={`nav-item ${location.pathname === '/owner/maintenance' ? 'active' : ''}`}
-            onClick={() => navigate('/owner/maintenance')}
-          >
-            Maintenance
-          </button>
-        </div>
-
-        <div className="fleet-system">
-          <p className="nav-section">System</p>
-          <button type="button" className="nav-item">
-            Settings
-          </button>
-        </div>
-
-        <div className="fleet-user">
-          <div className="fleet-user-row">
-            <div className="user-avatar">CO</div>
-            <div className="user-info">
-              <p className="user-name">Car Owner</p>
-              <p className="user-email">{user?.email || '—'}</p>
-            </div>
-          </div>
-          <button type="button" className="fleet-logout-btn" onClick={handleLogout}>
-            Đăng xuất
-          </button>
-        </div>
-      </aside>
+      <FleetSidebar user={user} onLogout={handleLogout} />
 
       <section className="fleet-main">
         <header className="fleet-header">

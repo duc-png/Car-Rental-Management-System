@@ -163,6 +163,12 @@ function Login() {
 
                     <div className="auth-footer">
                         <p>
+                            Đã là chủ xe?{' '}
+                            <Link to="/owner/login" className="auth-link">
+                                Đăng nhập chủ xe
+                            </Link>
+                        </p>
+                        <p>
                             Bạn không có tài khoản?{' '}
                             <Link to="/register" className="auth-link">
                                 Đăng ký Ngày

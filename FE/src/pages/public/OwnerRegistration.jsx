@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { submitOwnerRegistration } from '../../api/ownerRegistrations';
+import {
+    sendOwnerRegistrationEmailOtp,
+    submitOwnerRegistration,
+    verifyOwnerRegistrationEmailOtp
+} from '../../api/ownerRegistrations';
+import { useAuth } from '../../hooks/useAuth';
 import { useVehicleCatalogs } from '../../hooks/useVehicleCatalogs';
 import { generateQueryVariants, resolveBestGeocodeFromVariants } from '../../utils/carDetailsUtils';
 import {
@@ -15,12 +20,17 @@ import 'leaflet/dist/leaflet.css';
 
 function OwnerRegistration() {
     const navigate = useNavigate();
+    const { isAuthenticated, user } = useAuth();
     const [showForm, setShowForm] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState(() => createEmptyOwnerRegistrationForm());
     const [images, setImages] = useState([]);
     const [invalidImageNames, setInvalidImageNames] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+    const [otpValue, setOtpValue] = useState('');
+    const [isOtpVerifying, setIsOtpVerifying] = useState(false);
+    const [isOtpResending, setIsOtpResending] = useState(false);
     const {
         featureCatalog,
         brands: brandCatalog,
@@ -41,6 +51,24 @@ function OwnerRegistration() {
     const addressMapRef = useRef(null);
 
     const previews = useMemo(() => images.map((file) => URL.createObjectURL(file)), [images]);
+    const roleText = String(user?.role || user?.scope || '');
+    const isAdminAccount = roleText.includes('ROLE_ADMIN') || roleText.includes('ADMIN');
+    const isLoggedCustomerFlow = isAuthenticated && !isAdminAccount;
+
+    useEffect(() => {
+        if (!isLoggedCustomerFlow) return;
+
+        setFormData((prev) => ({
+            ...prev,
+            owner: {
+                ...prev.owner,
+                email: String(user?.email || user?.sub || '').trim(),
+                phone: String(user?.phone || '').trim(),
+                fullName: String(user?.fullName || user?.name || '').trim(),
+                password: ''
+            }
+        }));
+    }, [isLoggedCustomerFlow, user]);
 
     useEffect(() => {
         return () => {
@@ -332,7 +360,8 @@ function OwnerRegistration() {
 
     const validateStep = (step) => {
         if (step === 1) {
-            if (!formData.owner.email || !formData.owner.phone || !formData.owner.fullName || !formData.owner.password) {
+            if (!isLoggedCustomerFlow
+                && (!formData.owner.email || !formData.owner.phone || !formData.owner.fullName || !formData.owner.password)) {
                 toast.error('Vui lòng nhập đầy đủ thông tin chủ xe');
                 return false;
             }
@@ -452,7 +481,7 @@ function OwnerRegistration() {
         }
 
         const payload = {
-            owner: {
+            owner: isLoggedCustomerFlow ? null : {
                 email: formData.owner.email.trim(),
                 phone: formData.owner.phone.trim(),
                 fullName: formData.owner.fullName.trim(),
@@ -496,9 +525,53 @@ function OwnerRegistration() {
             setCurrentStep(1);
             navigate('/');
         } catch (error) {
+            if (isLoggedCustomerFlow && Number(error?.code) === 2017) {
+                try {
+                    await sendOwnerRegistrationEmailOtp();
+                } catch {
+                    // ignore because backend submit may already trigger OTP send
+                }
+
+                toast.info('Email chưa xác thực. Hệ thống đã gửi OTP vào email của bạn.');
+                setOtpValue('');
+                setIsOtpModalOpen(true);
+                return;
+            }
             toast.error(error.message || 'Gửi yêu cầu thất bại');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleVerifyOtp = async () => {
+        const normalizedOtp = String(otpValue || '').trim();
+        if (normalizedOtp.length !== 6) {
+            toast.error('Vui lòng nhập OTP gồm 6 số');
+            return;
+        }
+
+        try {
+            setIsOtpVerifying(true);
+            await verifyOwnerRegistrationEmailOtp(normalizedOtp);
+            setIsOtpModalOpen(false);
+            setOtpValue('');
+            toast.success('Xác thực email thành công. Vui lòng bấm Gửi yêu cầu lại.');
+        } catch (error) {
+            toast.error(error.message || 'OTP không hợp lệ');
+        } finally {
+            setIsOtpVerifying(false);
+        }
+    };
+
+    const handleResendOtp = async () => {
+        try {
+            setIsOtpResending(true);
+            await sendOwnerRegistrationEmailOtp();
+            toast.success('Đã gửi lại OTP vào email của bạn');
+        } catch (error) {
+            toast.error(error.message || 'Không thể gửi lại OTP');
+        } finally {
+            setIsOtpResending(false);
         }
     };
 
@@ -581,51 +654,53 @@ function OwnerRegistration() {
 
                 <form className="owner-registration-form" onSubmit={handleSubmit}>
                     {currentStep === 1 && <>
-                        <div className="form-section">
-                            <h2>Thông tin chủ xe</h2>
-                            <div className="form-grid">
-                                <label>
-                                    Họ và tên
-                                    <input
-                                        type="text"
-                                        value={formData.owner.fullName}
-                                        onChange={(event) => updateOwner('fullName', event.target.value)}
-                                        placeholder="Ví Dụ: Nguyễn Văn A"
-                                        required
-                                    />
-                                </label>
-                                <label>
-                                    Email
-                                    <input
-                                        type="email"
-                                        value={formData.owner.email}
-                                        onChange={(event) => updateOwner('email', event.target.value)}
-                                        placeholder="Ví Dụ:owner@email.com"
-                                        required
-                                    />
-                                </label>
-                                <label>
-                                    Số điện thoại
-                                    <input
-                                        type="tel"
-                                        value={formData.owner.phone}
-                                        onChange={(event) => updateOwner('phone', event.target.value)}
-                                        placeholder="Ví Dụ:0901234567"
-                                        required
-                                    />
-                                </label>
-                                <label>
-                                    Mật khẩu
-                                    <input
-                                        type="password"
-                                        value={formData.owner.password}
-                                        onChange={(event) => updateOwner('password', event.target.value)}
-                                        placeholder="********"
-                                        required
-                                    />
-                                </label>
+                        {!isLoggedCustomerFlow && (
+                            <div className="form-section">
+                                <h2>Thông tin chủ xe</h2>
+                                <div className="form-grid">
+                                    <label>
+                                        Họ và tên
+                                        <input
+                                            type="text"
+                                            value={formData.owner.fullName}
+                                            onChange={(event) => updateOwner('fullName', event.target.value)}
+                                            placeholder="Ví Dụ: Nguyễn Văn A"
+                                            required
+                                        />
+                                    </label>
+                                    <label>
+                                        Email
+                                        <input
+                                            type="email"
+                                            value={formData.owner.email}
+                                            onChange={(event) => updateOwner('email', event.target.value)}
+                                            placeholder="Ví Dụ:owner@email.com"
+                                            required
+                                        />
+                                    </label>
+                                    <label>
+                                        Số điện thoại
+                                        <input
+                                            type="tel"
+                                            value={formData.owner.phone}
+                                            onChange={(event) => updateOwner('phone', event.target.value)}
+                                            placeholder="Ví Dụ:0901234567"
+                                            required
+                                        />
+                                    </label>
+                                    <label>
+                                        Mật khẩu
+                                        <input
+                                            type="password"
+                                            value={formData.owner.password}
+                                            onChange={(event) => updateOwner('password', event.target.value)}
+                                            placeholder="********"
+                                            required
+                                        />
+                                    </label>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         <div className="form-section owner-vehicle-license-section">
                             <h2>Biển số xe</h2>
@@ -1018,6 +1093,57 @@ function OwnerRegistration() {
                             >
                                 Hủy bỏ
                             </button>
+                        </div>
+                    </div>
+                )}
+
+                {isOtpModalOpen && (
+                    <div className="owner-address-modal-overlay" onClick={() => setIsOtpModalOpen(false)}>
+                        <div className="owner-address-modal owner-otp-modal" onClick={(event) => event.stopPropagation()}>
+                            <button
+                                type="button"
+                                className="owner-address-modal-close"
+                                onClick={() => setIsOtpModalOpen(false)}
+                                aria-label="Đóng"
+                            >
+                                ×
+                            </button>
+
+                            <h3>Xác thực email</h3>
+                            <p className="owner-otp-modal-note">
+                                Vui lòng nhập mã OTP 6 số đã gửi tới email tài khoản của bạn để tiếp tục đăng ký chủ xe.
+                            </p>
+
+                            <label>
+                                Mã OTP
+                                <input
+                                    type="text"
+                                    value={otpValue}
+                                    onChange={(event) => setOtpValue(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                                    placeholder="Nhập 6 số"
+                                    inputMode="numeric"
+                                    maxLength={6}
+                                />
+                            </label>
+
+                            <div className="owner-otp-modal-actions">
+                                <button
+                                    type="button"
+                                    className="owner-address-cancel-btn"
+                                    onClick={handleResendOtp}
+                                    disabled={isOtpResending || isOtpVerifying}
+                                >
+                                    {isOtpResending ? 'Đang gửi lại...' : 'Gửi lại OTP'}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="owner-address-apply-btn"
+                                    onClick={handleVerifyOtp}
+                                    disabled={isOtpVerifying || isOtpResending}
+                                >
+                                    {isOtpVerifying ? 'Đang xác thực...' : 'Xác thực'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
