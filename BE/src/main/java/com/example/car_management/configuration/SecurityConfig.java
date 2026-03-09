@@ -25,7 +25,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
         private final String[] PUBLIC_ENDPOINTS = {
-                        "/auth/token", "/auth/logout", "/auth/refresh", "/auth/register", "/api/v1/owner-registrations", "/auth/forgot-password"
+                        "/auth/token", "/auth/logout", "/auth/refresh", "/auth/register", "/api/v1/owner-registrations",
+                        "/auth/forgot-password"
         };
 
         private final CustomJwtDecoder customJwtDecoder;
@@ -53,8 +54,9 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/api/v1/bookings/vehicle/*/booked-dates").permitAll()
                                 // Allow public GET access to owner public info (car details page)
                                 .requestMatchers(HttpMethod.GET, "/api/v1/owners/**").permitAll()
-                                // Allow PayOS Webhook
+                                // Allow PayOS Webhook + verify
                                 .requestMatchers(HttpMethod.POST, "/api/v1/payments/payos-webhook").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/v1/payments/verify").permitAll()
                                 // Allow Test PayOS
                                 .requestMatchers(HttpMethod.GET, "/api/v1/test-payos").permitAll()
                                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()

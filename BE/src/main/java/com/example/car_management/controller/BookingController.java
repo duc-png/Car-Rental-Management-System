@@ -85,4 +85,12 @@ public class BookingController {
                                 .result(result)
                                 .build());
         }
+
+        @PostMapping("/{id}/confirm-handover")
+        public ResponseEntity<ApiResponse<BookingResponse>> confirmHandover(@PathVariable Integer id) {
+                BookingResponse response = bookingService.confirmHandover(id);
+                return ResponseEntity.ok(ApiResponse.<BookingResponse>builder()
+                                .result(response)
+                                .build());
+        }
 }

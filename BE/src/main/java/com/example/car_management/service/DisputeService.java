@@ -7,7 +7,6 @@ import com.example.car_management.entity.BookingEntity;
 import com.example.car_management.entity.DisputeEntity;
 import com.example.car_management.entity.UserEntity;
 import com.example.car_management.entity.enums.DisputeStatus;
-import com.example.car_management.entity.enums.ReturnStatus;
 import com.example.car_management.exception.AppException;
 import com.example.car_management.exception.ErrorCode;
 import com.example.car_management.repository.BookingRepository;
@@ -37,7 +36,7 @@ public class DisputeService {
     @Transactional
     public DisputeResponse createDispute(CreateDisputeRequest request) {
         Integer userId = getCurrentUserId();
-        
+
         BookingEntity booking = bookingRepository.findById(request.getBookingId())
                 .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
 
@@ -46,14 +45,16 @@ public class DisputeService {
             throw new AppException(ErrorCode.FORBIDDEN_RESOURCE);
         }
 
-        if (booking.getReturnStatus() != ReturnStatus.FEES_CALCULATED) {
+        // Dispute can be created when booking is in ONGOING or COMPLETED status
+        if (booking.getStatus() != com.example.car_management.entity.enums.BookingStatus.ONGOING
+                && booking.getStatus() != com.example.car_management.entity.enums.BookingStatus.COMPLETED) {
             throw new AppException(ErrorCode.CANNOT_CREATE_DISPUTE);
         }
 
         List<DisputeStatus> activeStatuses = Arrays.asList(DisputeStatus.OPEN, DisputeStatus.IN_DISCUSSION);
         List<DisputeEntity> existingDisputes = disputeRepository.findActiveDisputesByBookingId(
                 request.getBookingId(), activeStatuses);
-        
+
         if (!existingDisputes.isEmpty()) {
             throw new AppException(ErrorCode.DISPUTE_ALREADY_EXISTS);
         }
@@ -66,15 +67,13 @@ public class DisputeService {
                 .customer(customer)
                 .owner(owner)
                 .reason(request.getReason())
-                .disputedAmount(request.getDisputedAmount() != null ? 
-                        request.getDisputedAmount() : booking.getTotalAdditionalFees())
+                .disputedAmount(request.getDisputedAmount() != null ? request.getDisputedAmount() : null)
                 .status(DisputeStatus.OPEN)
                 .createdAt(Instant.now())
                 .build();
 
         disputeRepository.save(dispute);
 
-        booking.setReturnStatus(ReturnStatus.DISPUTED);
         booking.setUpdatedAt(Instant.now());
         bookingRepository.save(booking);
 
@@ -84,7 +83,7 @@ public class DisputeService {
     @Transactional(readOnly = true)
     public DisputeResponse getDispute(Integer disputeId) {
         Integer userId = getCurrentUserId();
-        
+
         DisputeEntity dispute = disputeRepository.findById(disputeId)
                 .orElseThrow(() -> new AppException(ErrorCode.DISPUTE_NOT_FOUND));
 
@@ -98,7 +97,7 @@ public class DisputeService {
     @Transactional(readOnly = true)
     public DisputeResponse getDisputeByBookingId(Integer bookingId) {
         Integer userId = getCurrentUserId();
-        
+
         DisputeEntity dispute = disputeRepository.findByBookingId(bookingId)
                 .orElseThrow(() -> new AppException(ErrorCode.DISPUTE_NOT_FOUND));
 
@@ -119,7 +118,7 @@ public class DisputeService {
     @Transactional
     public DisputeResponse startDiscussion(Integer disputeId) {
         Integer userId = getCurrentUserId();
-        
+
         DisputeEntity dispute = disputeRepository.findById(disputeId)
                 .orElseThrow(() -> new AppException(ErrorCode.DISPUTE_NOT_FOUND));
 
@@ -141,7 +140,7 @@ public class DisputeService {
     @Transactional
     public DisputeResponse resolveDispute(Integer disputeId, ResolveDisputeRequest request) {
         Integer userId = getCurrentUserId();
-        
+
         DisputeEntity dispute = disputeRepository.findById(disputeId)
                 .orElseThrow(() -> new AppException(ErrorCode.DISPUTE_NOT_FOUND));
 
@@ -161,8 +160,6 @@ public class DisputeService {
         disputeRepository.save(dispute);
 
         BookingEntity booking = dispute.getBooking();
-        booking.setTotalAdditionalFees(request.getFinalAmount());
-        booking.setReturnStatus(ReturnStatus.RESOLVED);
         booking.setUpdatedAt(Instant.now());
         bookingRepository.save(booking);
 
@@ -172,7 +169,7 @@ public class DisputeService {
     @Transactional
     public DisputeResponse acceptResolution(Integer disputeId) {
         Integer userId = getCurrentUserId();
-        
+
         DisputeEntity dispute = disputeRepository.findById(disputeId)
                 .orElseThrow(() -> new AppException(ErrorCode.DISPUTE_NOT_FOUND));
 
@@ -185,7 +182,6 @@ public class DisputeService {
         }
 
         BookingEntity booking = dispute.getBooking();
-        booking.setReturnStatus(ReturnStatus.CUSTOMER_CONFIRMED);
         booking.setStatus(com.example.car_management.entity.enums.BookingStatus.COMPLETED);
         booking.setUpdatedAt(Instant.now());
         bookingRepository.save(booking);
@@ -195,8 +191,8 @@ public class DisputeService {
 
     private DisputeResponse toResponse(DisputeEntity dispute) {
         BookingEntity booking = dispute.getBooking();
-        String vehicleName = booking.getVehicle().getModel().getBrand().getName() + " " + 
-                           booking.getVehicle().getModel().getName();
+        String vehicleName = booking.getVehicle().getModel().getBrand().getName() + " " +
+                booking.getVehicle().getModel().getName();
 
         return DisputeResponse.builder()
                 .id(dispute.getId())
@@ -216,7 +212,7 @@ public class DisputeService {
                 .updatedAt(dispute.getUpdatedAt())
                 .resolvedAt(dispute.getResolvedAt())
                 .vehicleName(vehicleName)
-                .originalFees(booking.getTotalAdditionalFees())
+                .originalFees(null)
                 .build();
     }
 
