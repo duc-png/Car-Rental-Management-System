@@ -56,8 +56,10 @@ public class BookingService {
         UserEntity customer = userRepository.findById(renterId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        // 3. Check availability
+        // 3. Check availability — block if vehicle already has a booking (even PENDING)
+        // in the same period
         List<BookingStatus> activeStatuses = Arrays.asList(
+                BookingStatus.PENDING,
                 BookingStatus.CONFIRMED,
                 BookingStatus.ONGOING);
 
@@ -71,8 +73,9 @@ public class BookingService {
             throw new AppException(ErrorCode.BOOKING_DATE_CONFLICT);
         }
 
-        // 4. Calculate total price
-        long days = Duration.between(request.getStartDate(), request.getEndDate()).toDays();
+        // 4. Calculate total price — round UP to nearest day (e.g. 34d 23h → 35 days)
+        long hours = Duration.between(request.getStartDate(), request.getEndDate()).toHours();
+        long days = (long) Math.ceil(hours / 24.0);
         if (days == 0)
             days = 1;
         BigDecimal totalPrice = vehicle.getPricePerDay().multiply(BigDecimal.valueOf(days));
@@ -85,7 +88,7 @@ public class BookingService {
                 .endDate(request.getEndDate())
                 .totalPrice(totalPrice)
                 .status(BookingStatus.PENDING)
-                .paymentStatus(com.example.car_management.entity.enums.PaymentStatus.UNPAID)
+                .paymentStatus(PaymentStatus.UNPAID)
                 .createdAt(Instant.now())
                 .updatedAt(Instant.now())
                 .build();
@@ -139,15 +142,6 @@ public class BookingService {
         log.info("=== getUserBookings called for userId: {} ===", userId);
         List<BookingEntity> bookings = bookingRepository.findByRenterIdOrOwnerId(userId);
         log.info("=== Found {} bookings for userId: {} ===", bookings.size(), userId);
-        for (BookingEntity b : bookings) {
-            log.info("  Booking #{}: vehicle={}, customer={}, owner={}, status={}",
-                    b.getId(),
-                    b.getVehicle() != null ? b.getVehicle().getId() : "null",
-                    b.getCustomer() != null ? b.getCustomer().getId() : "null",
-                    b.getVehicle() != null && b.getVehicle().getOwner() != null ? b.getVehicle().getOwner().getId()
-                            : "null",
-                    b.getStatus());
-        }
         return bookingMapper.toResponseList(bookings);
     }
 
@@ -234,7 +228,7 @@ public class BookingService {
         booking.setStatus(request.getStatus());
         booking.setUpdatedAt(Instant.now());
 
-        // ===== Handle CONFIRMED: Generate PayOS Deposit Link =====
+        // ===== Handle CONFIRMED: Generate PayOS Deposit Link (15%) =====
         if (request.getStatus() == BookingStatus.CONFIRMED &&
                 booking.getPaymentStatus() == PaymentStatus.UNPAID) {
 
@@ -246,10 +240,9 @@ public class BookingService {
                 var checkoutResponse = paymentService.createPaymentLink(booking, true);
                 booking.setPaymentStatus(PaymentStatus.PENDING_DEPOSIT);
                 booking.setCheckoutUrl(checkoutResponse.getCheckoutUrl());
-                log.info("Checkout URL: {}", checkoutResponse.getCheckoutUrl());
+                log.info("Deposit link created for booking #{}: {}", booking.getId(),
+                        checkoutResponse.getCheckoutUrl());
             } catch (Exception e) {
-                // Throw so @Transactional rolls back — booking stays PENDING, not stuck
-                // CONFIRMED
                 log.error("Failed to create PayOS deposit link for booking #{}: {}", booking.getId(), e.getMessage());
                 throw new AppException(ErrorCode.PAYMENT_ERROR);
             }
@@ -261,8 +254,8 @@ public class BookingService {
                     booking.getStartDate(),
                     booking.getEndDate());
             if (!competing.isEmpty()) {
-                log.info("Auto-cancelling {} competing PENDING bookings for vehicle {} (booking #{} confirmed)",
-                        competing.size(), booking.getVehicle().getId(), booking.getId());
+                log.info("Auto-cancelling {} competing PENDING bookings for vehicle {}", competing.size(),
+                        booking.getVehicle().getId());
                 for (BookingEntity competitor : competing) {
                     competitor.setStatus(BookingStatus.CANCELLED);
                     competitor.setUpdatedAt(Instant.now());
@@ -271,133 +264,49 @@ public class BookingService {
             }
         }
 
-        // ===== Handle ONGOING: Start Trip - Record handover ODO & Fuel =====
+        // ===== Handle ONGOING: Confirm Car Handover =====
+        // 85% payment link was already created automatically after deposit was paid
+        // (via webhook).
+        // Owner can only start trip if customer has paid in full.
         if (request.getStatus() == BookingStatus.ONGOING) {
-            // Check that deposit has been paid before allowing start
-            if (booking.getPaymentStatus() != PaymentStatus.DEPOSIT_PAID
-                    && booking.getPaymentStatus() != PaymentStatus.FULLY_PAID) {
-                throw new AppException(ErrorCode.DEPOSIT_NOT_PAID);
-            }
-
-            // Save start KM (default from vehicle if not provided)
-            Integer startKm = request.getStartKm() != null
-                    ? request.getStartKm()
-                    : booking.getVehicle().getCurrentKm();
-            booking.setStartKm(startKm);
-
-            // Save start Fuel Level (default from vehicle if not provided)
-            Integer startFuel = request.getStartFuelLevel() != null
-                    ? request.getStartFuelLevel()
-                    : (booking.getVehicle().getFuelLevel() != null ? booking.getVehicle().getFuelLevel() : 100);
-            booking.setStartFuelLevel(startFuel);
-
-            log.info("Start Trip - Booking #{}: startKm={}, startFuelLevel={}%", booking.getId(), startKm, startFuel);
-
-            // Generate Full Payment Link (PayOS)
-            if (booking.getPaymentStatus() == PaymentStatus.DEPOSIT_PAID) {
-                try {
-                    var checkoutResponse = paymentService.createPaymentLink(booking,
-                            false);
-                    booking.setPaymentStatus(PaymentStatus.PENDING_FULL_PAYMENT);
-                    booking.setCheckoutUrl(checkoutResponse.getCheckoutUrl());
-                    log.info("Checkout URL for Full Payment: {}", checkoutResponse.getCheckoutUrl());
-                } catch (Exception e) {
-                    log.warn("Could not create PayOS full payment link: {}", e.getMessage());
-                }
-            }
-        }
-
-        // ===== Handle COMPLETED: Return Car - Calculate surcharges =====
-        if (request.getStatus() == BookingStatus.COMPLETED) {
-            // Check that full payment has been completed
             if (booking.getPaymentStatus() != PaymentStatus.FULLY_PAID) {
                 throw new AppException(ErrorCode.FULL_PAYMENT_NOT_COMPLETED);
             }
+            log.info("Trip started for booking #{} — fully paid, car handed over.", booking.getId());
+        }
 
-            // Save end KM
-            if (request.getEndKm() != null) {
-                booking.setEndKm(request.getEndKm());
-            }
-            // Save end Fuel Level
-            if (request.getEndFuelLevel() != null) {
-                booking.setEndFuelLevel(request.getEndFuelLevel());
-            }
-            // Save return notes
-            if (request.getReturnNotes() != null) {
-                booking.setReturnNotes(request.getReturnNotes());
-            }
-
-            // Calculate over-KM surcharge: 300km/day limit, 5000 VND per extra km
-            BigDecimal overKmSurcharge = BigDecimal.ZERO;
-            if (booking.getStartKm() != null && booking.getEndKm() != null) {
-                int drivenKm = booking.getEndKm() - booking.getStartKm();
-                long rentalDays = Duration
-                        .between(booking.getStartDate().atZone(java.time.ZoneId.systemDefault()).toInstant(),
-                                booking.getEndDate().atZone(java.time.ZoneId.systemDefault()).toInstant())
-                        .toDays();
-                if (rentalDays < 1)
-                    rentalDays = 1;
-
-                int allowedKm = (int) (rentalDays * 300);
-                int overKm = drivenKm - allowedKm;
-
-                if (overKm > 0) {
-                    overKmSurcharge = BigDecimal.valueOf(overKm).multiply(BigDecimal.valueOf(5000));
-                    log.info("Over-KM surcharge: {} km over limit ({} km allowed for {} days) = {} VND",
-                            overKm, allowedKm, rentalDays, overKmSurcharge);
-                }
-            }
-
-            // Calculate late return surcharge
-            // - Under 24h late: 10% of pricePerDay per hour
-            // - 24h or more: 150% of pricePerDay per full day
-            BigDecimal lateReturnSurcharge = BigDecimal.ZERO;
-            LocalDateTime actualReturn = request.getActualReturnTime() != null
-                    ? request.getActualReturnTime()
-                    : LocalDateTime.now();
-            if (actualReturn.isAfter(booking.getEndDate())) {
-                long lateMinutes = Duration.between(booking.getEndDate(), actualReturn).toMinutes();
-                long lateHours = (lateMinutes + 59) / 60; // round up to nearest hour
-
-                BigDecimal pricePerDay = booking.getVehicle().getPricePerDay();
-
-                if (lateHours < 24) {
-                    // Per hour penalty: 10% of daily rate per hour
-                    lateReturnSurcharge = pricePerDay
-                            .multiply(BigDecimal.valueOf(0.10))
-                            .multiply(BigDecimal.valueOf(lateHours));
-                    log.info("Late return: {} hours → surcharge = {} VND (10%/hour × {} hours)",
-                            lateHours, lateReturnSurcharge, lateHours);
-                } else {
-                    // Per day penalty: 150% of daily rate per full day
-                    long lateDays = (lateHours + 23) / 24; // round up to nearest day
-                    lateReturnSurcharge = pricePerDay
-                            .multiply(BigDecimal.valueOf(1.50))
-                            .multiply(BigDecimal.valueOf(lateDays));
-                    log.info("Late return: {} days → surcharge = {} VND (150%/day × {} days)",
-                            lateDays, lateReturnSurcharge, lateDays);
-                }
-            }
-
-            // Total surcharge = over-KM + late return + other surcharges from owner
-            BigDecimal otherSurcharge = request.getOtherSurcharge() != null ? request.getOtherSurcharge()
-                    : BigDecimal.ZERO;
-            booking.setSurchargeAmount(overKmSurcharge.add(lateReturnSurcharge).add(otherSurcharge));
-            log.info("Total surcharge for Booking #{}: {} VND (overKm={}, lateReturn={}, other={})",
-                    booking.getId(), booking.getSurchargeAmount(), overKmSurcharge, lateReturnSurcharge,
-                    otherSurcharge);
-
-            // Update vehicle's current KM and fuel level for next rental
-            VehicleEntity vehicle = booking.getVehicle();
-            if (request.getEndKm() != null) {
-                vehicle.setCurrentKm(request.getEndKm());
-            }
-            if (request.getEndFuelLevel() != null) {
-                vehicle.setFuelLevel(request.getEndFuelLevel());
-            }
+        // ===== Handle COMPLETED: Return Car =====
+        // Simple completion — no penalty calculations.
+        if (request.getStatus() == BookingStatus.COMPLETED) {
+            log.info("Trip completed for booking #{}.", booking.getId());
         }
 
         BookingEntity updated = bookingRepository.save(booking);
+        return bookingMapper.toResponse(updated);
+    }
+
+    @Transactional
+    public BookingResponse confirmHandover(Integer bookingId) {
+        Integer userId = getCurrentUserId();
+        BookingEntity booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new AppException(ErrorCode.BOOKING_NOT_FOUND));
+
+        // Only the customer (renter) can confirm handover
+        Integer renterId = booking.getCustomer() != null ? booking.getCustomer().getId() : null;
+        if (!userId.equals(renterId)) {
+            throw new AppException(ErrorCode.FORBIDDEN_RESOURCE);
+        }
+
+        // Only allowed when booking is ONGOING
+        if (booking.getStatus() != BookingStatus.ONGOING) {
+            throw new AppException(ErrorCode.INVALID_STATUS_TRANSITION);
+        }
+
+        booking.setCustomerConfirmedHandover(true);
+        booking.setUpdatedAt(Instant.now());
+
+        BookingEntity updated = bookingRepository.save(booking);
+        log.info("Customer #{} confirmed handover for booking #{}", userId, bookingId);
         return bookingMapper.toResponse(updated);
     }
 
@@ -427,9 +336,24 @@ public class BookingService {
 
     private Integer getCurrentUserId() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        UserEntity user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        return user.getId();
+        String name = authentication.getName();
+
+        // Try email lookup first (normal JWT)
+        java.util.Optional<UserEntity> byEmail = userRepository.findByEmail(name);
+        if (byEmail.isPresent()) {
+            return byEmail.get().getId();
+        }
+
+        // For OAuth2 JWT — extract email from token claims
+        if (authentication instanceof org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken jwtAuth) {
+            String emailClaim = jwtAuth.getToken().getClaimAsString("email");
+            if (emailClaim != null) {
+                return userRepository.findByEmail(emailClaim)
+                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED))
+                        .getId();
+            }
+        }
+
+        throw new AppException(ErrorCode.USER_NOT_EXISTED);
     }
 }

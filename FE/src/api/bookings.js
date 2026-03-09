@@ -122,3 +122,10 @@ export const getOwnerBookingCalendar = async (fromDate, toDate, vehicleId) => {
     const data = await authFetch(`${API_BASE_URL}/bookings/owner/calendar?${query.toString()}`);
     return data.result || [];
 };
+
+export const confirmHandover = async (bookingId) => {
+    const data = await authFetch(`${API_BASE_URL}/bookings/${bookingId}/confirm-handover`, {
+        method: 'POST',
+    });
+    return data.result;
+};

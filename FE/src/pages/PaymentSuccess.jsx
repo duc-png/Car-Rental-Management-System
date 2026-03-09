@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import '../styles/MyBookings.css'; // Reuse styles for consistent look
+import '../styles/MyBookings.css';
+
+const API_BASE = 'http://localhost:8080/api/v1';
 
 function PaymentSuccess() {
     const { id } = useParams();
@@ -8,8 +10,21 @@ function PaymentSuccess() {
     const [countdown, setCountdown] = useState(5);
 
     useEffect(() => {
-        // Optional: could call backend to check payment status just to be sure,
-        // but webhook should handle it.
+        // Read orderCode from URL that PayOS adds on redirect
+        const params = new URLSearchParams(window.location.search);
+        const orderCode = params.get('orderCode');
+        const status = params.get('status'); // 'PAID' on success
+
+        // Verify payment on BE — handles localhost where PayOS webhook can't reach us
+        if (orderCode && status === 'PAID') {
+            const token = localStorage.getItem('token');
+            fetch(`${API_BASE}/payments/verify?orderCode=${orderCode}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': token ? `Bearer ${token}` : ''
+                }
+            }).catch(() => {/* silent - best effort */ });
+        }
 
         // Auto redirect
         const timer = setInterval(() => {

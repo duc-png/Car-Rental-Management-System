@@ -2,10 +2,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { getMyBookings, cancelBooking } from '../../api/bookings'
+import { getMyBookings, cancelBooking, confirmHandover } from '../../api/bookings'
 import { formatVndCurrency, getBookingStatusLabel } from '../../utils/bookingUtils'
-import ReturnConfirmationModal from '../../components/ReturnConfirmationModal'
-import DisputeChatModal from '../../components/DisputeChatModal'
 import '../../styles/MyBookings.css'
 
 function MyBookings() {
@@ -14,9 +12,7 @@ function MyBookings() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [cancellingId, setCancellingId] = useState(null)
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [showChatModal, setShowChatModal] = useState(false)
-  const [selectedBooking, setSelectedBooking] = useState(null)
+  const [confirmingHandoverId, setConfirmingHandoverId] = useState(null)
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -42,12 +38,10 @@ function MyBookings() {
 
   const handleCancelBooking = async (id) => {
     if (!confirm('Bạn có chắc muốn hủy đặt xe này?')) return
-
     try {
       setCancellingId(id)
       await cancelBooking(id)
       toast.success('Đã hủy đặt xe thành công!')
-      // Refresh list
       fetchBookings()
     } catch (err) {
       toast.error(err.message || 'Không thể hủy đặt xe')
@@ -56,56 +50,30 @@ function MyBookings() {
     }
   }
 
+  const handleConfirmHandover = async (id) => {
+    if (!confirm('Xac nhan da nhan xe tu chu xe?')) return
+    try {
+      setConfirmingHandoverId(id)
+      await confirmHandover(id)
+      toast.success('Da xac nhan nhan xe! Chuc ban co chuyen di vui ve!')
+      fetchBookings()
+    } catch (err) {
+      toast.error(err.message || 'Khong the xac nhan luc nay')
+    } finally {
+      setConfirmingHandoverId(null)
+    }
+  }
+
   const formatDate = (dateString) => {
     if (!dateString) return ''
-    const date = new Date(dateString)
-    return date.toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+    return new Date(dateString).toLocaleDateString('vi-VN', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
     })
   }
 
-  const getStatusLabel = (status) => {
-    const statusMap = {
-      'PENDING': 'Chờ duyệt',
-      'CONFIRMED': 'Đã duyệt',
-      'ONGOING': 'Đang thuê',
-      'COMPLETED': 'Hoàn thành',
-      'CANCELLED': 'Đã hủy'
-    }
-    return statusMap[status] || status
-  }
+  const canCancel = (status) => status === 'PENDING' || status === 'CONFIRMED'
 
-  const getReturnStatusLabel = (returnStatus) => {
-    const labels = {
-      'NOT_RETURNED': null,
-      'PENDING_INSPECTION': 'Đang kiểm tra',
-      'FEES_CALCULATED': 'Chờ xác nhận phí',
-      'CUSTOMER_CONFIRMED': 'Đã xác nhận',
-      'DISPUTED': 'Đang tranh chấp',
-      'RESOLVED': 'Đã giải quyết'
-    }
-    return labels[returnStatus] || null
-  }
-
-  const getReturnStatusColor = (returnStatus) => {
-    const colors = {
-      'FEES_CALCULATED': '#f59e0b',
-      'DISPUTED': '#ef4444',
-      'RESOLVED': '#10b981',
-      'CUSTOMER_CONFIRMED': '#10b981'
-    }
-    return colors[returnStatus] || '#6b7280'
-  }
-
-  const canCancel = (status) => {
-    return status === 'PENDING' || status === 'CONFIRMED'
-  }
-
-<<<<<<< HEAD
   const STEPS = [
     { key: 'PENDING', label: 'Đặt xe', icon: '📋' },
     { key: 'CONFIRMED', label: 'Chủ xe duyệt', icon: '✅' },
@@ -114,14 +82,13 @@ function MyBookings() {
     { key: 'COMPLETED', label: 'Hoàn thành', icon: '🏁' },
   ]
 
-  // Map booking status + paymentStatus → active step index
   const getActiveStep = (status, paymentStatus) => {
     if (status === 'CANCELLED') return -1
     if (status === 'COMPLETED') return 4
     if (status === 'ONGOING') return 3
     if (paymentStatus === 'DEPOSIT_PAID' || paymentStatus === 'PENDING_FULL_PAYMENT' || paymentStatus === 'FULLY_PAID') return 2
     if (status === 'CONFIRMED') return 1
-    return 0 // PENDING
+    return 0
   }
 
   const BookingSteps = ({ status, paymentStatus }) => {
@@ -134,9 +101,7 @@ function MyBookings() {
           const isActive = !isCancelled && idx === activeStep
           return (
             <div key={step.key} className={`step-item ${isDone ? 'done' : ''} ${isActive ? 'active' : ''} ${isCancelled ? 'cancelled' : ''}`}>
-              <div className="step-circle">
-                {isDone ? '✓' : step.icon}
-              </div>
+              <div className="step-circle">{isDone ? '✓' : step.icon}</div>
               <span className="step-label">{step.label}</span>
               {idx < STEPS.length - 1 && <div className={`step-line ${isDone ? 'done' : ''}`} />}
             </div>
@@ -145,24 +110,6 @@ function MyBookings() {
         {isCancelled && <div className="step-cancelled-badge">❌ Đã hủy</div>}
       </div>
     )
-  }
-
-  const handleReviewFees = (booking) => {
-    setSelectedBooking(booking)
-    setShowConfirmModal(true)
-  }
-
-  const handleOpenChat = (booking) => {
-    setSelectedBooking(booking)
-    setShowChatModal(true)
-  }
-
-  const handleDisputeCreated = () => {
-    setShowConfirmModal(false)
-    fetchBookings()
-    if (selectedBooking) {
-      setShowChatModal(true)
-    }
   }
 
   if (loading) {
@@ -213,32 +160,11 @@ function MyBookings() {
                   {booking.depositAmount && (
                     <p><strong>Tiền cọc (15%):</strong> {formatVndCurrency(booking.depositAmount)}</p>
                   )}
-
-                  {booking.totalAdditionalFees > 0 && (
-                    <p>
-                      <strong>Phí phát sinh:</strong>{' '}
-                      <span style={{ color: '#ef4444', fontWeight: 600 }}>
-                        {formatVndCurrency(booking.totalAdditionalFees)}
-                      </span>
-                    </p>
-                  )}
                 </div>
                 <div className="booking-status">
                   <span className={`status-badge ${booking.status?.toLowerCase()}`}>
                     {getBookingStatusLabel(booking.status)}
                   </span>
-                  {getReturnStatusLabel(booking.returnStatus) && (
-                    <span
-                      className="status-badge"
-                      style={{
-                        background: getReturnStatusColor(booking.returnStatus),
-                        marginLeft: '8px',
-                        color: 'white'
-                      }}
-                    >
-                      {getReturnStatusLabel(booking.returnStatus)}
-                    </span>
-                  )}
                 </div>
               </div>
               <BookingSteps status={booking.status} paymentStatus={booking.paymentStatus} />
@@ -261,40 +187,36 @@ function MyBookings() {
                       Thanh toán 85% còn lại
                     </button>
                   )}
+
+                {booking.status === 'ONGOING' && !booking.customerConfirmedHandover && (
+                  <button
+                    className="btn-pay"
+                    style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)', border: 'none' }}
+                    onClick={() => handleConfirmHandover(booking.id)}
+                    disabled={confirmingHandoverId === booking.id}
+                  >
+                    {confirmingHandoverId === booking.id ? 'Dang xac nhan...' : 'Nhan xe'}
+                  </button>
+                )}
+                {booking.status === 'ONGOING' && booking.customerConfirmedHandover && (
+                  <div style={{ padding: '8px 12px', background: 'rgba(16,185,129,0.15)', borderRadius: '8px', color: '#10b981', fontSize: '0.85rem', fontWeight: 600 }}>
+                    Da nhan xe
+                  </div>
+                )}
+
                 <button
                   className="btn-view"
                   onClick={() => navigate(`/cars/${booking.vehicleId}`)}
                 >
                   Xem xe
                 </button>
-
-                {booking.returnStatus === 'FEES_CALCULATED' && (
-                  <button
-                    className="btn-view"
-                    style={{ background: '#f59e0b', color: 'white' }}
-                    onClick={() => handleReviewFees(booking)}
-                  >
-                    Xem phí trả xe
-                  </button>
-                )}
-
-                {(booking.returnStatus === 'DISPUTED' || booking.returnStatus === 'RESOLVED') && (
-                  <button
-                    className="btn-view"
-                    style={{ background: '#667eea', color: 'white' }}
-                    onClick={() => handleOpenChat(booking)}
-                  >
-                    {booking.returnStatus === 'RESOLVED' ? 'Xem kết quả' : 'Mở chat'}
-                  </button>
-                )}
-
                 {canCancel(booking.status) && (
                   <button
                     className="btn-cancel"
                     onClick={() => handleCancelBooking(booking.id)}
                     disabled={cancellingId === booking.id}
                   >
-                    {cancellingId === booking.id ? 'Đang hủy...' : 'Hủy đặt xe'}
+                    {cancellingId === booking.id ? 'Dang huy...' : 'Huy dat xe'}
                   </button>
                 )}
               </div>
@@ -309,34 +231,6 @@ function MyBookings() {
             Khám phá xe ngay
           </button>
         </div>
-      )}
-
-      {showConfirmModal && selectedBooking && (
-        <ReturnConfirmationModal
-          booking={selectedBooking}
-          onClose={() => {
-            setShowConfirmModal(false)
-            setSelectedBooking(null)
-          }}
-          onSuccess={() => {
-            fetchBookings()
-          }}
-          onDispute={handleDisputeCreated}
-        />
-      )}
-
-      {showChatModal && selectedBooking && (
-        <DisputeChatModal
-          booking={selectedBooking}
-          isOwner={false}
-          onClose={() => {
-            setShowChatModal(false)
-            setSelectedBooking(null)
-          }}
-          onResolved={() => {
-            fetchBookings()
-          }}
-        />
       )}
     </div>
   )

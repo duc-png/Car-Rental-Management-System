@@ -111,21 +111,20 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
-  max-width: 1000px;
   margin: 0 auto;
   padding: 0 24px;
 }
 
 .booking-card {
-  background: #1e293b;
+  background: #ffffff;
   border-radius: 20px;
   padding: 24px;
   display: grid;
   grid-template-columns: 200px 1fr auto;
   grid-template-rows: auto auto;
   gap: 20px 32px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
@@ -133,9 +132,9 @@
 
 .booking-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  background: #253045;
-  border-color: rgba(99, 102, 241, 0.2);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+  background: #f8fafc;
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
 /* Status Strip */
@@ -197,7 +196,7 @@
 
 .booking-details h3 {
   font-size: 1.5rem;
-  color: #f1f5f9;
+  color: #1e293b;
   margin: 0;
   font-weight: 700;
 }
@@ -210,7 +209,7 @@
 
 .booking-info p {
   margin: 0;
-  color: #94a3b8;
+  color: #64748b;
   font-size: 0.95rem;
   display: flex;
   align-items: center;
@@ -218,7 +217,7 @@
 }
 
 .booking-info p strong {
-  color: #cbd5e1;
+  color: #334155;
   font-weight: 600;
   min-width: 80px;
 }
@@ -351,16 +350,16 @@
   align-items: flex-start;
   gap: 0;
   padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.03);
+  background: #f8fafc;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid #e2e8f0;
   position: relative;
   overflow: hidden;
 }
 
 .booking-steps.cancelled {
-  background: rgba(239, 68, 68, 0.04);
-  border-color: rgba(239, 68, 68, 0.12);
+  background: #fef2f2;
+  border-color: #fca5a5;
 }
 
 .step-item {
@@ -380,9 +379,9 @@
   align-items: center;
   justify-content: center;
   font-size: 1.1rem;
-  background: #1e293b;
-  border: 2px solid #334155;
-  color: #475569;
+  background: #ffffff;
+  border: 2px solid #cbd5e1;
+  color: #64748b;
   transition: all 0.3s;
   z-index: 1;
   flex-shrink: 0;
@@ -426,7 +425,7 @@
 .step-label {
   font-size: 0.72rem;
   font-weight: 600;
-  color: #475569;
+  color: #64748b;
   text-align: center;
   white-space: nowrap;
   transition: color 0.3s;
@@ -675,5 +674,157 @@
   .status-badge {
     font-size: 0.75rem;
     padding: 5px 10px;
+  }
+}
+
+/* Collapsible Booking Cards in Profile */
+.collapsible-bookings .booking-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  gap: 0;
+}
+
+.collapsible-bookings .booking-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.collapsible-bookings .booking-card-header:hover {
+  background: #f1f5f9;
+}
+
+.collapsible-bookings .header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.collapsible-bookings .header-info h3 {
+  font-size: 1.2rem;
+  color: #1e293b;
+  margin: 0;
+  font-weight: 700;
+}
+
+.collapsible-bookings .header-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.collapsible-bookings .header-meta .dot {
+  color: #94a3b8;
+}
+
+.collapsible-bookings .header-meta .price {
+  font-weight: 600;
+  color: #334155;
+}
+
+.collapsible-bookings .header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.collapsible-bookings .expand-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.collapsible-bookings .expand-btn:hover {
+  color: #1e293b;
+  background: #e2e8f0;
+}
+
+.collapsible-bookings .expand-btn svg {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.collapsible-bookings .booking-card-body {
+  padding: 0 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  border-top: 1px solid #e2e8f0;
+  margin-top: 0;
+  padding-top: 24px;
+  animation: slideDown 0.3s cubic-bezier(0.175, 0.885, 0.32, 1) forwards;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.collapsible-bookings .booking-content-top {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 24px;
+}
+
+.collapsible-bookings .booking-image {
+  width: 100%;
+  height: 140px;
+}
+
+.collapsible-bookings .received-badge {
+  padding: 8px 12px;
+  background: rgba(16, 185, 129, 0.15);
+  border-radius: 8px;
+  color: #10b981;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Fix CSS grid overlap for collapsed items */
+.collapsible-bookings .booking-actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 10px;
+}
+
+.collapsible-bookings .booking-actions button {
+  flex: 1;
+  min-width: 140px;
+}
+
+@media (max-width: 600px) {
+  .collapsible-bookings .booking-content-top {
+    grid-template-columns: 1fr;
+  }
+
+  .collapsible-bookings .header-right {
+    flex-direction: column-reverse;
+    align-items: flex-end;
+  }
+
+  .collapsible-bookings .booking-actions {
+    flex-direction: column;
   }
 }
