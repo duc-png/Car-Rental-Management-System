@@ -4,6 +4,8 @@ import com.example.car_management.entity.BookingEntity;
 import com.example.car_management.entity.PaymentEntity;
 import com.example.car_management.entity.enums.PaymentMethod;
 import com.example.car_management.entity.enums.PaymentStatus;
+import com.example.car_management.entity.enums.PaymentType;
+import com.example.car_management.entity.enums.BookingStatus;
 import com.example.car_management.entity.enums.TransactionStatus;
 import com.example.car_management.repository.BookingRepository;
 import com.example.car_management.repository.PaymentRepository;
@@ -16,6 +18,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.example.car_management.entity.ReturnInspectionEntity;
+import com.example.car_management.entity.VehicleEntity;
+import com.example.car_management.repository.ReturnInspectionRepository;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -30,6 +36,7 @@ public class PayOSWebhookController {
     private final BookingRepository bookingRepository;
     private final PaymentRepository paymentRepository;
     private final PaymentService paymentService;
+    private final ReturnInspectionRepository returnInspectionRepository;
 
     @PostMapping("/payos-webhook")
     public ResponseEntity<String> receiveWebhook(@RequestBody JsonNode body) {
@@ -85,6 +92,7 @@ public class PayOSWebhookController {
                         paymentRepository.save(PaymentEntity.builder()
                                 .booking(booking)
                                 .paymentMethod(PaymentMethod.BANK_TRANSFER)
+                                .paymentType(PaymentType.DEPOSIT)
                                 .amount(depositAmount)
                                 .transactionId(String.valueOf(orderCode))
                                 .status(TransactionStatus.SUCCESS)
@@ -105,12 +113,50 @@ public class PayOSWebhookController {
                         paymentRepository.save(PaymentEntity.builder()
                                 .booking(booking)
                                 .paymentMethod(PaymentMethod.BANK_TRANSFER)
+                                .paymentType(PaymentType.FULL_PAYMENT)
                                 .amount(remainingAmount)
                                 .transactionId(String.valueOf(orderCode))
                                 .status(TransactionStatus.SUCCESS)
                                 .paymentDate(Instant.now())
                                 .build());
                         log.info("Full payment recorded for booking #{}: {} VND", booking.getId(), remainingAmount);
+                    }
+                }
+                // Penalty payment (extra fees after return — from confirm or dispute accept)
+                else if (orderCode.equals(booking.getPayosPenaltyOrderCode())) {
+                    if (booking.getStatus() == BookingStatus.ONGOING || booking.getStatus() == BookingStatus.PENALTY_PAYMENT_PENDING) {
+                        booking.setStatus(BookingStatus.COMPLETED);
+                        booking.setCheckoutUrl(null);
+
+                        Optional<ReturnInspectionEntity> inspectionOpt =
+                                returnInspectionRepository.findByBookingId(booking.getId());
+                        if (inspectionOpt.isPresent()) {
+                            ReturnInspectionEntity inspection = inspectionOpt.get();
+                            VehicleEntity vehicle = booking.getVehicle();
+                            if (vehicle != null) {
+                                vehicle.setCurrentKm(inspection.getOdometerEnd());
+                                vehicle.setFuelLevel(inspection.getFuelLevelEnd().getPercentage());
+                            }
+                        }
+
+                        bookingRepository.save(booking);
+
+                        BigDecimal penaltyAmount = BigDecimal.ZERO;
+                        if (dataNode.has("amount")) {
+                            penaltyAmount = BigDecimal.valueOf(dataNode.get("amount").asLong());
+                        }
+
+                        paymentRepository.save(PaymentEntity.builder()
+                                .booking(booking)
+                                .paymentMethod(PaymentMethod.BANK_TRANSFER)
+                                .paymentType(PaymentType.PENALTY)
+                                .amount(penaltyAmount)
+                                .transactionId(String.valueOf(orderCode))
+                                .status(TransactionStatus.SUCCESS)
+                                .paymentDate(Instant.now())
+                                .build());
+
+                        log.info("Penalty payment recorded for booking #{}: {} VND", booking.getId(), penaltyAmount);
                     }
                 }
             } else {
@@ -160,6 +206,26 @@ public class PayOSWebhookController {
                     booking.setCheckoutUrl(null);
                     bookingRepository.save(booking);
                     log.info("Verify: full payment done for booking #{}", booking.getId());
+                }
+                // Penalty payment verified
+                else if (orderCode.equals(booking.getPayosPenaltyOrderCode())
+                        && (booking.getStatus() == BookingStatus.ONGOING || booking.getStatus() == BookingStatus.PENALTY_PAYMENT_PENDING)) {
+                    booking.setStatus(BookingStatus.COMPLETED);
+                    booking.setCheckoutUrl(null);
+
+                    Optional<ReturnInspectionEntity> inspectionOpt =
+                            returnInspectionRepository.findByBookingId(booking.getId());
+                    if (inspectionOpt.isPresent()) {
+                        ReturnInspectionEntity inspection = inspectionOpt.get();
+                        VehicleEntity vehicle = booking.getVehicle();
+                        if (vehicle != null) {
+                            vehicle.setCurrentKm(inspection.getOdometerEnd());
+                            vehicle.setFuelLevel(inspection.getFuelLevelEnd().getPercentage());
+                        }
+                    }
+
+                    bookingRepository.save(booking);
+                    log.info("Verify: penalty payment done for booking #{}", booking.getId());
                 }
                 return ResponseEntity.ok("verified");
             }

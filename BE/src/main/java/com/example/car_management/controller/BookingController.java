@@ -3,6 +3,7 @@ package com.example.car_management.controller;
 import com.example.car_management.dto.request.CreateBookingRequest;
 import com.example.car_management.dto.request.UpdateBookingStatusRequest;
 import com.example.car_management.dto.ApiResponse;
+import com.example.car_management.dto.response.BookingJourneyResponse;
 import com.example.car_management.dto.response.BookingResponse;
 import com.example.car_management.dto.response.BookedDateResponse;
 import com.example.car_management.dto.response.OwnerBookingCalendarItemResponse;
@@ -40,6 +41,14 @@ public class BookingController {
                 BookingResponse response = bookingService.getBookingById(id);
 
                 return ResponseEntity.ok(ApiResponse.<BookingResponse>builder()
+                                .result(response)
+                                .build());
+        }
+
+        @GetMapping("/{id}/journey")
+        public ResponseEntity<ApiResponse<BookingJourneyResponse>> getBookingJourney(@PathVariable Integer id) {
+                BookingJourneyResponse response = bookingService.getBookingJourney(id);
+                return ResponseEntity.ok(ApiResponse.<BookingJourneyResponse>builder()
                                 .result(response)
                                 .build());
         }

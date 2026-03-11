@@ -2,6 +2,7 @@ export const BOOKING_STATUS_LABELS = {
     PENDING: 'Chờ duyệt',
     CONFIRMED: 'Đã duyệt',
     ONGOING: 'Đang thuê',
+    PENALTY_PAYMENT_PENDING: 'Chờ thanh toán phí phạt',
     COMPLETED: 'Hoàn tất',
     CANCELLED: 'Đã huỷ',
 }
