@@ -2,6 +2,7 @@ package com.example.car_management.controller;
 
 import com.example.car_management.dto.ApiResponse;
 import com.example.car_management.dto.request.CreateDisputeRequest;
+import com.example.car_management.dto.request.CounterOfferRequest;
 import com.example.car_management.dto.request.ResolveDisputeRequest;
 import com.example.car_management.dto.response.DisputeResponse;
 import com.example.car_management.service.DisputeService;
@@ -95,6 +96,18 @@ public class DisputeController {
         return ResponseEntity.ok(ApiResponse.<DisputeResponse>builder()
                 .code(1000)
                 .message("Resolution accepted")
+                .result(result)
+                .build());
+    }
+
+    @PostMapping("/{disputeId}/counter-offer")
+    public ResponseEntity<ApiResponse<DisputeResponse>> submitCounterOffer(
+            @PathVariable Integer disputeId,
+            @Valid @RequestBody CounterOfferRequest request) {
+        DisputeResponse result = disputeService.submitCounterOffer(disputeId, request);
+        return ResponseEntity.ok(ApiResponse.<DisputeResponse>builder()
+                .code(1000)
+                .message("Counter offer submitted")
                 .result(result)
                 .build());
     }

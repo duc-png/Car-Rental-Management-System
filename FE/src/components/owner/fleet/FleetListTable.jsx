@@ -1,4 +1,4 @@
-import { Cog, Eye, Fuel, Pencil, Trash2 } from 'lucide-react'
+import { Cog, Eye, Fuel, Pencil, Trash2, Wrench } from 'lucide-react'
 import {
     formatCarTypeLabel,
     formatEnumLabel,
@@ -9,7 +9,7 @@ import {
     vehicleDisplayName
 } from '../../../utils/ownerFleetUtils'
 
-function FleetListTable({ vehicles, onViewDetails, onEdit, onDelete }) {
+function FleetListTable({ vehicles, onViewDetails, onEdit, onDelete, onMaintenance }) {
     return (
         <div className="fleet-list-table">
             <header className="fleet-list-head">
@@ -56,13 +56,42 @@ function FleetListTable({ vehicles, onViewDetails, onEdit, onDelete }) {
                         <div className="fleet-list-cell fleet-list-price">{formatPrice(vehicle.pricePerDay)}</div>
 
                         <div className="fleet-list-cell fleet-list-actions">
-                            <button type="button" className="fleet-list-action" title="Chi tiết" aria-label="Chi tiết" onClick={() => onViewDetails(vehicle)}>
+                            <button
+                                type="button"
+                                className="fleet-list-action"
+                                title="Chi tiết"
+                                aria-label="Chi tiết"
+                                onClick={() => onViewDetails(vehicle)}
+                            >
                                 <Eye size={18} />
                             </button>
-                            <button type="button" className="fleet-list-action" title="Sửa" aria-label="Sửa" onClick={() => onEdit(vehicle)}>
+                            {onMaintenance && (
+                                <button
+                                    type="button"
+                                    className="fleet-list-action"
+                                    title="Bảo dưỡng"
+                                    aria-label="Bảo dưỡng"
+                                    onClick={() => onMaintenance(vehicle)}
+                                >
+                                    <Wrench size={18} />
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                className="fleet-list-action"
+                                title="Sửa"
+                                aria-label="Sửa"
+                                onClick={() => onEdit(vehicle)}
+                            >
                                 <Pencil size={18} />
                             </button>
-                            <button type="button" className="fleet-list-action danger" title="Xóa" aria-label="Xóa" onClick={() => onDelete(vehicle.id)}>
+                            <button
+                                type="button"
+                                className="fleet-list-action danger"
+                                title="Xóa"
+                                aria-label="Xóa"
+                                onClick={() => onDelete(vehicle.id)}
+                            >
                                 <Trash2 size={18} />
                             </button>
                         </div>

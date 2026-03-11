@@ -1,4 +1,4 @@
-import { Cog, Eye, Fuel, Pencil, Plus, ReceiptText, Trash2, Users } from 'lucide-react'
+import { Cog, Eye, Fuel, Pencil, Plus, ReceiptText, Trash2, Users, Wrench } from 'lucide-react'
 import {
     formatCarTypeLabel,
     formatEnumLabel,
@@ -9,7 +9,7 @@ import {
     vehicleDisplayName
 } from '../../../utils/ownerFleetUtils'
 
-export function FleetGridCard({ vehicle, onViewDetails, onEdit, onDelete }) {
+export function FleetGridCard({ vehicle, onViewDetails, onEdit, onDelete, onMaintenance }) {
     return (
         <article className="fleet-card">
             <div className="fleet-image">
@@ -63,11 +63,29 @@ export function FleetGridCard({ vehicle, onViewDetails, onEdit, onDelete }) {
                         <span>Chi tiết</span>
                     </button>
                     <div className="fleet-actions-secondary">
-                        <button type="button" className="btn-outline btn-outline-warning" onClick={() => onEdit(vehicle)}>
+                        {onMaintenance && (
+                            <button
+                                type="button"
+                                className="btn-outline"
+                                onClick={() => onMaintenance(vehicle)}
+                            >
+                                <Wrench size={15} />
+                                <span>Bảo dưỡng</span>
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            className="btn-outline btn-outline-warning"
+                            onClick={() => onEdit(vehicle)}
+                        >
                             <Pencil size={15} />
                             <span>Sửa</span>
                         </button>
-                        <button type="button" className="btn-outline danger" onClick={() => onDelete(vehicle.id)}>
+                        <button
+                            type="button"
+                            className="btn-outline danger"
+                            onClick={() => onDelete(vehicle.id)}
+                        >
                             <Trash2 size={15} />
                             <span>Xóa</span>
                         </button>

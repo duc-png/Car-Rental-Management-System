@@ -1,6 +1,7 @@
 package com.example.car_management.dto.response;
 
 import com.example.car_management.entity.enums.BookingStatus;
+import com.example.car_management.entity.enums.ReturnStatus;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -17,6 +18,7 @@ public class BookingResponse {
     private Integer vehicleId;
     private String vehicleName;
     private String vehicleImage;
+    private Integer vehicleCurrentKm;
     private Integer renterId;
     private String renterName;
     private String renterEmail;
@@ -37,4 +39,7 @@ public class BookingResponse {
 
     // Handover confirmation
     private Boolean customerConfirmedHandover;
+
+    // Return / penalty tracking
+    private ReturnStatus returnStatus;
 }

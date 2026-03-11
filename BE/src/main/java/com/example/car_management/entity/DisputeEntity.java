@@ -38,6 +38,15 @@ public class DisputeEntity {
     @Column(name = "disputed_amount", precision = 12, scale = 2)
     private BigDecimal disputedAmount;
 
+    @Column(name = "customer_proposed_amount", precision = 12, scale = 2)
+    private BigDecimal customerProposedAmount;
+
+    @Column(name = "customer_counter_reason", length = 1000)
+    private String customerCounterReason;
+
+    @Column(name = "countered_at")
+    private Instant counteredAt;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     @Builder.Default

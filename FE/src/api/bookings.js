@@ -75,6 +75,11 @@ export const getBookingById = async (id) => {
     return data.result;
 };
 
+export const getBookingJourney = async (id) => {
+    const data = await authFetch(`${API_BASE_URL}/bookings/${id}/journey`);
+    return data.result;
+};
+
 /**
  * Cập nhật trạng thái booking (cho Owner)
  * @param {number} id - Booking ID

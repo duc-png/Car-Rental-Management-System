@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { getMyBookings, updateBookingStatus } from '../api/bookings'
+import ReturnInspectionModal from '../components/ReturnInspectionModal'
+import DisputeChatModal from '../components/DisputeChatModal'
 import { useAuth } from '../hooks/useAuth'
 import FleetSidebar from '../components/owner/fleet/FleetSidebar'
 import DashboardNotificationBell from '../components/layout/DashboardNotificationBell'
@@ -13,6 +15,7 @@ const STATUS_COLORS = {
     PENDING: 'pending',
     CONFIRMED: 'confirmed',
     ONGOING: 'ongoing',
+    PENALTY_PAYMENT_PENDING: 'ongoing',
     COMPLETED: 'completed',
     CANCELLED: 'cancelled',
 }
@@ -27,6 +30,8 @@ function ManageRentals() {
     const navigate = useNavigate()
     const [rentals, setRentals] = useState([])
     const [loading, setLoading] = useState(true)
+    const [selectedForInspection, setSelectedForInspection] = useState(null)
+    const [selectedForDisputeChat, setSelectedForDisputeChat] = useState(null)
     const { user, isAuthenticated, logout } = useAuth()
     const canManage = Boolean(user?.role?.includes('ROLE_CAR_OWNER') || user?.role?.includes('ROLE_ADMIN'))
 
@@ -85,9 +90,13 @@ function ManageRentals() {
         handleStatusUpdate(booking.id, 'ONGOING')
     }
 
-    const handleCompleteTrip = (booking) => {
-        if (!window.confirm('🏁 Xác nhận hoàn thành chuyến?\n\nCar đã được trả về thành công.')) return
-        handleStatusUpdate(booking.id, 'COMPLETED')
+    const handleOpenInspection = (booking) => {
+        setSelectedForInspection(booking)
+    }
+
+    const handleInspectionSuccess = () => {
+        fetchRentals()
+        setSelectedForInspection(null)
     }
 
     const handleCancel = (booking) => {
@@ -218,6 +227,16 @@ function ManageRentals() {
                                             <span className={`status-badge ${getStatusColor(booking.status)}`}>
                                                 {getBookingStatusLabel(booking.status)}
                                             </span>
+                                            {booking.returnStatus && (
+                                                <span className="status-badge return-status">
+                                                    {booking.returnStatus === 'NOT_RETURNED' && 'Chưa trả xe'}
+                                                    {booking.returnStatus === 'PENDING_INSPECTION' && 'Chờ kiểm tra trả xe'}
+                                                    {booking.returnStatus === 'FEES_CALCULATED' && 'Đã tính phí, chờ khách'}
+                                                    {booking.returnStatus === 'CUSTOMER_CONFIRMED' && 'Khách đã xác nhận phí'}
+                                                    {booking.returnStatus === 'DISPUTED' && 'Đang tranh chấp phí'}
+                                                    {booking.returnStatus === 'RESOLVED' && 'Phí đã giải quyết'}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -306,14 +325,36 @@ function ManageRentals() {
                                         </>
                                     )}
 
-                                    {/* ONGOING: Complete Trip */}
-                                    {booking.status === 'ONGOING' && (
+                                    {/* ONGOING: Return inspection / fee calculation */}
+                                    {booking.status === 'ONGOING' && booking.returnStatus !== 'FEES_CALCULATED' && (
                                         <button
                                             className="btn-view"
                                             style={ACTION_BUTTON_STYLES.completeTrip}
-                                            onClick={() => handleCompleteTrip(booking)}
+                                            onClick={() => handleOpenInspection(booking)}
                                         >
-                                            Hoàn thành chuyến
+                                            Kiểm tra trả xe & tính phí
+                                        </button>
+                                    )}
+
+                                    {booking.status === 'ONGOING' && booking.returnStatus === 'FEES_CALCULATED' && (
+                                        <div style={{
+                                            marginTop: '8px',
+                                            padding: '8px 10px',
+                                            borderRadius: '8px',
+                                            background: '#e0f2fe',
+                                            color: '#0369a1',
+                                            fontSize: '0.85rem'
+                                        }}>
+                                            Đã kiểm tra trả xe, chờ khách xác nhận phí.
+                                        </div>
+                                    )}
+
+                                    {booking.returnStatus === 'DISPUTED' && (
+                                        <button
+                                            className="btn-view"
+                                            onClick={() => setSelectedForDisputeChat(booking)}
+                                        >
+                                            Xem chat tranh chấp phí
                                         </button>
                                     )}
                                 </div>
@@ -321,6 +362,22 @@ function ManageRentals() {
                         ))
                     )}
                 </div>
+
+                {selectedForInspection && (
+                    <ReturnInspectionModal
+                        booking={selectedForInspection}
+                        onClose={() => setSelectedForInspection(null)}
+                        onSuccess={handleInspectionSuccess}
+                    />
+                )}
+                {selectedForDisputeChat && (
+                    <DisputeChatModal
+                        booking={selectedForDisputeChat}
+                        isOwner={true}
+                        onClose={() => setSelectedForDisputeChat(null)}
+                        onResolved={fetchRentals}
+                    />
+                )}
             </section>
         </div>
     )

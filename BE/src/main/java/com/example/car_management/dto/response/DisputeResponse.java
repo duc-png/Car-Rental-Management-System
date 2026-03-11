@@ -26,6 +26,9 @@ public class DisputeResponse {
     
     private String reason;
     private BigDecimal disputedAmount;
+    private BigDecimal customerProposedAmount;
+    private String customerCounterReason;
+    private Instant counteredAt;
     private DisputeStatus status;
     
     private String resolutionNotes;
@@ -37,4 +40,5 @@ public class DisputeResponse {
     
     private String vehicleName;
     private BigDecimal originalFees;
+    private String penaltyCheckoutUrl;
 }
