@@ -263,7 +263,8 @@ function MyBookings() {
                 )}
 
                 {booking.returnStatus === 'RESOLVED'
-                  && (booking.status === 'ONGOING' || booking.status === 'PENALTY_PAYMENT_PENDING')
+                  && booking.status !== 'COMPLETED'
+                  && booking.status !== 'CANCELLED'
                   && booking.checkoutUrl && (
                   <button
                     className="btn-pay"
@@ -275,7 +276,8 @@ function MyBookings() {
                 )}
 
                 {booking.returnStatus === 'CUSTOMER_CONFIRMED'
-                  && (booking.status === 'ONGOING' || booking.status === 'PENALTY_PAYMENT_PENDING')
+                  && booking.status !== 'COMPLETED'
+                  && booking.status !== 'CANCELLED'
                   && booking.checkoutUrl && (
                   <button
                     className="btn-pay"
