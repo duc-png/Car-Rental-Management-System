@@ -89,7 +89,7 @@ function DisputeChatModal({ booking, isOwner, onClose, onResolved }) {
         try {
             const resolved = await resolveDispute(
                 dispute.id, 
-                parseFloat(resolveData.finalAmount), 
+                parseInt(resolveData.finalAmount, 10), 
                 resolveData.resolutionNotes
             )
             setDispute(resolved)
@@ -129,7 +129,7 @@ function DisputeChatModal({ booking, isOwner, onClose, onResolved }) {
         try {
             const updated = await submitCounterOffer(
                 dispute.id,
-                parseFloat(counterData.counterAmount),
+                parseInt(counterData.counterAmount, 10),
                 counterData.counterReason
             )
             setDispute(updated)
@@ -289,7 +289,7 @@ function DisputeChatModal({ booking, isOwner, onClose, onResolved }) {
                                         ...prev, 
                                         finalAmount: e.target.value
                                     }))}
-                                    placeholder="Nhập số tiền cuối cùng"
+                                    placeholder="Nhập số tiền cuối cùng (VNĐ nguyên)"
                                     min="0"
                                     step="1000"
                                 />

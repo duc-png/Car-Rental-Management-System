@@ -168,7 +168,16 @@ public class DisputeService {
             throw new AppException(ErrorCode.DISPUTE_ALREADY_RESOLVED);
         }
 
-        dispute.setFinalAmount(request.getFinalAmount());
+        java.math.BigDecimal normalizedFinalAmount = request.getFinalAmount().setScale(0, java.math.RoundingMode.HALF_UP);
+        if (normalizedFinalAmount.compareTo(java.math.BigDecimal.ZERO) < 0) {
+            throw new AppException(ErrorCode.INVALID_KEY);
+        }
+        if (normalizedFinalAmount.compareTo(java.math.BigDecimal.ZERO) > 0
+                && normalizedFinalAmount.compareTo(java.math.BigDecimal.valueOf(2000)) < 0) {
+            throw new AppException(ErrorCode.INVALID_KEY);
+        }
+
+        dispute.setFinalAmount(normalizedFinalAmount);
         dispute.setResolutionNotes(request.getResolutionNotes());
         dispute.setStatus(DisputeStatus.RESOLVED);
         dispute.setResolvedAt(Instant.now());
@@ -176,8 +185,15 @@ public class DisputeService {
         disputeRepository.save(dispute);
 
         BookingEntity booking = dispute.getBooking();
-        booking.setReturnStatus(ReturnStatus.RESOLVED);
-        // Prevent stale/old penalty links from being reused before customer accepts
+        // Only mark as RESOLVED after customer accepts owner proposal.
+        booking.setReturnStatus(ReturnStatus.DISPUTED);
+        // If booking was previously completed, move it back to ONGOING while waiting
+        // for customer acceptance/payment decision.
+        if (normalizedFinalAmount.compareTo(java.math.BigDecimal.ZERO) > 0
+                && booking.getStatus() == BookingStatus.COMPLETED) {
+            booking.setStatus(BookingStatus.ONGOING);
+        }
+        // Prevent stale/old penalty links from being reused before customer accepts.
         booking.setCheckoutUrl(null);
         booking.setUpdatedAt(Instant.now());
         bookingRepository.save(booking);
