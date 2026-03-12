@@ -23,6 +23,74 @@
     margin-top: 4px;
 }
 
+/* Modules Grid */
+.admin-dashboard-modules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 24px;
+}
+
+.admin-dashboard-module-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 24px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+}
+
+.admin-dashboard-module-card:hover {
+    border-color: #6366f1;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+    transform: translateY(-2px);
+}
+
+.admin-dashboard-module-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #eef2ff;
+    color: #6366f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.admin-dashboard-module-card h3 {
+    margin: 0 0 6px 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.admin-dashboard-module-card p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+.admin-dashboard-module-accent {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border-color: #bbf7d0;
+}
+
+.admin-dashboard-module-accent .admin-dashboard-module-icon {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.admin-dashboard-module-accent:hover {
+    border-color: #22c55e;
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+}
+
 .admin-dashboard-card {
     background: #ffffff;
     border-radius: 20px;
@@ -145,6 +213,10 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
+    }
+
+    .admin-dashboard-modules-grid {
+        grid-template-columns: 1fr;
     }
 
     .admin-dashboard-panels-grid {
