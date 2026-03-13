@@ -10,6 +10,7 @@ function FleetSidebar({ user, onLogout }) {
     const isOverviewRoute = location.pathname === '/owner/overview'
     const isVehiclesRoute = location.pathname.startsWith('/owner/fleet') || location.pathname.startsWith('/owner/vehicles')
     const isRentalRoute = location.pathname.startsWith('/manage-rentals')
+    const isMaintenanceRoute = location.pathname.startsWith('/owner/maintenance')
     const isFeedbackRoute = location.pathname.startsWith('/owner/feedback')
     const isCalendarRoute = location.pathname.startsWith('/owner/booking-calendar')
     const isWalletRoute = location.pathname.startsWith('/owner/wallet')
@@ -51,6 +52,13 @@ function FleetSidebar({ user, onLogout }) {
             icon: CalendarDays,
             label: 'Lịch booking',
             active: isCalendarRoute,
+        },
+        {
+            key: 'maintenance',
+            to: '/owner/maintenance',
+            icon: ShieldCheck,
+            label: 'Bảo dưỡng',
+            active: isMaintenanceRoute,
         },
         {
             key: 'feedback',

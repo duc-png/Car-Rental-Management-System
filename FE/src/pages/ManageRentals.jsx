@@ -166,14 +166,17 @@ function ManageRentals() {
                     </div>
                 </header>
 
-                <div className="bookings-grid">
+                <div className="bookings-list owner-rentals-list">
                     {rentals.length === 0 ? (
-                        <div className="no-bookings">
-                            <p>Chưa có đơn thuê nào.</p>
+                        <div className="empty-state owner-rentals-empty">
+                            <div className="empty-icon">📂</div>
+                            <h3>Chưa có yêu cầu thuê</h3>
+                            <p>Khi khách đặt xe của bạn, đơn thuê sẽ hiển thị tại đây.</p>
                         </div>
                     ) : (
                         rentals.map((booking) => (
                             <div key={booking.id} className={`booking-card ${getStatusColor(booking.status)}`}>
+                                {/* Left: Image */}
                                 <div className="booking-image">
                                     <img
                                         src={booking.vehicleImage || '/placeholder.svg'}
@@ -181,11 +184,12 @@ function ManageRentals() {
                                     />
                                 </div>
 
+                                {/* Middle: Info */}
                                 <div className="booking-details">
-                                    <h3>{booking.vehicleName || `Vehicle #${booking.vehicleId}`}</h3>
+                                    <h3>{booking.vehicleName}</h3>
                                     <div className="booking-info">
-                                        <p><strong>Khách thuê:</strong> {booking.renterName || 'N/A'} {booking.renterEmail && `(${booking.renterEmail})`}</p>
-                                        <p><strong>Thời gian:</strong> {booking.startDate ? new Date(booking.startDate).toLocaleDateString('vi-VN') : 'N/A'} - {booking.endDate ? new Date(booking.endDate).toLocaleDateString('vi-VN') : 'N/A'}</p>
+                                        <p><strong>Khách thuê:</strong> {booking.renterName} ({booking.renterEmail})</p>
+                                        <p><strong>Thời gian:</strong> {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}</p>
                                         <p><strong>Tổng tiền:</strong> {formatVndCurrency(booking.totalPrice)}</p>
                                         {booking.depositAmount && (
                                             <p><strong>Cọc 15%:</strong> {formatVndCurrency(booking.depositAmount)}</p>
@@ -241,6 +245,7 @@ function ManageRentals() {
                                     </div>
                                 </div>
 
+                                {/* Right: Actions */}
                                 <div className="booking-actions">
                                     {/* PENDING: Confirm or Cancel */}
                                     {booking.status === 'PENDING' && (
@@ -250,13 +255,13 @@ function ManageRentals() {
                                                 style={ACTION_BUTTON_STYLES.confirm}
                                                 onClick={() => handleConfirm(booking)}
                                             >
-                                                Xác nhận
+                                                ✅ Duyệt đơn
                                             </button>
                                             <button
                                                 className="btn-cancel"
                                                 onClick={() => handleCancel(booking)}
                                             >
-                                                Từ chối
+                                                ❌ Từ chối
                                             </button>
                                         </>
                                     )}
