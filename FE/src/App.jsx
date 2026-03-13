@@ -15,6 +15,7 @@ import Login from './pages/auth/Login'
 import OwnerLogin from './pages/auth/OwnerLogin'
 import Register from './pages/auth/Register'
 import ForgotPassword from './pages/auth/ForgotPassword'
+import OAuth2Callback from './pages/auth/OAuth2Callback'
 import CarOwnerFleet from './pages/owner/CarOwnerFleet'
 import OwnerVehicleDetails from './pages/owner/OwnerVehicleDetails'
 import OwnerVehicleEdit from './pages/owner/OwnerVehicleEdit'
@@ -51,6 +52,29 @@ const forceScrollTop = () => {
 function hasAdminRole(user) {
   const scope = String(user?.role || user?.scope || '')
   return scope.includes('ROLE_ADMIN') || scope.includes('ADMIN')
+}
+
+function hasOwnerRole(user) {
+  const scope = String(user?.role || user?.scope || '')
+  return scope.includes('ROLE_CAR_OWNER') || scope.includes('ROLE_EXPERT') || scope.includes('CAR_OWNER') || scope.includes('EXPERT')
+}
+
+function OwnerRoute({ children }) {
+  const { user, isAuthenticated, loading } = useAuth()
+
+  if (loading) {
+    return null
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (!hasOwnerRole(user)) {
+    return <Navigate to="/" replace />
+  }
+
+  return children
 }
 
 function AdminRoute({ children }) {
@@ -116,22 +140,24 @@ function AppLayout() {
           <Route path="/my-bookings" element={<MyBookings />} />
           <Route path="/profile" element={<CustomerProfile />} />
           <Route path="/chat" element={<ChatPage />} />
-          <Route path="/manage-rentals" element={<ManageRentals />} />
+          <Route path="/manage-rentals" element={<OwnerRoute><ManageRentals /></OwnerRoute>} />
           <Route path="/booking/:id/payment-success" element={<PaymentSuccess />} />
           <Route path="/booking/:id/payment-cancel" element={<PaymentCancel />} />
           <Route path="/login" element={<Login />} />
           <Route path="/owner/login" element={<OwnerLogin />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/owner/fleet" element={<CarOwnerFleet />} />
-          <Route path="/owner/fleet/vehicles" element={<CarOwnerFleet />} />
-          <Route path="/owner/vehicles/:id" element={<OwnerVehicleDetails />} />
-          <Route path="/owner/vehicles/:id/edit" element={<OwnerVehicleEdit />} />
-          <Route path="/owner/feedback" element={<OwnerResponseDashboard />} />
-          <Route path="/owner/booking-calendar" element={<OwnerBookingCalendar />} />
-          <Route path="/owner/wallet" element={<OwnerWallet />} />
-          <Route path="/owner/maintenance" element={<MaintenanceDashboard />} />
-          <Route path="/owner/analytics" element={<OwnerAnalytics />} />
+          <Route path="/oauth2/callback" element={<OAuth2Callback />} />
+          <Route path="/owner/fleet" element={<OwnerRoute><CarOwnerFleet /></OwnerRoute>} />
+          <Route path="/owner/fleet/vehicles" element={<OwnerRoute><CarOwnerFleet /></OwnerRoute>} />
+          <Route path="/owner/vehicles/:id" element={<OwnerRoute><OwnerVehicleDetails /></OwnerRoute>} />
+          <Route path="/owner/vehicles/:id/edit" element={<OwnerRoute><OwnerVehicleEdit /></OwnerRoute>} />
+          <Route path="/owner/feedback" element={<OwnerRoute><OwnerResponseDashboard /></OwnerRoute>} />
+          <Route path="/owner/booking-calendar" element={<OwnerRoute><OwnerBookingCalendar /></OwnerRoute>} />
+          <Route path="/owner/wallet" element={<OwnerRoute><OwnerWallet /></OwnerRoute>} />
+          <Route path="/owner/maintenance" element={<OwnerRoute><MaintenanceDashboard /></OwnerRoute>} />
+          <Route path="/owner/analytics" element={<OwnerRoute><OwnerAnalytics /></OwnerRoute>} />
+          <Route path="/customers" element={<OwnerRoute><Customers /></OwnerRoute>} />
           <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="dashboard" element={<AdminDashboard />} />

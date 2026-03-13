@@ -1,5 +1,6 @@
 .owner-analytics-page {
-    /* acts as modifier on top of .fleet-dashboard */
+    min-height: 100vh;
+    background: #f5f7fb;
 }
 
 .owner-analytics-sidebar {

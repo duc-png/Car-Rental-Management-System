@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { CalendarDays, Car, LayoutGrid, LogOut, MessageSquareText, ReceiptText, Settings, ShieldCheck, UsersRound, Wallet } from 'lucide-react'
+import { BarChart3, CalendarDays, Car, LayoutGrid, LogOut, MessageSquareText, ReceiptText, Settings, UsersRound, Wallet, Wrench } from 'lucide-react'
 import '../../../styles/FleetSidebar.css'
 
 function FleetSidebar({ user, onLogout }) {
@@ -14,6 +14,8 @@ function FleetSidebar({ user, onLogout }) {
     const isFeedbackRoute = location.pathname.startsWith('/owner/feedback')
     const isCalendarRoute = location.pathname.startsWith('/owner/booking-calendar')
     const isWalletRoute = location.pathname.startsWith('/owner/wallet')
+    const isAnalyticsRoute = location.pathname.startsWith('/owner/analytics')
+    const isMaintenanceRoute = location.pathname.startsWith('/owner/maintenance')
 
     const navItems = [
         {
@@ -29,6 +31,13 @@ function FleetSidebar({ user, onLogout }) {
             icon: Car,
             label: 'Xe của tôi',
             active: isVehiclesRoute,
+        },
+        {
+            key: 'maintenance',
+            to: '/owner/maintenance',
+            icon: Wrench,
+            label: 'Bảo dưỡng xe',
+            active: isMaintenanceRoute,
         },
         {
             key: 'rentals',
@@ -71,6 +80,13 @@ function FleetSidebar({ user, onLogout }) {
             icon: Wallet,
             label: 'Ví của tôi',
             active: isWalletRoute,
+        },
+        {
+            key: 'analytics',
+            to: '/owner/analytics',
+            icon: BarChart3,
+            label: 'Báo cáo & Thống kê',
+            active: isAnalyticsRoute,
         },
     ]
 

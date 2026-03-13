@@ -25,7 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
         private final String[] PUBLIC_ENDPOINTS = {
-                        "/auth/token", "/auth/logout", "/auth/refresh", "/auth/register", "/api/v1/owner-registrations", "/auth/forgot-password"
+                        "/auth/token", "/auth/logout", "/auth/refresh", "/auth/register", "/api/v1/owner-registrations"
         };
 
         private final CustomJwtDecoder customJwtDecoder;
@@ -34,8 +34,6 @@ public class SecurityConfig {
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
                 http.authorizeHttpRequests(request -> request
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
-                                // Allow public GET for forgot-password (user chưa đăng nhập)
-                                .requestMatchers(HttpMethod.GET, "/auth/forgot-password/**").permitAll()
                                 // Allow public GET access to vehicles (for browsing)
                                 .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/**").permitAll()
                                 // Allow public GET access to vehicle models (for dropdowns)
@@ -44,6 +42,7 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/api/v1/brands/**").permitAll()
                                 // Allow public GET access to vehicle features
                                 .requestMatchers(HttpMethod.GET, "/api/v1/vehicle-features/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/auth/forgot-password/**").permitAll()
                                 // Allow public vehicle search
                                 .requestMatchers(HttpMethod.POST, "/api/v1/vehicles/search").permitAll()
                                 // Allow public owner profiles

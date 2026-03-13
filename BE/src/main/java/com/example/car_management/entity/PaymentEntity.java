@@ -1,6 +1,7 @@
 package com.example.car_management.entity;
 
 import com.example.car_management.entity.enums.PaymentMethod;
+import com.example.car_management.entity.enums.PaymentType;
 import com.example.car_management.entity.enums.TransactionStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -28,6 +29,10 @@ public class PaymentEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", length = 20)
     private PaymentMethod paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_type", length = 20)
+    private PaymentType paymentType;
 
     @Column(name = "amount", precision = 12, scale = 2, nullable = false)
     private BigDecimal amount;

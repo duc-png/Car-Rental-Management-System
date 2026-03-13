@@ -25,13 +25,14 @@ public class ReportController {
 
     /**
      * Revenue report. Admin: system-wide. Car Owner: own vehicles.
-     * Params: fromDate (required), toDate (required).
+     * Params: fromDate (required), toDate (required), granularity (optional, default MONTHLY).
      */
     @GetMapping("/revenue")
     public ResponseEntity<ApiResponse<RevenueReportResponse>> getRevenueReport(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
-        RevenueReportResponse result = reportService.getRevenueReport(fromDate, toDate);
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false, defaultValue = "MONTHLY") String granularity) {
+        RevenueReportResponse result = reportService.getRevenueReport(fromDate, toDate, granularity);
         return ResponseEntity.ok(ApiResponse.<RevenueReportResponse>builder()
                 .code(1000)
                 .message("Success")
@@ -69,6 +70,23 @@ public class ReportController {
                 .code(1000)
                 .message("Success")
                 .result(result)
+                .build());
+    }
+
+
+
+
+    /**
+     * Dev helper: seed demo revenue data (completed bookings + payments).
+     * Call this on local to quickly have data for reports.
+     */
+    @PostMapping("/dev/seed-owner-revenue-demo")
+    public ResponseEntity<ApiResponse<String>> seedOwnerRevenueDemo() {
+        reportService.seedDemoRevenueData();
+        return ResponseEntity.ok(ApiResponse.<String>builder()
+                .code(1000)
+                .message("Success")
+                .result("Demo revenue data seeded")
                 .build());
     }
 }

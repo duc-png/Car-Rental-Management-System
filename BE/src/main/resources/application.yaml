@@ -7,7 +7,7 @@ spring:
     url: jdbc:mysql://localhost:3306/car_manager
     driverClassName: com.mysql.cj.jdbc.Driver
     username: root
-    password: 123456
+    password: 170103
   jpa:
     hibernate:
       ddl-auto: update
@@ -23,6 +23,16 @@ spring:
           auth: true
           starttls:
             enable: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:nhap_vao_moi_truong_chay_thuc_te}
+            client-secret: ${GOOGLE_CLIENT_SECRET:nhap_vao_moi_truong_chay_thuc_te}
+            scope: openid, profile, email
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
 
 
 cloudinary:
