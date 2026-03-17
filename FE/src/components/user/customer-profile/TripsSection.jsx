@@ -4,6 +4,8 @@ import { toast } from 'sonner'
 import { cancelBooking, confirmHandover } from '../../../api/bookings'
 import { formatVndCurrency, getBookingStatusLabel } from '../../../utils/bookingUtils'
 import { TRIP_TAB } from '../../../utils/customerProfile/constants'
+import ReturnConfirmationModal from '../../ReturnConfirmationModal'
+import DisputeChatModal from '../../DisputeChatModal'
 
 const STEPS = [
     { key: 'PENDING', label: 'Đặt xe', icon: '📋' },
@@ -56,6 +58,8 @@ export default function TripsSection({
     const [cancellingId, setCancellingId] = useState(null)
     const [confirmingHandoverId, setConfirmingHandoverId] = useState(null)
     const [expandedBookingId, setExpandedBookingId] = useState(null)
+    const [selectedForReturnFees, setSelectedForReturnFees] = useState(null)
+    const [selectedForDisputeChat, setSelectedForDisputeChat] = useState(null)
 
     const toggleExpand = (id) => {
         setExpandedBookingId(prev => prev === id ? null : id)
@@ -230,6 +234,51 @@ export default function TripsSection({
                                                         </div>
                                                     )}
 
+                                                    {booking.returnStatus === 'FEES_CALCULATED' && (
+                                                        <button
+                                                            className="btn-pay"
+                                                            style={{ background: '#0ea5e9', border: 'none' }}
+                                                            onClick={(e) => { e.stopPropagation(); setSelectedForReturnFees(booking) }}
+                                                        >
+                                                            Xem & xác nhận phí trả xe
+                                                        </button>
+                                                    )}
+
+                                                    {booking.returnStatus === 'DISPUTED' && (
+                                                        <button
+                                                            className="btn-view"
+                                                            onClick={(e) => { e.stopPropagation(); setSelectedForDisputeChat(booking) }}
+                                                        >
+                                                            Thảo luận phí với chủ xe
+                                                        </button>
+                                                    )}
+
+                                                    {booking.returnStatus === 'RESOLVED'
+                                                        && booking.status !== 'COMPLETED'
+                                                        && booking.status !== 'CANCELLED'
+                                                        && booking.checkoutUrl && (
+                                                            <button
+                                                                className="btn-pay"
+                                                                style={{ background: '#ef4444', border: 'none' }}
+                                                                onClick={(e) => { e.stopPropagation(); window.open(booking.checkoutUrl, '_blank') }}
+                                                            >
+                                                                Thanh toán phí phạt
+                                                            </button>
+                                                        )}
+
+                                                    {booking.returnStatus === 'CUSTOMER_CONFIRMED'
+                                                        && booking.status !== 'COMPLETED'
+                                                        && booking.status !== 'CANCELLED'
+                                                        && booking.checkoutUrl && (
+                                                            <button
+                                                                className="btn-pay"
+                                                                style={{ background: '#ef4444', border: 'none' }}
+                                                                onClick={(e) => { e.stopPropagation(); window.open(booking.checkoutUrl, '_blank') }}
+                                                            >
+                                                                Thanh toán phí phạt
+                                                            </button>
+                                                        )}
+
                                                     <button
                                                         className="btn-view"
                                                         onClick={(e) => { e.stopPropagation(); navigate(`/cars/${booking.vehicleId}`); }}
@@ -255,6 +304,27 @@ export default function TripsSection({
                     </div>
                 </>
             ) : null}
+
+            {selectedForReturnFees && (
+                <ReturnConfirmationModal
+                    booking={selectedForReturnFees}
+                    onClose={() => setSelectedForReturnFees(null)}
+                    onSuccess={() => onRefresh?.()}
+                    onDispute={() => {
+                        setSelectedForDisputeChat(selectedForReturnFees)
+                        setSelectedForReturnFees(null)
+                    }}
+                />
+            )}
+
+            {selectedForDisputeChat && (
+                <DisputeChatModal
+                    booking={selectedForDisputeChat}
+                    isOwner={false}
+                    onClose={() => setSelectedForDisputeChat(null)}
+                    onResolved={() => onRefresh?.()}
+                />
+            )}
         </div>
     )
 }
