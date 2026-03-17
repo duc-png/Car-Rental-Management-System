@@ -80,6 +80,11 @@ export const getBookingById = async (id) => {
     return data.result;
 };
 
+export const getBookingJourney = async (id) => {
+    const data = await authFetch(`${API_BASE_URL}/bookings/${id}/journey`);
+    return data.result;
+};
+
 /**
  * Cập nhật trạng thái booking (cho Owner)
  * @param {number} id - Booking ID
@@ -126,4 +131,11 @@ export const getOwnerBookingCalendar = async (fromDate, toDate, vehicleId) => {
 
     const data = await authFetch(`${API_BASE_URL}/bookings/owner/calendar?${query.toString()}`);
     return data.result || [];
+};
+
+export const confirmHandover = async (bookingId) => {
+    const data = await authFetch(`${API_BASE_URL}/bookings/${bookingId}/confirm-handover`, {
+        method: 'POST',
+    });
+    return data.result;
 };

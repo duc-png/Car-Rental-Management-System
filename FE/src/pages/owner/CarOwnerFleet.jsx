@@ -233,6 +233,11 @@ function CarOwnerFleet() {
         navigate(`/owner/vehicles/${vehicle.id}/edit${ownerQuery}`)
     }
 
+    const openMaintenance = (vehicle) => {
+        if (!vehicle?.id) return
+        navigate(`/owner/maintenance?vehicleId=${vehicle.id}`)
+    }
+
     const updateCreateField = (field, value) => {
         setCreateForm((prev) => ({
             ...prev,
@@ -699,6 +704,7 @@ function CarOwnerFleet() {
                                 onViewDetails={viewDetails}
                                 onEdit={startEdit}
                                 onDelete={onDeleteVehicle}
+                                onMaintenance={openMaintenance}
                             />
                         ) : (
                             <>
@@ -709,6 +715,7 @@ function CarOwnerFleet() {
                                         onViewDetails={viewDetails}
                                         onEdit={startEdit}
                                         onDelete={onDeleteVehicle}
+                                        onMaintenance={openMaintenance}
                                     />
                                 ))}
 

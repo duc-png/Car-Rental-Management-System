@@ -63,6 +63,7 @@ export default function CarDetails() {
     const [deliveryFeeVnd, setDeliveryFeeVnd] = useState(0);
     const [bookingLoading, setBookingLoading] = useState(false);
     const [contactLoading, setContactLoading] = useState(false);
+    const [showBookingConfirm, setShowBookingConfirm] = useState(false);
 
     // Voucher state
     const [voucherInput, setVoucherInput] = useState('');
@@ -437,7 +438,7 @@ export default function CarDetails() {
         setReturnDate(normalized);
     };
 
-    const handleBooking = async () => {
+    const handleBooking = () => {
         if (!user) {
             toast.error('Vui lòng đăng nhập để đặt xe!');
             navigate('/login');
@@ -449,6 +450,16 @@ export default function CarDetails() {
             return;
         }
 
+        if (!pickupDate || !returnDate) {
+            toast.error('Vui lòng chọn ngày nhận và trả xe!');
+            return;
+        }
+
+        // Open confirmation modal — do NOT book yet
+        setShowBookingConfirm(true);
+    };
+
+    const handleConfirmBooking = async () => {
         const resolvedReturn = returnDate || new Date(pickupDate.getTime() + DAY_MS);
 
         const [pickupHour, pickupMin] = pickupTime.split(':').map(Number);
@@ -461,7 +472,7 @@ export default function CarDetails() {
         endDt.setHours(returnHour, returnMin, 0, 0);
 
         if (endDt.getTime() <= startDt.getTime()) {
-            toast.error('Thoi gian tra xe phai sau thoi gian nhan xe.');
+            toast.error('Thời gian trả xe phải sau thời gian nhận xe.');
             return;
         }
 
@@ -471,6 +482,8 @@ export default function CarDetails() {
         setBookingLoading(true);
         try {
             await createBooking(car.id, fmt(startDt), fmt(endDt), appliedVoucherCode || null);
+            await createBooking(car.id, fmt(startDt), fmt(endDt));
+            setShowBookingConfirm(false);
             toast.success('Đặt xe thành công! Vui lòng chờ chủ xe duyệt.');
             navigate('/my-bookings');
         } catch (err) {
@@ -1224,6 +1237,104 @@ export default function CarDetails() {
                     setIsCustomAddressModalOpen(false);
                 }}
             />
+
+            {/* Booking Confirmation Modal */}
+            {showBookingConfirm && (
+                <div
+                    style={{
+                        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)',
+                        zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        padding: '16px',
+                    }}
+                    onClick={() => setShowBookingConfirm(false)}
+                >
+                    <div
+                        style={{
+                            background: '#1e293b', borderRadius: '16px', padding: '32px',
+                            width: '100%', maxWidth: '480px', boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                        }}
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <h2 style={{ margin: '0 0 4px', fontSize: '1.4rem', color: '#f1f5f9', fontWeight: 700 }}>
+                            Xác nhận đặt xe
+                        </h2>
+                        <p style={{ margin: '0 0 24px', color: '#94a3b8', fontSize: '0.9rem' }}>
+                            Vui lòng kiểm tra thông tin trước khi xác nhận
+                        </p>
+
+                        {/* Car info */}
+                        <div style={{ display: 'flex', gap: '14px', marginBottom: '20px', padding: '16px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px' }}>
+                            <img
+                                src={images[0]?.url || '/placeholder.svg'}
+                                alt={car.modelName}
+                                style={{ width: '80px', height: '60px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }}
+                            />
+                            <div>
+                                <div style={{ fontWeight: 700, color: '#f1f5f9', fontSize: '1rem' }}>
+                                    {car.brandName} {car.modelName} {car.year || ''}
+                                </div>
+                                <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginTop: '4px' }}>
+                                    {car.seatCount} chỗ • {car.transmission} • {car.fuelType}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Booking summary */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+                            {[
+                                { label: '📅 Nhận xe', value: `${pickupTime}, ${formatDate(pickupDate)}` },
+                                { label: '📅 Trả xe', value: `${returnTime}, ${formatDate(returnDate || pickupDate)}` },
+                                { label: '⏱ Số ngày', value: `${selectedDays} ngày` },
+                                { label: '💰 Giá thuê', value: `${formatVndNumber(pricePerDay)} VNĐ/ngày` },
+                                { label: '💳 Tổng tiền', value: `${formatVndNumber(totalPrice)} VNĐ`, highlight: true },
+                                { label: '🔒 Đặt cọc 15%', value: `${formatVndNumber(Math.ceil(totalPrice * 0.15))} VNĐ (thanh toán sau khi được duyệt)`, highlight: true },
+                            ].map(({ label, value, highlight }) => (
+                                <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>{label}</span>
+                                    <span style={{ color: highlight ? '#f59e0b' : '#f1f5f9', fontWeight: highlight ? 700 : 500, fontSize: highlight ? '1rem' : '0.9rem' }}>
+                                        {value}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div style={{ padding: '12px 16px', background: 'rgba(245,158,11,0.1)', borderRadius: '10px', border: '1px solid rgba(245,158,11,0.3)', marginBottom: '24px' }}>
+                            <p style={{ margin: 0, color: '#fbbf24', fontSize: '0.85rem' }}>
+                                ⚠️ Sau khi đặt, chủ xe sẽ xét duyệt. Bạn cần thanh toán cọc 15% để xác nhận chuyến.
+                            </p>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={() => setShowBookingConfirm(false)}
+                                style={{
+                                    flex: 1, padding: '12px', borderRadius: '10px',
+                                    border: '1px solid rgba(255,255,255,0.15)',
+                                    background: 'transparent', color: '#94a3b8',
+                                    cursor: 'pointer', fontSize: '0.95rem', fontWeight: 600,
+                                }}
+                            >
+                                Quay lại
+                            </button>
+                            <button
+                                onClick={handleConfirmBooking}
+                                disabled={bookingLoading}
+                                style={{
+                                    flex: 2, padding: '12px', borderRadius: '10px',
+                                    background: bookingLoading ? '#475569' : 'linear-gradient(135deg, #f59e0b, #d97706)',
+                                    color: 'white', border: 'none',
+                                    cursor: bookingLoading ? 'not-allowed' : 'pointer',
+                                    fontSize: '0.95rem', fontWeight: 700,
+                                    boxShadow: bookingLoading ? 'none' : '0 4px 16px rgba(245,158,11,0.3)',
+                                }}
+                            >
+                                {bookingLoading ? 'Đang đặt xe...' : '✅ Xác nhận đặt xe'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

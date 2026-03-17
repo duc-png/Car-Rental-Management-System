@@ -303,6 +303,13 @@ export function AuthProvider({ children }) {
         }
     }
 
+    // loginWithToken: dùng cho OAuth2 callback
+    const loginWithToken = (rawToken) => {
+        if (applyToken(rawToken)) {
+            scheduleRefresh(rawToken)
+        }
+    }
+
     // Giá trị được chia sẻ cho toàn bộ app
     const value = {
         user,
@@ -311,6 +318,7 @@ export function AuthProvider({ children }) {
         loading,
         login,
         logout,
+        loginWithToken,
         refreshProfile
     }
 

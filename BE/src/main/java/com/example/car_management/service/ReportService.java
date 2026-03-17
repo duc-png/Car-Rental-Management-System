@@ -12,8 +12,9 @@ public interface ReportService {
      * Revenue report. Admin: system-wide (ownerId=null). Car Owner: own vehicles only.
      * @param fromDate start date (inclusive)
      * @param toDate end date (inclusive)
+     * @param granularity DAILY, MONTHLY, QUARTERLY, or YEARLY
      */
-    RevenueReportResponse getRevenueReport(LocalDate fromDate, LocalDate toDate);
+    RevenueReportResponse getRevenueReport(LocalDate fromDate, LocalDate toDate, String granularity);
 
     /**
      * Car usage report. Car Owner only.
@@ -25,4 +26,10 @@ public interface ReportService {
      * @param granularity DAILY, WEEKLY, or MONTHLY
      */
     BookingStatsResponse getBookingStats(LocalDate fromDate, LocalDate toDate, String granularity);
+
+    /**
+     * Dev helper: seed a few COMPLETED bookings + matching payments so reports have demo data.
+     * Intended for local testing only.
+     */
+    void seedDemoRevenueData();
 }

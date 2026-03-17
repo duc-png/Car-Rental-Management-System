@@ -22,4 +22,5 @@ public class CreateDisputeRequest {
     private String reason;
 
     private BigDecimal disputedAmount;
+    private BigDecimal customerProposedAmount;
 }

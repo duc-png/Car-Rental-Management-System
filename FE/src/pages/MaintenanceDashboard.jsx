@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '../hooks/useAuth';
+import FleetSidebar from '../components/owner/fleet/FleetSidebar';
 import {
   getMaintenanceByVehicle,
   createMaintenanceRecord,
   updateMaintenanceStatus,
   addMaintenanceCostItem,
 } from '../api/maintenance';
+import { listOwnerVehicles } from '../api/ownerVehicles';
 import '../styles/CarOwnerFleet.css';
 import '../styles/MaintenanceDashboard.css';
 
@@ -60,9 +62,8 @@ function MaintenanceDashboard() {
   const [searchParams] = useSearchParams();
   const vehicleId = Number(searchParams.get('vehicleId'));
 
-  const { token, user, logout } = useAuth();
+  const { token, user, logout, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -89,6 +90,9 @@ function MaintenanceDashboard() {
 
   const [activeTab, setActiveTab] = useState('create');
   const [vehicleInfo, setVehicleInfo] = useState(null);
+  const [ownerVehicles, setOwnerVehicles] = useState([]);
+  const [ownerVehiclesLoading, setOwnerVehiclesLoading] = useState(false);
+  const [ownerVehiclesError, setOwnerVehiclesError] = useState('');
 
   const selectedRecord =
     selectedRecordId != null
@@ -104,14 +108,24 @@ function MaintenanceDashboard() {
   };
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
     if (!token) {
       navigate('/login');
       return;
     }
-    if (!user?.role?.includes('ROLE_EXPERT')) {
+
+    const role = String(user?.role || '');
+    const canAccessMaintenance =
+      role.includes('ROLE_EXPERT') || role.includes('ROLE_CAR_OWNER');
+
+    if (!canAccessMaintenance) {
       navigate('/');
       return;
     }
+
     if (!vehicleId) return;
 
     const load = async () => {
@@ -127,7 +141,54 @@ function MaintenanceDashboard() {
     };
 
     load();
-  }, [token, user?.role, vehicleId, navigate]);
+  }, [authLoading, token, user?.role, vehicleId, navigate]);
+
+  // Tải danh sách xe của chủ xe để cho phép chọn xe ngay trên màn Bảo dưỡng
+  useEffect(() => {
+    if (authLoading || !token) {
+      return;
+    }
+
+    const role = String(user?.role || '');
+    const canAccessMaintenance =
+      role.includes('ROLE_EXPERT') || role.includes('ROLE_CAR_OWNER');
+
+    if (!canAccessMaintenance) {
+      return;
+    }
+
+    const ownerId = user?.userId || user?.id;
+    if (!ownerId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadOwnerVehicles = async () => {
+      try {
+        setOwnerVehiclesLoading(true);
+        setOwnerVehiclesError('');
+        const data = await listOwnerVehicles(ownerId);
+        if (!cancelled) {
+          setOwnerVehicles(Array.isArray(data) ? data : []);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setOwnerVehiclesError(error.message || 'Không thể tải danh sách xe của bạn');
+        }
+      } finally {
+        if (!cancelled) {
+          setOwnerVehiclesLoading(false);
+        }
+      }
+    };
+
+    loadOwnerVehicles();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authLoading, token, user]);
 
   const handleLogout = async () => {
     await logout();
@@ -139,7 +200,6 @@ function MaintenanceDashboard() {
     try {
       if (newRecord.scheduledAt) {
         const picked = new Date(newRecord.scheduledAt);
-        const now = new Date();
         if (Number.isNaN(picked.getTime())) {
           toast.error('Thời gian bảo dưỡng không hợp lệ');
           return;
@@ -171,7 +231,7 @@ function MaintenanceDashboard() {
       toast.success('✅ Tạo hồ sơ bảo dưỡng thành công');
     } catch (error) {
       const errorMsg = error.message || 'Không thể tạo hồ sơ bảo dưỡng';
-      
+
       if (errorMsg.includes('already has active maintenance')) {
         toast.error('⚠️ Xe đang có lịch bảo dưỡng chưa hoàn thành');
       } else if (errorMsg.includes('not available')) {
@@ -199,7 +259,7 @@ function MaintenanceDashboard() {
       toast.success('✅ Cập nhật trạng thái thành công');
     } catch (error) {
       const errorMsg = error.message || 'Không thể cập nhật trạng thái';
-      
+
       if (errorMsg.includes('Invalid maintenance status transition')) {
         toast.error('⚠️ Chuyển trạng thái không hợp lệ');
       } else if (errorMsg.includes('Cannot modify completed')) {
@@ -236,7 +296,7 @@ function MaintenanceDashboard() {
       toast.success('✅ Thêm chi phí thành công');
     } catch (error) {
       const errorMsg = error.message || 'Không thể thêm chi phí';
-      
+
       if (errorMsg.includes('Cannot modify completed')) {
         toast.error('⚠️ Không thể thêm chi phí cho hồ sơ đã hoàn thành/hủy');
       } else if (errorMsg.includes('do not own')) {
@@ -249,57 +309,7 @@ function MaintenanceDashboard() {
 
   return (
     <div className="fleet-dashboard">
-      <aside className="fleet-sidebar">
-        <button
-          type="button"
-          className="fleet-brand"
-          onClick={() => navigate('/owner/fleet')}
-        >
-          <div className="brand-icon">CR</div>
-          <div>
-            <h3>CarRental System</h3>
-            <p>Maintenance</p>
-          </div>
-        </button>
-
-        <div className="fleet-nav">
-          <p className="nav-section">Navigation</p>
-          <button
-            type="button"
-            className={`nav-item ${location.pathname === '/owner/fleet' ? 'active' : ''}`}
-            onClick={() => navigate('/owner/fleet')}
-          >
-            Fleet
-          </button>
-          <button
-            type="button"
-            className={`nav-item ${location.pathname === '/owner/maintenance' ? 'active' : ''}`}
-            onClick={() => navigate('/owner/maintenance')}
-          >
-            Maintenance
-          </button>
-        </div>
-
-        <div className="fleet-system">
-          <p className="nav-section">System</p>
-          <button type="button" className="nav-item">
-            Settings
-          </button>
-        </div>
-
-        <div className="fleet-user">
-          <div className="fleet-user-row">
-            <div className="user-avatar">CO</div>
-            <div className="user-info">
-              <p className="user-name">Car Owner</p>
-              <p className="user-email">{user?.email || '—'}</p>
-            </div>
-          </div>
-          <button type="button" className="fleet-logout-btn" onClick={handleLogout}>
-            Đăng xuất
-          </button>
-        </div>
-      </aside>
+      <FleetSidebar user={user} onLogout={handleLogout} />
 
       <section className="fleet-main">
         <header className="fleet-header">
@@ -316,10 +326,47 @@ function MaintenanceDashboard() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <h3 className="text-lg font-semibold text-slate-700 mb-2">Chưa chọn xe</h3>
-            <p className="text-sm text-slate-500">Vui lòng truy cập từ trang Fleet với một xe cụ thể để xem bảo dưỡng.</p>
+            <p className="text-sm text-slate-500 mb-4">
+              Chọn một xe bên dưới để xem và quản lý hồ sơ bảo dưỡng.
+            </p>
+
+            {ownerVehiclesError && (
+              <p className="text-sm text-red-600 mb-2">{ownerVehiclesError}</p>
+            )}
+
+            {ownerVehiclesLoading ? (
+              <p className="text-sm text-slate-500 mb-2">Đang tải danh sách xe của bạn...</p>
+            ) : ownerVehicles.length === 0 ? (
+              <p className="text-sm text-slate-500 mb-2">
+                Bạn chưa có xe nào. Vào trang Quản lý xe để thêm xe mới.
+              </p>
+            ) : (
+              <div className="flex flex-col items-center gap-3">
+                <select
+                  className="form-select min-w-[260px]"
+                  defaultValue=""
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    if (!selectedId) return;
+                    navigate(`/owner/maintenance?vehicleId=${selectedId}`);
+                  }}
+                >
+                  <option value="">-- Chọn xe để xem bảo dưỡng --</option>
+                  {ownerVehicles.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      #{v.id} - {v.modelName || v.carModelName || 'Xe'} ({v.licensePlate || 'chưa có biển số'})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-400">
+                  Hoặc vào trang Quản lý xe để xem chi tiết từng xe.
+                </p>
+              </div>
+            )}
+
             <button
               onClick={() => navigate('/owner/fleet')}
-              className="mt-4 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
+              className="mt-6 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors"
             >
               Quay lại Fleet
             </button>

@@ -11,6 +11,7 @@ import vn.payos.model.v2.paymentRequests.CreatePaymentLinkRequest;
 import vn.payos.model.v2.paymentRequests.PaymentLinkItem;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Date;
 
 @Service
@@ -21,6 +22,7 @@ public class PaymentService {
     private String frontendUrl;
 
     private final PayOS payOS;
+    private static final BigDecimal MIN_PAYOS_AMOUNT = BigDecimal.valueOf(2000);
 
     public CreatePaymentLinkResponse createPaymentLink(BookingEntity booking, boolean isDeposit) {
         try {
@@ -73,11 +75,59 @@ public class PaymentService {
 
             return payOS.paymentRequests().create(paymentData);
 
+        } catch (AppException e) {
+            throw e;
         } catch (Exception e) {
             System.err.println("Error creating payment link: " + e.getMessage());
             e.printStackTrace();
             throw new AppException(ErrorCode.PAYMENT_ERROR); // Replace with a better UNCATEGORIZED_EXCEPTION or
                                                              // PAYMENT_ERROR
+        }
+    }
+
+    public CreatePaymentLinkResponse createPenaltyPaymentLink(BookingEntity booking, java.math.BigDecimal penaltyAmount) {
+        try {
+            long orderCode = new Date().getTime();
+            if (penaltyAmount == null || penaltyAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new AppException(ErrorCode.INVALID_KEY);
+            }
+
+            BigDecimal normalizedPenaltyAmount = penaltyAmount.setScale(0, RoundingMode.HALF_UP);
+            if (normalizedPenaltyAmount.compareTo(MIN_PAYOS_AMOUNT) < 0) {
+                throw new AppException(ErrorCode.INVALID_KEY);
+            }
+            int price = normalizedPenaltyAmount.intValueExact();
+
+            String description = ("Phi phat " + booking.getVehicle().getLicensePlate())
+                    .replaceAll("[^a-zA-Z0-9 ]", "");
+            if (description.length() > 25) {
+                description = description.substring(0, 25);
+            }
+
+            PaymentLinkItem item = PaymentLinkItem.builder()
+                    .name("Phi phat tra xe")
+                    .quantity(1)
+                    .price(Long.valueOf(price))
+                    .build();
+
+            CreatePaymentLinkRequest paymentData = CreatePaymentLinkRequest.builder()
+                    .orderCode(orderCode)
+                    .amount(Long.valueOf(price))
+                    .description(description)
+                    .returnUrl(frontendUrl + "/booking/" + booking.getId() + "/payment-success")
+                    .cancelUrl(frontendUrl + "/booking/" + booking.getId() + "/payment-cancel")
+                    .item(item)
+                    .build();
+
+            booking.setPayosPenaltyOrderCode(orderCode);
+
+            return payOS.paymentRequests().create(paymentData);
+        } catch (AppException e) {
+            throw e;
+        } catch (Exception e) {
+            System.err.println("Error creating penalty payment link: " + e.getMessage());
+            e.printStackTrace();
+            throw new AppException(ErrorCode.PAYMENT_ERROR);
         }
     }
 }

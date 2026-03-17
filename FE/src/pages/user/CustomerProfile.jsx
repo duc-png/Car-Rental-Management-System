@@ -34,6 +34,7 @@ import '../../styles/customer-profile/Layout.css'
 import '../../styles/customer-profile/Dashboard.css'
 import '../../styles/customer-profile/Account.css'
 import '../../styles/customer-profile/FavoritesTrips.css'
+import '../../styles/MyBookings.css'
 
 function CustomerProfile() {
     const navigate = useNavigate()
@@ -976,7 +977,7 @@ function CustomerProfile() {
                                 tripHistory={tripHistory}
                                 displayedTrips={displayedTrips}
                                 onTripTabChange={setActiveTripTab}
-                                formatDateTime={formatDateTime}
+                                onRefresh={loadBookings}
                             />
                         ) : null}
 

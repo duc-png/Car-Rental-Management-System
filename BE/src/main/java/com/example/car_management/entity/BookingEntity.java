@@ -1,7 +1,6 @@
 package com.example.car_management.entity;
 
 import com.example.car_management.entity.enums.BookingStatus;
-import com.example.car_management.entity.enums.FuelLevel;
 import com.example.car_management.entity.enums.ReturnStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -41,7 +40,12 @@ public class BookingEntity {
     private BigDecimal totalPrice;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 50)
     private BookingStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "return_status")
+    private ReturnStatus returnStatus;
 
     @Column(name = "created_at")
     private Instant createdAt;
@@ -68,6 +72,9 @@ public class BookingEntity {
 
     @Column(name = "payos_full_order_code")
     private Long payosFullOrderCode;
+
+    @Column(name = "payos_penalty_order_code")
+    private Long payosPenaltyOrderCode;
 
     @Column(name = "checkout_url", length = 500)
     private String checkoutUrl;
@@ -141,9 +148,9 @@ public class BookingEntity {
     
     @Enumerated(EnumType.STRING)
     @Column(name = "return_status")
+    // Customer handover confirmation — set to true when customer confirms they've
+    // received the car
+    @Column(name = "customer_confirmed_handover")
     @Builder.Default
-    private ReturnStatus returnStatus = ReturnStatus.NOT_RETURNED;
-
-    @Column(name = "return_notes", length = 500)
-    private String returnNotes;
+    private Boolean customerConfirmedHandover = false;
 }

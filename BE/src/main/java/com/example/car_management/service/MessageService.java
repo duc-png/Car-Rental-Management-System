@@ -45,7 +45,7 @@ public class MessageService {
             throw new AppException(ErrorCode.FORBIDDEN_RESOURCE);
         }
 
-        if (dispute.getStatus() == DisputeStatus.RESOLVED || dispute.getStatus() == DisputeStatus.ESCALATED) {
+        if (dispute.getStatus() == DisputeStatus.ESCALATED) {
             throw new AppException(ErrorCode.CANNOT_SEND_MESSAGE);
         }
 

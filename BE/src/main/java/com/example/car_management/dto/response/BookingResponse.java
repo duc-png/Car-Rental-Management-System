@@ -1,14 +1,12 @@
 package com.example.car_management.dto.response;
 
 import com.example.car_management.entity.enums.BookingStatus;
-import com.example.car_management.entity.enums.FuelLevel;
 import com.example.car_management.entity.enums.ReturnStatus;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Getter
 @Setter
@@ -20,6 +18,7 @@ public class BookingResponse {
     private Integer vehicleId;
     private String vehicleName;
     private String vehicleImage;
+    private Integer vehicleCurrentKm;
     private Integer renterId;
     private String renterName;
     private String renterEmail;
@@ -33,7 +32,7 @@ public class BookingResponse {
     private Instant createdAt;
     private Instant updatedAt;
 
-    // Payment specific fields
+    // Payment fields
     private BigDecimal depositAmount;
     private com.example.car_management.entity.enums.PaymentStatus paymentStatus;
     private String checkoutUrl;
@@ -66,10 +65,9 @@ public class BookingResponse {
     private List<String> damageImages;
     
     // Return status
+    // Handover confirmation
+    private Boolean customerConfirmedHandover;
+
+    // Return / penalty tracking
     private ReturnStatus returnStatus;
-    private String returnNotes;
-    
-    // Dispute info
-    private Integer disputeId;
-    private String disputeStatus;
 }

@@ -25,10 +25,10 @@ const authFetch = async (url, options = {}) => {
     return response.json();
 };
 
-export const createDispute = async (bookingId, reason, disputedAmount = null) => {
+export const createDispute = async (bookingId, reason, disputedAmount = null, customerProposedAmount = null) => {
     const data = await authFetch(`${API_BASE_URL}/disputes`, {
         method: 'POST',
-        body: JSON.stringify({ bookingId, reason, disputedAmount }),
+        body: JSON.stringify({ bookingId, reason, disputedAmount, customerProposedAmount }),
     });
     return data.result;
 };
@@ -66,6 +66,14 @@ export const resolveDispute = async (disputeId, finalAmount, resolutionNotes) =>
 export const acceptResolution = async (disputeId) => {
     const data = await authFetch(`${API_BASE_URL}/disputes/${disputeId}/accept`, {
         method: 'POST',
+    });
+    return data.result;
+};
+
+export const submitCounterOffer = async (disputeId, counterAmount, counterReason) => {
+    const data = await authFetch(`${API_BASE_URL}/disputes/${disputeId}/counter-offer`, {
+        method: 'POST',
+        body: JSON.stringify({ counterAmount, counterReason }),
     });
     return data.result;
 };

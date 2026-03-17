@@ -69,6 +69,7 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Integer>
                 select b from BookingEntity b
                 where b.payosDepositOrderCode = :orderCode
                    or b.payosFullOrderCode = :orderCode
+                   or b.payosPenaltyOrderCode = :orderCode
             """)
     Optional<BookingEntity> findByPayosOrderCode(@Param("orderCode") Long orderCode);
 
@@ -157,20 +158,19 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Integer>
             @Param("ownerId") Integer ownerId);
 
     @Query("""
-                select year(b.startDate), month(b.startDate), sum(b.totalPrice)
+                select b.startDate, b.totalPrice
                 from BookingEntity b
                 where b.status in :statuses
                   and b.startDate >= :from
                   and b.startDate < :to
                   and (:ownerId is null or b.vehicle.owner.id = :ownerId)
-                group by year(b.startDate), month(b.startDate)
-                order by year(b.startDate), month(b.startDate)
             """)
-    List<Object[]> sumRevenueGroupedByMonth(
+    List<Object[]> findRevenueEntriesByStartDate(
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to,
             @Param("statuses") List<BookingStatus> statuses,
             @Param("ownerId") Integer ownerId);
+
 
     // ----- Reports: usage (bookings for owner in date range) -----
     @Query("""
