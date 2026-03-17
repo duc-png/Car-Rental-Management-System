@@ -140,7 +140,7 @@ export const buildAddressInfo = (car) => {
     };
 };
 
-export const calculatePricing = ({ pricePerDay, selectedDays, enableExtraInsurance }) => {
+export const calculatePricing = ({ pricePerDay, selectedDays, enableExtraInsurance, voucherDiscountPercent = 0 }) => {
     const normalizedPricePerDay = Number(pricePerDay || 0);
     const bookingFeePerDay = Math.round(normalizedPricePerDay * 0.08);
     const insuranceFeePerDay = Math.round(normalizedPricePerDay * 0.03);
@@ -153,7 +153,11 @@ export const calculatePricing = ({ pricePerDay, selectedDays, enableExtraInsuran
 
     const subtotalPrice = rentalCost + bookingFee + insuranceFee + extraInsuranceFee;
     const promoDiscount = Math.round(normalizedPricePerDay * 0.05) * selectedDays;
-    const totalPrice = Math.max(0, subtotalPrice - promoDiscount);
+
+    const voucherPercent = Number(voucherDiscountPercent || 0);
+    const voucherDiscount = voucherPercent > 0 ? Math.round(subtotalPrice * voucherPercent / 100) : 0;
+
+    const totalPrice = Math.max(0, subtotalPrice - promoDiscount - voucherDiscount);
 
     const oldPrice = Math.round(normalizedPricePerDay * 1.06);
     const discountPercent = Math.max(1, Math.round(((oldPrice - normalizedPricePerDay) / oldPrice) * 100));
@@ -165,6 +169,7 @@ export const calculatePricing = ({ pricePerDay, selectedDays, enableExtraInsuran
         extraInsurancePerDay,
         subtotalPrice,
         promoDiscount,
+        voucherDiscount,
         totalPrice,
         discountPercent,
     };

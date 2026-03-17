@@ -6,6 +6,7 @@ import { getOwnerById, getOwnerPerformance } from '../../api/owners';
 import { createBooking } from '../../api/bookings';
 import { startConversationByVehicle } from '../../api/chat';
 import { addMyFavoriteVehicle, getMyFavoriteVehicles, removeMyFavoriteVehicle } from '../../api/customers';
+import { validateVoucher } from '../../api/vouchers';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'sonner';
 import MapModal from '../../components/booking/MapModal';
@@ -63,6 +64,13 @@ export default function CarDetails() {
     const [bookingLoading, setBookingLoading] = useState(false);
     const [contactLoading, setContactLoading] = useState(false);
     const [showBookingConfirm, setShowBookingConfirm] = useState(false);
+
+    // Voucher state
+    const [voucherInput, setVoucherInput] = useState('');
+    const [voucherLoading, setVoucherLoading] = useState(false);
+    const [voucherResult, setVoucherResult] = useState(null); // { discountPercent, remainingUses }
+    const [voucherError, setVoucherError] = useState('');
+    const [appliedVoucherCode, setAppliedVoucherCode] = useState(null);
 
     const navigate = useNavigate();
     const { user, token } = useAuth();
@@ -369,10 +377,12 @@ export default function CarDetails() {
         promoDiscount,
         totalPrice,
         discountPercent,
+        voucherDiscount,
     } = calculatePricing({
         pricePerDay: car.pricePerDay,
         selectedDays,
         enableExtraInsurance,
+        voucherDiscountPercent: voucherResult?.discountPercent || 0,
     });
     const defaultContact = 'Chưa cập nhật';
     const ownerName = owner?.fullName || car.ownerName;
@@ -471,6 +481,7 @@ export default function CarDetails() {
 
         setBookingLoading(true);
         try {
+            await createBooking(car.id, fmt(startDt), fmt(endDt), appliedVoucherCode || null);
             await createBooking(car.id, fmt(startDt), fmt(endDt));
             setShowBookingConfirm(false);
             toast.success('Đặt xe thành công! Vui lòng chờ chủ xe duyệt.');
@@ -552,6 +563,50 @@ export default function CarDetails() {
             setReturnDate(new Date(pickupDate.getTime() + DAY_MS));
         }
         setIsTimeModalOpen(false);
+    };
+
+    const handleApplyVoucher = async () => {
+        const code = voucherInput.trim().toUpperCase();
+        if (!code || code.length !== 8) {
+            setVoucherError('Mã giảm giá phải có 8 ký tự');
+            setVoucherResult(null);
+            setAppliedVoucherCode(null);
+            return;
+        }
+
+        if (!user) {
+            toast.error('Vui lòng đăng nhập để sử dụng mã giảm giá!');
+            return;
+        }
+
+        setVoucherLoading(true);
+        setVoucherError('');
+        try {
+            const result = await validateVoucher(code);
+            if (result.valid) {
+                setVoucherResult(result);
+                setAppliedVoucherCode(code);
+                setVoucherError('');
+                toast.success(`Áp dụng mã giảm ${result.discountPercent}% thành công!`);
+            } else {
+                setVoucherResult(null);
+                setAppliedVoucherCode(null);
+                setVoucherError('Mã giảm giá đã hết lượt sử dụng');
+            }
+        } catch (err) {
+            setVoucherResult(null);
+            setAppliedVoucherCode(null);
+            setVoucherError(err.message || 'Mã giảm giá không hợp lệ');
+        } finally {
+            setVoucherLoading(false);
+        }
+    };
+
+    const handleRemoveVoucher = () => {
+        setVoucherInput('');
+        setVoucherResult(null);
+        setAppliedVoucherCode(null);
+        setVoucherError('');
     };
 
     return (
@@ -933,9 +988,44 @@ export default function CarDetails() {
                                     <b>-{formatVndNumber(promoDiscount)}</b>
                                 </div>
 
-                                <div className="promo-code">
-                                    <span>Mã khuyến mãi</span>
-                                    <button type="button">Áp dụng</button>
+                                {voucherResult && voucherDiscount > 0 && (
+                                    <div className="fee-row voucher-discount">
+                                        <span>Mã giảm giá ({voucherResult.discountPercent}%)</span>
+                                        <b>-{formatVndNumber(voucherDiscount)}</b>
+                                    </div>
+                                )}
+
+                                <div className="promo-code-input">
+                                    <span>Mã giảm giá</span>
+                                    {appliedVoucherCode ? (
+                                        <div className="voucher-applied-row">
+                                            <span className="voucher-applied-badge">✓ {appliedVoucherCode} (-{voucherResult?.discountPercent}%)</span>
+                                            <button type="button" className="voucher-remove-btn" onClick={handleRemoveVoucher}>Xoá</button>
+                                        </div>
+                                    ) : (
+                                        <div className="voucher-input-row">
+                                            <input
+                                                type="text"
+                                                placeholder="Nhập mã 8 ký tự"
+                                                maxLength={8}
+                                                value={voucherInput}
+                                                onChange={(e) => {
+                                                    setVoucherInput(e.target.value);
+                                                    setVoucherError('');
+                                                }}
+                                                className={`voucher-input ${voucherError ? 'error' : ''}`}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="voucher-apply-btn"
+                                                onClick={handleApplyVoucher}
+                                                disabled={voucherLoading || !voucherInput.trim()}
+                                            >
+                                                {voucherLoading ? '...' : 'Áp dụng'}
+                                            </button>
+                                        </div>
+                                    )}
+                                    {voucherError && <p className="voucher-error">{voucherError}</p>}
                                 </div>
                             </div>
 
