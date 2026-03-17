@@ -81,7 +81,14 @@ public enum ErrorCode {
     
     // Message
     MESSAGE_NOT_FOUND(6001, "Message not found", HttpStatus.NOT_FOUND),
-    CANNOT_SEND_MESSAGE(6002, "Cannot send message to this dispute", HttpStatus.BAD_REQUEST);
+    CANNOT_SEND_MESSAGE(6002, "Cannot send message to this dispute", HttpStatus.BAD_REQUEST),
+
+    // ===== Voucher =====
+    VOUCHER_NOT_FOUND(7001, "Voucher not found", HttpStatus.NOT_FOUND),
+    VOUCHER_ALREADY_USED(7002, "Voucher has been fully used", HttpStatus.BAD_REQUEST),
+    VOUCHER_INVALID(7003, "Voucher is invalid or inactive", HttpStatus.BAD_REQUEST),
+    VOUCHER_CODE_EXISTED(7004, "Voucher code already exists", HttpStatus.BAD_REQUEST),
+    VOUCHER_DISCOUNT_EXCEEDED(7005, "Discount percent must not exceed 30%", HttpStatus.BAD_REQUEST);
     // ===== Cloudinary / Image =====
     // IMAGE_UPLOAD_FAILED(2007, "Upload image failed", HttpStatus.BAD_REQUEST);
     //

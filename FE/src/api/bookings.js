@@ -33,11 +33,16 @@ const authFetch = async (url, options = {}) => {
  * @param {number} vehicleId - ID xe
  * @param {string} startDate - Ngày bắt đầu (ISO format)
  * @param {string} endDate - Ngày kết thúc (ISO format)
+ * @param {string} [voucherCode] - Mã giảm giá (optional, 8 chars)
  */
-export const createBooking = async (vehicleId, startDate, endDate) => {
+export const createBooking = async (vehicleId, startDate, endDate, voucherCode = null) => {
+    const body = { vehicleId, startDate, endDate };
+    if (voucherCode) {
+        body.voucherCode = voucherCode;
+    }
     const data = await authFetch(`${API_BASE_URL}/bookings`, {
         method: 'POST',
-        body: JSON.stringify({ vehicleId, startDate, endDate }),
+        body: JSON.stringify(body),
     });
     return data.result;
 };

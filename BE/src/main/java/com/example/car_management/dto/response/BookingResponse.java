@@ -38,6 +38,10 @@ public class BookingResponse {
     private com.example.car_management.entity.enums.PaymentStatus paymentStatus;
     private String checkoutUrl;
 
+    // Voucher
+    private String voucherCode;
+    private BigDecimal discountAmount;
+
     // Car handover & return tracking
     private Integer startKm;
     private Integer endKm;

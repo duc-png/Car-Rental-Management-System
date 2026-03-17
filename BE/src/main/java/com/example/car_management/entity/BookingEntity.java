@@ -129,6 +129,14 @@ public class BookingEntity {
     @Column(name = "image_url")
     private java.util.List<String> damageImages;
 
+    // ============ Voucher ============
+
+    @Column(name = "voucher_code", length = 8)
+    private String voucherCode;
+
+    @Column(name = "discount_amount", precision = 12, scale = 2)
+    private BigDecimal discountAmount;
+
     // ============ Return Status ============
     
     @Enumerated(EnumType.STRING)
