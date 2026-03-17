@@ -56,6 +56,7 @@ public class BookingService {
     UserRepository userRepository;
     BookingMapper bookingMapper;
     PaymentService paymentService;
+    VoucherService voucherService;
     ReturnInspectionRepository returnInspectionRepository;
     DisputeRepository disputeRepository;
     PaymentRepository paymentRepository;
@@ -97,7 +98,21 @@ public class BookingService {
             days = 1;
         BigDecimal totalPrice = vehicle.getPricePerDay().multiply(BigDecimal.valueOf(days));
 
-        // 5. Create booking
+        // 5. Apply voucher discount if provided
+        String voucherCode = null;
+        BigDecimal discountAmount = BigDecimal.ZERO;
+
+        if (request.getVoucherCode() != null && !request.getVoucherCode().isBlank()) {
+            BigDecimal discountPercent = voucherService.applyVoucher(request.getVoucherCode());
+            discountAmount = totalPrice.multiply(discountPercent)
+                    .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+            totalPrice = totalPrice.subtract(discountAmount);
+            voucherCode = request.getVoucherCode().toUpperCase();
+            log.info("Voucher {} applied: {}% discount = {} VND off. New total = {}",
+                    voucherCode, discountPercent, discountAmount, totalPrice);
+        }
+
+        // 6. Create booking
         BookingEntity booking = BookingEntity.builder()
                 .vehicle(vehicle)
                 .customer(customer)
@@ -105,6 +120,8 @@ public class BookingService {
                 .endDate(request.getEndDate())
                 .returnStatus(ReturnStatus.NOT_RETURNED)
                 .totalPrice(totalPrice)
+                .voucherCode(voucherCode)
+                .discountAmount(discountAmount)
                 .status(BookingStatus.PENDING)
                 .paymentStatus(PaymentStatus.UNPAID)
                 .createdAt(Instant.now())

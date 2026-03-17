@@ -3,14 +3,19 @@ package com.example.car_management.controller;
 import com.example.car_management.dto.ApiResponse;
 import com.example.car_management.dto.request.AdminOwnerRegistrationDecisionRequest;
 import com.example.car_management.dto.request.CreateOwnerRegistrationRequest;
+import com.example.car_management.dto.request.VerifyOwnerEmailOtpRequest;
 import com.example.car_management.dto.response.OwnerRegistrationRequestResponse;
 import com.example.car_management.entity.enums.OwnerRegistrationStatus;
+import com.example.car_management.exception.AppException;
+import com.example.car_management.exception.ErrorCode;
 import com.example.car_management.service.OwnerRegistrationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -97,5 +102,47 @@ public class OwnerRegistrationController {
                                 .message("Cancelled")
                                 .result(data)
                                 .build());
+        }
+
+        @PostMapping("/email-otp/send")
+        public ResponseEntity<ApiResponse<Object>> sendOwnerEmailOtp(@AuthenticationPrincipal Jwt jwt) {
+                ownerRegistrationService.sendOwnerEmailVerificationOtp(resolveUserId(jwt));
+                return ResponseEntity.ok(ApiResponse.builder()
+                                .code(1000)
+                                .message("OTP sent")
+                                .build());
+        }
+
+        @PostMapping("/email-otp/verify")
+        public ResponseEntity<ApiResponse<Object>> verifyOwnerEmailOtp(
+                        @AuthenticationPrincipal Jwt jwt,
+                        @Valid @RequestBody VerifyOwnerEmailOtpRequest request) {
+                ownerRegistrationService.verifyOwnerEmailVerificationOtp(resolveUserId(jwt), request.getOtp());
+                return ResponseEntity.ok(ApiResponse.builder()
+                                .code(1000)
+                                .message("Email verified")
+                                .build());
+        }
+
+        private Integer resolveUserId(Jwt jwt) {
+                if (jwt == null) {
+                        throw new AppException(ErrorCode.UNAUTHORIZED);
+                }
+
+                Object claim = jwt.getClaim("userId");
+
+                if (claim instanceof Number number) {
+                        return number.intValue();
+                }
+
+                if (claim instanceof String value) {
+                        try {
+                                return Integer.parseInt(value);
+                        } catch (NumberFormatException ignored) {
+                                throw new AppException(ErrorCode.UNAUTHORIZED);
+                        }
+                }
+
+                throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 }

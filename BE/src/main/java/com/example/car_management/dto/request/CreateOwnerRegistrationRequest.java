@@ -16,7 +16,6 @@ import java.util.List;
 @Builder
 public class CreateOwnerRegistrationRequest {
 
-    @NotNull
     @Valid
     private OwnerInfo owner;
 

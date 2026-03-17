@@ -202,19 +202,23 @@ public class AuthenticationService {
         }
     }
 
-    public void forgotPassword(Long id)  {
-            UserEntity user = userRepository.findById(id);
+    public void forgotPassword(Long id) {
+        UserEntity user = userRepository.findById(id);
 
-            String hashedPassword = passwordEncoder.encode("123456");
-            user.setPassword(hashedPassword);
-            userRepository.save(user);
-}
+        String hashedPassword = passwordEncoder.encode("123456");
+        user.setPassword(hashedPassword);
+        userRepository.save(user);
+    }
 
     private String buildScope(UserEntity user) {
         StringJoiner stringJoiner = new StringJoiner(" ");
 
         if (user.getRoleId() != null) {
             stringJoiner.add("ROLE_" + user.getRoleId().name());
+            if (user.getRoleId() == UserRole.CAR_OWNER) {
+                // Keep customer capabilities after becoming owner.
+                stringJoiner.add("ROLE_USER");
+            }
         }
 
         return stringJoiner.toString();

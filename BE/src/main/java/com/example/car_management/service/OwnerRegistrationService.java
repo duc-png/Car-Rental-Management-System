@@ -18,4 +18,8 @@ public interface OwnerRegistrationService {
     OwnerRegistrationRequestResponse approve(Integer requestId, AdminOwnerRegistrationDecisionRequest request);
 
     OwnerRegistrationRequestResponse cancel(Integer requestId, AdminOwnerRegistrationDecisionRequest request);
+
+    void sendOwnerEmailVerificationOtp(Integer userId);
+
+    void verifyOwnerEmailVerificationOtp(Integer userId, String otp);
 }

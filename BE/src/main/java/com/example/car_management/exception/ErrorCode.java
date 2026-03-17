@@ -11,7 +11,6 @@ public enum ErrorCode {
     USER_EXISTED(1002, "User existed", HttpStatus.BAD_REQUEST),
     USERNAME_INVALID(1003, "Username must be at least {min} characters", HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD(1004, "Password must be at least {min} characters", HttpStatus.BAD_REQUEST),
-    USER_NOT_EXISTED(1005, "User not existed", HttpStatus.NOT_FOUND),
     UNAUTHENTICATED(1006, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN),
     INVALID_DOB(1008, "Your age must be at least {min}", HttpStatus.BAD_REQUEST),
@@ -29,7 +28,6 @@ public enum ErrorCode {
     LICENSE_VERIFICATION_NOT_PENDING(1021, "License verification request is not pending", HttpStatus.BAD_REQUEST),
     LICENSE_VERIFICATION_NOTE_REQUIRED(1022, "Rejection reason is required", HttpStatus.BAD_REQUEST),
     LICENSE_NUMBER_EXISTED(1023, "Driving license number already belongs to another account", HttpStatus.BAD_REQUEST),
-
     EMAIL_NOT_EXISTED(1005, "Email not existed", HttpStatus.NOT_FOUND),
     EMAIL_EXISTED(1011, "Email already exists", HttpStatus.BAD_REQUEST),
     VEHICLE_NOT_FOUND(2001, "Vehicle not found", HttpStatus.NOT_FOUND),
@@ -40,8 +38,7 @@ public enum ErrorCode {
     FORBIDDEN_RESOURCE(2006, "You do not have permission", HttpStatus.FORBIDDEN),
     OWNER_REGISTRATION_NOT_FOUND(2007, "Owner registration request not found", HttpStatus.NOT_FOUND),
     OWNER_REGISTRATION_ALREADY_PENDING(2008, "Owner registration request already pending", HttpStatus.BAD_REQUEST),
-    OWNER_REGISTRATION_LICENSE_PLATE_PENDING(2009, "License plate already exists in pending request",
-            HttpStatus.BAD_REQUEST),
+    OWNER_REGISTRATION_LICENSE_PLATE_PENDING(2009, "License plate already exists in pending request",HttpStatus.BAD_REQUEST),
     OWNER_REGISTRATION_INVALID_STATUS(2010, "Owner registration request cannot be processed", HttpStatus.BAD_REQUEST),
     OWNER_REGISTRATION_IMAGES_REQUIRED(2011, "Owner registration images are required", HttpStatus.BAD_REQUEST),
     OWNER_REGISTRATION_IMAGES_LIMIT(2012, "Owner registration images exceed limit", HttpStatus.BAD_REQUEST),
@@ -49,6 +46,7 @@ public enum ErrorCode {
     IMAGE_UPLOAD_FAILED(2014, "Invalid image file or upload failed", HttpStatus.BAD_REQUEST),
     VEHICLE_APPROVAL_REQUIRED(2015, "Vehicle is pending admin approval", HttpStatus.BAD_REQUEST),
     VEHICLE_IMMUTABLE_FIELDS(2016, "Core vehicle information cannot be changed after creation", HttpStatus.BAD_REQUEST),
+    OWNER_REGISTRATION_EMAIL_NOT_VERIFIED(2017, "Email is not verified. OTP has been sent", HttpStatus.BAD_REQUEST),
     MAINTENANCE_NOT_FOUND(3001, "Maintenance record not found", HttpStatus.NOT_FOUND),
     MAINTENANCE_ALREADY_EXISTS(3002, "Vehicle already has active maintenance", HttpStatus.BAD_REQUEST),
     MAINTENANCE_INVALID_STATUS_TRANSITION(3003, "Invalid maintenance status transition", HttpStatus.BAD_REQUEST),
@@ -81,6 +79,20 @@ public enum ErrorCode {
 
     // Message
     MESSAGE_NOT_FOUND(6001, "Message not found", HttpStatus.NOT_FOUND),
+    CANNOT_SEND_MESSAGE(6002, "Cannot send message to this dispute", HttpStatus.BAD_REQUEST),
+
+    // ===== Voucher =====
+    VOUCHER_NOT_FOUND(7001, "Voucher not found", HttpStatus.NOT_FOUND),
+    VOUCHER_ALREADY_USED(7002, "Voucher has been fully used", HttpStatus.BAD_REQUEST),
+    VOUCHER_INVALID(7003, "Voucher is invalid or inactive", HttpStatus.BAD_REQUEST),
+    VOUCHER_CODE_EXISTED(7004, "Voucher code already exists", HttpStatus.BAD_REQUEST),
+    VOUCHER_DISCOUNT_EXCEEDED(7005, "Discount percent must not exceed 30%", HttpStatus.BAD_REQUEST);
+    // ===== Cloudinary / Image =====
+    // IMAGE_UPLOAD_FAILED(2007, "Upload image failed", HttpStatus.BAD_REQUEST);
+    //
+    // IMAGE_DELETE_FAILED(2008,"Delete image failed",HttpStatus.BAD_REQUEST) {
+    //
+    // }
     CANNOT_SEND_MESSAGE(6002, "Cannot send message to this dispute", HttpStatus.BAD_REQUEST);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
