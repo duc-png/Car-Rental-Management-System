@@ -67,6 +67,60 @@ export const register = async (userData) => {
 }
 
 /**
+ * Gửi lại OTP xác minh email sau khi đăng ký
+ * @param {string} token - JWT token nhận từ API register
+ */
+export const resendRegistrationEmailOtp = async (token) => {
+    try {
+        const response = await fetch(`${API_URL}/auth/register/email-otp/send`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.message || 'Không thể gửi lại OTP')
+        }
+
+        return response.json()
+    } catch (error) {
+        console.error('Resend registration OTP error:', error)
+        throw error
+    }
+}
+
+/**
+ * Xác minh OTP email cho tài khoản vừa đăng ký
+ * @param {string} token - JWT token nhận từ API register
+ * @param {string} otp - Mã OTP 6 số
+ */
+export const verifyRegistrationEmailOtp = async (token, otp) => {
+    try {
+        const response = await fetch(`${API_URL}/auth/register/email-otp/verify`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ otp })
+        })
+
+        if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.message || 'OTP không hợp lệ')
+        }
+
+        return response.json()
+    } catch (error) {
+        console.error('Verify registration OTP error:', error)
+        throw error
+    }
+}
+
+/**
  * Hàm đăng xuất
  * @param {string} token - JWT token hiện tại
  */

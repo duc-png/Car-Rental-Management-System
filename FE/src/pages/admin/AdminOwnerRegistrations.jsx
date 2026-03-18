@@ -93,9 +93,14 @@ const registrationSubtitle = (item) => {
     return parts.length ? parts.join(' • ') : '—'
 }
 
-const formatFuelConsumption = (value) => {
+const formatFuelConsumption = (value, fuelType) => {
     if (value == null || value === '') return '—'
-    return `${value}L/100km`
+    const raw = String(value).trim()
+    if (!raw) return '—'
+    if (/[a-zA-Z]/.test(raw) || raw.includes('/')) return raw
+    return String(fuelType || '').toUpperCase() === 'ELECTRIC'
+        ? `${raw} km/lần sạc đầy`
+        : `${raw} L/100km`
 }
 
 export default function AdminOwnerRegistrations() {
@@ -337,7 +342,7 @@ export default function AdminOwnerRegistrations() {
                                                     </div>
                                                     <div className="spec-line">
                                                         <span className="dot" aria-hidden="true">🧮</span>
-                                                        <span>{formatFuelConsumption(item.fuelConsumption)}</span>
+                                                        <span>{formatFuelConsumption(item.fuelConsumption, item.fuelType)}</span>
                                                     </div>
                                                 </div>
                                             </td>

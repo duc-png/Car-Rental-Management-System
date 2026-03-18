@@ -6,6 +6,7 @@ export default function OwnerVehicleSpecsSection({
     formatEnumLabel,
     immutable = false,
 }) {
+    const isElectricFuel = String(form?.fuelType || '').toUpperCase() === 'ELECTRIC'
     return (
         <div className="edit-card">
             <div className="card-header">
@@ -40,7 +41,7 @@ export default function OwnerVehicleSpecsSection({
                     <input type="number" name="year" value={form.year} onChange={handleChange} disabled={immutable} readOnly={immutable} />
                 </label>
                 <label>
-                    Mức tiêu thụ (L/100km)
+                    {isElectricFuel ? 'Quãng đường/sạc đầy (km)' : 'Mức tiêu thụ (L/100km)'}
                     <input type="number" step="0.1" name="fuelConsumption" value={form.fuelConsumption} onChange={handleChange} />
                 </label>
                 <label>

@@ -121,6 +121,13 @@ public class VehicleServiceImpl implements VehicleService {
         // Chi chu xe so huu moi duoc cap nhat xe.
         assertOwner(v, ownerId);
 
+        // Xe dang cho admin duyet thi khong duoc chinh sua trong qua trinh tham dinh.
+        if (v.getStatus() == VehicleStatus.PENDING_APPROVAL) {
+            throw new AppException(ErrorCode.VEHICLE_APPROVAL_REQUIRED);
+        }
+
+        boolean resubmitForApproval = v.getStatus() == VehicleStatus.REJECTED;
+
         // Chan cap nhat cac field co dinh (model/bien so/seat/fuel/year).
         assertImmutableFields(req, v);
 
@@ -161,6 +168,13 @@ public class VehicleServiceImpl implements VehicleService {
         }
 
         VehicleEntity saved = vehicleRepository.save(v);
+
+        // Xe bi tu choi sau khi chu xe sua thong tin thi gui lai luong duyet.
+        if (resubmitForApproval) {
+            saved.setStatus(VehicleStatus.PENDING_APPROVAL);
+            saved.setReviewedAt(null);
+            notificationService.notifyAdminsVehicleSubmitted(saved);
+        }
 
         // chỉ load images để map response, KHÔNG set vào entity
         List<VehicleImageEntity> imgs = vehicleImageRepository.findByVehicle_Id(saved.getId());
@@ -220,6 +234,7 @@ public class VehicleServiceImpl implements VehicleService {
         if (loc == null)
             return false;
         return (loc.getProvince() != null && !loc.getProvince().trim().isEmpty())
+                || (loc.getDistrict() != null && !loc.getDistrict().trim().isEmpty())
                 || (loc.getWard() != null && !loc.getWard().trim().isEmpty())
                 || (loc.getAddressDetail() != null && !loc.getAddressDetail().trim().isEmpty());
     }
@@ -237,8 +252,9 @@ public class VehicleServiceImpl implements VehicleService {
 
         // Nếu có location input, tạo/update location
         LocationEntity location = LocationEntity.builder()
-                .city(locationInput.getProvince() != null ? locationInput.getProvince().trim() : null)
-                .district(locationInput.getWard() != null ? locationInput.getWard().trim() : null)
+                .province(locationInput.getProvince() != null ? locationInput.getProvince().trim() : null)
+                .district(locationInput.getDistrict() != null ? locationInput.getDistrict().trim() : null)
+                .ward(locationInput.getWard() != null ? locationInput.getWard().trim() : null)
                 .addressDetail(
                         locationInput.getAddressDetail() != null ? locationInput.getAddressDetail().trim() : null)
                 .build();
@@ -257,8 +273,9 @@ public class VehicleServiceImpl implements VehicleService {
         }
 
         LocationEntity location = LocationEntity.builder()
-                .city(locationInput.getProvince() != null ? locationInput.getProvince().trim() : null)
-                .district(locationInput.getWard() != null ? locationInput.getWard().trim() : null)
+                .province(locationInput.getProvince() != null ? locationInput.getProvince().trim() : null)
+                .district(locationInput.getDistrict() != null ? locationInput.getDistrict().trim() : null)
+                .ward(locationInput.getWard() != null ? locationInput.getWard().trim() : null)
                 .addressDetail(
                         locationInput.getAddressDetail() != null ? locationInput.getAddressDetail().trim() : null)
                 .build();

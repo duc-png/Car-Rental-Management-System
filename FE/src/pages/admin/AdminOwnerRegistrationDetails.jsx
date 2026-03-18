@@ -59,12 +59,14 @@ const formatSeats = (value) => {
     return `${seats} chỗ`
 }
 
-const formatFuelConsumption = (value) => {
+const formatFuelConsumption = (value, fuelType) => {
     if (value == null || value === '') return '—'
     const raw = String(value).trim()
     if (!raw) return '—'
     if (/[a-zA-Z]/.test(raw) || raw.includes('/')) return raw
-    return `${raw} L/100km`
+    return String(fuelType || '').toUpperCase() === 'ELECTRIC'
+        ? `${raw} km/lần sạc đầy`
+        : `${raw} L/100km`
 }
 
 const formatDateTime = (value) => {
@@ -265,7 +267,7 @@ export default function AdminOwnerRegistrationDetails() {
                                 </div>
                                 <div className="spec-cell">
                                     <div className="spec-label">Mức tiêu thụ</div>
-                                    <div className="spec-value">{formatFuelConsumption(data.fuelConsumption)}</div>
+                                    <div className="spec-value">{formatFuelConsumption(data.fuelConsumption, data.fuelType)}</div>
                                 </div>
                                 <div className="spec-cell">
                                     <div className="spec-label">Biển số</div>

@@ -368,6 +368,7 @@ function CarOwnerFleet() {
         const yearValue = String(createForm.year || '').trim()
         const fuelConsumptionValue = String(createForm.fuelConsumption || '').trim()
         const province = String(createForm.province || '').trim()
+        const district = String(createForm.district || '').trim()
         const ward = String(createForm.ward || '').trim()
         const addressDetail = String(createForm.addressDetail || '').trim()
 
@@ -427,6 +428,9 @@ function CarOwnerFleet() {
 
         if (!province) {
             errors.province = 'Vui lòng nhập tỉnh/thành phố.'
+        }
+        if (!district) {
+            errors.district = 'Vui lòng nhập quận/huyện.'
         }
         if (!ward) {
             errors.ward = 'Vui lòng nhập xã/phường.'
@@ -536,6 +540,7 @@ function CarOwnerFleet() {
                 locationId: null,
                 location: {
                     province: String(createForm.province || '').trim(),
+                    district: String(createForm.district || '').trim(),
                     ward: String(createForm.ward || '').trim(),
                     addressDetail: String(createForm.addressDetail || '').trim(),
                 },

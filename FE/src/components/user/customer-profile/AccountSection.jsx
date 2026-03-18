@@ -3,6 +3,7 @@ import { BadgeCheck, CarFront, Pencil, X } from 'lucide-react'
 
 export default function AccountSection({
     formData,
+    emailVerified,
     successTripsCount,
     birthDateLabel,
     licenseBirthDateLabel,
@@ -350,7 +351,13 @@ export default function AccountSection({
                         </div>
 
                         <div className="account-field-row">
-                            <label>Email <span className="account-verified"><BadgeCheck size={12} /> Đã xác thực</span></label>
+                            <label>
+                                Email
+                                <span className={`account-verified ${emailVerified ? '' : 'unverified'}`}>
+                                    <BadgeCheck size={12} />
+                                    {emailVerified ? 'Đã xác thực' : 'Chưa xác thực'}
+                                </span>
+                            </label>
                             <div className="account-field-value-wrap">
                                 <strong>{formData.email || 'Chưa cập nhật'}</strong>
                                 <button

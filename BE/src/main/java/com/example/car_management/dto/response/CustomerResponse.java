@@ -35,6 +35,7 @@ public class CustomerResponse {
     private Instant licenseVerifiedAt;
     private String avatar;
     private String address;
+    private Boolean isVerified;
     private Boolean isActive;
     private Instant createdAt;
     private Long totalBookings;

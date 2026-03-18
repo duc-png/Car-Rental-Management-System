@@ -23,6 +23,7 @@ function FleetListTable({ vehicles, onViewDetails, onEdit, onDelete, onMaintenan
 
             {vehicles.map((vehicle) => {
                 const carTypeLabel = formatCarTypeLabel(vehicle.carTypeName)
+                const canEdit = String(vehicle?.status || '') !== 'PENDING_APPROVAL'
                 return (
                     <article className="fleet-list-row" key={vehicle.id}>
                         <div className="fleet-list-cell fleet-list-info">
@@ -79,9 +80,10 @@ function FleetListTable({ vehicles, onViewDetails, onEdit, onDelete, onMaintenan
                             <button
                                 type="button"
                                 className="fleet-list-action"
-                                title="Sửa"
-                                aria-label="Sửa"
+                                title={canEdit ? 'Sửa' : 'Xe đang chờ duyệt, chưa thể sửa'}
+                                aria-label={canEdit ? 'Sửa' : 'Xe đang chờ duyệt, chưa thể sửa'}
                                 onClick={() => onEdit(vehicle)}
+                                disabled={!canEdit}
                             >
                                 <Pencil size={18} />
                             </button>

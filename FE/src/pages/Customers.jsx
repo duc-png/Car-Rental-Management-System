@@ -38,14 +38,24 @@ export default function Customers() {
     const [editingCustomer, setEditingCustomer] = useState(null)
     const [form, setForm] = useState(emptyForm)
     const [submitting, setSubmitting] = useState(false)
+    const [activeFilter, setActiveFilter] = useState('all')
 
     const stats = useMemo(() => {
         const totalCustomers = customers.length
         const activeCustomers = customers.filter((item) => item.isActive).length
+        const inactiveCustomers = totalCustomers - activeCustomers
         const totalBookings = customers.reduce((sum, item) => sum + (item.totalBookings || 0), 0)
+        const highValueCustomers = customers.filter((item) => Number(item.totalRevenue || 0) >= 5000000).length
         const avgBookings = totalCustomers ? (totalBookings / totalCustomers).toFixed(1) : '0'
-        return { totalCustomers, activeCustomers, totalBookings, avgBookings }
+        return { totalCustomers, activeCustomers, inactiveCustomers, totalBookings, highValueCustomers, avgBookings }
     }, [customers])
+
+    const filteredCustomers = useMemo(() => {
+        if (activeFilter === 'active') return customers.filter((item) => item.isActive)
+        if (activeFilter === 'inactive') return customers.filter((item) => !item.isActive)
+        if (activeFilter === 'vip') return customers.filter((item) => Number(item.totalRevenue || 0) >= 5000000)
+        return customers
+    }, [customers, activeFilter])
 
     const loadCustomers = useCallback(async (searchValue = '') => {
         try {
@@ -193,43 +203,92 @@ export default function Customers() {
                 <section className="admin-content">
                     <header className="customers-header">
                         <div>
-                            <h1>Customer Management</h1>
-                            <p>Manage your customer database</p>
+                            <h1>Customer Dashboard</h1>
+                            <p>Theo dõi hồ sơ thuê xe, mức độ hoạt động và doanh thu theo khách hàng.</p>
                         </div>
-                        <button className="btn-primary" onClick={openCreateModal}>
-                            + Add Customer
-                        </button>
+                        <div className="customers-header-actions">
+                            <button className="btn-outline" onClick={() => loadCustomers(query.trim())}>
+                                Làm mới dữ liệu
+                            </button>
+                            <button className="btn-primary" onClick={openCreateModal}>
+                                + Thêm khách hàng
+                            </button>
+                        </div>
                     </header>
 
                     <div className="stats-grid">
-                        <div className="stat-card">
-                            <p>Total Customers</p>
+                        <div className="stat-card stat-card-accent">
+                            <p>Tổng khách hàng</p>
                             <h3>{stats.totalCustomers}</h3>
+                            <span className="stat-footnote">Toàn bộ hồ sơ trong hệ thống</span>
                         </div>
                         <div className="stat-card">
-                            <p>Active Customers</p>
+                            <p>Đang hoạt động</p>
                             <h3>{stats.activeCustomers}</h3>
+                            <span className="stat-footnote">Khách có thể đặt xe bình thường</span>
                         </div>
                         <div className="stat-card">
-                            <p>Total Bookings</p>
+                            <p>Đã vô hiệu</p>
+                            <h3>{stats.inactiveCustomers}</h3>
+                            <span className="stat-footnote">Tài khoản đang bị tạm khóa</span>
+                        </div>
+                        <div className="stat-card">
+                            <p>Khách giá trị cao</p>
+                            <h3>{stats.highValueCustomers}</h3>
+                            <span className="stat-footnote">Doanh thu từ 5.000.000 VNĐ</span>
+                        </div>
+                        <div className="stat-card">
+                            <p>Tổng lượt booking</p>
                             <h3>{stats.totalBookings}</h3>
+                            <span className="stat-footnote">Tổng booking của tất cả khách</span>
                         </div>
                         <div className="stat-card">
-                            <p>Avg. Bookings/Customer</p>
+                            <p>TB booking / khách</p>
                             <h3>{stats.avgBookings}</h3>
+                            <span className="stat-footnote">Tần suất sử dụng dịch vụ</span>
                         </div>
                     </div>
 
                     <div className="customers-table-card">
                         <div className="table-header">
                             <div>
-                                <h2>All Customers</h2>
-                                <p>Complete customer directory</p>
+                                <h2>Danh sách khách hàng</h2>
+                                <p>Quản trị thông tin liên hệ, tình trạng tài khoản và doanh thu.</p>
+                                <div className="customer-filters">
+                                    <button
+                                        type="button"
+                                        className={`customer-filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
+                                        onClick={() => setActiveFilter('all')}
+                                    >
+                                        Tất cả ({customers.length})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`customer-filter-btn ${activeFilter === 'active' ? 'active' : ''}`}
+                                        onClick={() => setActiveFilter('active')}
+                                    >
+                                        Active ({stats.activeCustomers})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`customer-filter-btn ${activeFilter === 'inactive' ? 'active' : ''}`}
+                                        onClick={() => setActiveFilter('inactive')}
+                                    >
+                                        Inactive ({stats.inactiveCustomers})
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`customer-filter-btn ${activeFilter === 'vip' ? 'active' : ''}`}
+                                        onClick={() => setActiveFilter('vip')}
+                                    >
+                                        Giá trị cao ({stats.highValueCustomers})
+                                    </button>
+                                </div>
                             </div>
                             <div className="search-box">
                                 <input
                                     type="text"
-                                    placeholder="Search by name, email, or phone..."
+                                    placeholder="Tìm theo tên, email hoặc số điện thoại..."
                                     value={query}
                                     onChange={(event) => setQuery(event.target.value)}
                                 />
@@ -239,22 +298,22 @@ export default function Customers() {
                         <div className="table-wrapper">
                             {loading ? (
                                 <div className="table-empty">Đang tải dữ liệu...</div>
-                            ) : customers.length === 0 ? (
+                            ) : filteredCustomers.length === 0 ? (
                                 <div className="table-empty">Chưa có khách hàng nào.</div>
                             ) : (
                                 <table className="customers-table">
                                     <thead>
                                         <tr>
-                                            <th>Customer</th>
-                                            <th>Contact</th>
-                                            <th>License</th>
-                                            <th>Revenue</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
+                                            <th>Khách hàng</th>
+                                            <th>Liên hệ</th>
+                                            <th>GPLX</th>
+                                            <th>Doanh thu</th>
+                                            <th>Trạng thái</th>
+                                            <th>Thao tác</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {customers.map((customer) => (
+                                        {filteredCustomers.map((customer) => (
                                             <tr key={customer.id}>
                                                 <td>
                                                     <div className="customer-cell">
@@ -264,7 +323,7 @@ export default function Customers() {
                                                         <div>
                                                             <p className="customer-name">{customer.fullName}</p>
                                                             <p className="customer-meta">
-                                                                Joined {formatDate(customer.createdAt)}
+                                                                Tham gia {formatDate(customer.createdAt)}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -279,7 +338,7 @@ export default function Customers() {
                                                     <span
                                                         className={`status-pill ${customer.isActive ? 'active' : 'inactive'}`}
                                                     >
-                                                        {customer.isActive ? 'Active' : 'Inactive'}
+                                                        {customer.isActive ? 'Đang hoạt động' : 'Đang khóa'}
                                                     </span>
                                                 </td>
                                                 <td>
@@ -288,13 +347,13 @@ export default function Customers() {
                                                             className="btn-light"
                                                             onClick={() => openEditModal(customer)}
                                                         >
-                                                            View Details
+                                                            Xem chi tiết
                                                         </button>
                                                         <button
                                                             className="btn-outline"
                                                             onClick={() => handleToggleStatus(customer)}
                                                         >
-                                                            {customer.isActive ? 'Deactivate' : 'Activate'}
+                                                            {customer.isActive ? 'Khóa tài khoản' : 'Mở khóa'}
                                                         </button>
                                                     </div>
                                                 </td>
@@ -313,8 +372,8 @@ export default function Customers() {
                     <div className="modal-card" onClick={(event) => event.stopPropagation()}>
                         <div className="modal-header">
                             <div>
-                                <h3>{editingCustomer ? 'Customer Details' : 'Add New Customer'}</h3>
-                                <p>Enter customer information</p>
+                                <h3>{editingCustomer ? 'Chi tiết khách hàng' : 'Thêm khách hàng mới'}</h3>
+                                <p>Nhập thông tin hồ sơ khách hàng.</p>
                             </div>
                             <button className="modal-close" onClick={closeModal}>
                                 ✕
@@ -324,11 +383,11 @@ export default function Customers() {
                         <form className="modal-form" onSubmit={handleSubmit}>
                             <div className="form-grid">
                                 <label>
-                                    Full Name
+                                    Họ và tên
                                     <input
                                         type="text"
                                         name="fullName"
-                                        placeholder="John Doe"
+                                        placeholder="Nguyen Van A"
                                         value={form.fullName}
                                         onChange={handleChange}
                                         required
@@ -346,18 +405,18 @@ export default function Customers() {
                                     />
                                 </label>
                                 <label>
-                                    Phone Number
+                                    Số điện thoại
                                     <input
                                         type="text"
                                         name="phone"
-                                        placeholder="+84 123 456 789"
+                                        placeholder="09xx xxx xxx"
                                         value={form.phone}
                                         onChange={handleChange}
                                         required
                                     />
                                 </label>
                                 <label>
-                                    License Number
+                                    Số GPLX
                                     <input
                                         type="text"
                                         name="licenseNumber"
@@ -368,11 +427,11 @@ export default function Customers() {
                                 </label>
                             </div>
                             <label className="full-width">
-                                Address
+                                Địa chỉ
                                 <input
                                     type="text"
                                     name="address"
-                                    placeholder="123 Main St, City, State, ZIP"
+                                    placeholder="Số nhà, phường/xã, quận/huyện, tỉnh/thành"
                                     value={form.address}
                                     onChange={handleChange}
                                 />
@@ -380,10 +439,10 @@ export default function Customers() {
 
                             <div className="modal-actions">
                                 <button type="button" className="btn-secondary" onClick={closeModal}>
-                                    Cancel
+                                    Hủy
                                 </button>
                                 <button type="submit" className="btn-primary" disabled={submitting}>
-                                    {submitting ? 'Saving...' : editingCustomer ? 'Save Changes' : 'Add Customer'}
+                                    {submitting ? 'Đang lưu...' : editingCustomer ? 'Lưu thay đổi' : 'Thêm khách hàng'}
                                 </button>
                             </div>
                         </form>

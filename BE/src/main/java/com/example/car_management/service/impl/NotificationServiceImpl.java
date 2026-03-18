@@ -21,6 +21,12 @@ import java.util.List;
 @RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
 
+    private static final int TITLE_MAX = 255;
+    private static final int TYPE_MAX = 30;
+    private static final int PRIORITY_MAX = 20;
+    private static final int DEEP_LINK_MAX = 255;
+    private static final int MESSAGE_SAFE_MAX = 240;
+
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
 
@@ -165,17 +171,35 @@ public class NotificationServiceImpl implements NotificationService {
             return;
         }
 
+        // Keep compatibility with old DB schemas where message may still be VARCHAR.
+        String safeTitle = truncate(title, TITLE_MAX);
+        String safeMessage = truncate(message, MESSAGE_SAFE_MAX);
+        String safeType = truncate(type, TYPE_MAX);
+        String safePriority = truncate(priority, PRIORITY_MAX);
+        String safeDeepLink = truncate(deepLink, DEEP_LINK_MAX);
+
         NotificationEntity notification = NotificationEntity.builder()
                 .user(user)
-                .title(title)
-                .message(message)
-                .type(type)
-                .priority(priority)
+                .title(safeTitle)
+                .message(safeMessage)
+                .type(safeType)
+                .priority(safePriority)
                 .isRead(Boolean.FALSE)
-                .deepLink(deepLink)
+                .deepLink(safeDeepLink)
                 .build();
 
         notificationRepository.save(notification);
+    }
+
+    private String truncate(String value, int maxLength) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim();
+        if (normalized.length() <= maxLength) {
+            return normalized;
+        }
+        return normalized.substring(0, maxLength);
     }
 
     private NotificationResponse toResponse(NotificationEntity n) {

@@ -103,7 +103,7 @@ function VehicleCard({ vehicle }) {
             <span className="feature-icon-wrapper" aria-hidden="true">
               <MapPin className="vehicle-feature-icon" />
             </span>
-            <span>{formatFeatureValue(vehicle.city)}</span>
+            <span>{formatFeatureValue(vehicle.province || vehicle.city)}</span>
           </div>
         </div>
       </div>

@@ -46,6 +46,7 @@ export default function OwnerVehicleEdit() {
         currentKm: '',
         description: '',
         province: '',
+        district: '',
         ward: '',
         addressDetail: '',
         deliveryEnabled: true,
@@ -71,6 +72,8 @@ export default function OwnerVehicleEdit() {
     const [invalidUploadNames, setInvalidUploadNames] = useState([]);
     const [setFirstAsMain, setSetFirstAsMain] = useState(false);
     const [imagesUpdating, setImagesUpdating] = useState(false);
+    const isPendingApproval = String(vehicle?.status || '') === 'PENDING_APPROVAL';
+    const isRejected = String(vehicle?.status || '') === 'REJECTED';
 
     const handleLogout = async () => {
         await logout();
@@ -106,8 +109,9 @@ export default function OwnerVehicleEdit() {
                     fuelConsumption: data.fuelConsumption || '',
                     currentKm: data.currentKm || '',
                     description: data.description || '',
-                    province: data.city ?? '',
-                    ward: data.district ?? '',
+                    province: data.province ?? data.city ?? '',
+                    district: data.district ?? '',
+                    ward: data.ward ?? '',
                     addressDetail: data.addressDetail ?? '',
                     deliveryEnabled: data.deliveryEnabled === undefined || data.deliveryEnabled === null
                         ? true
@@ -144,11 +148,13 @@ export default function OwnerVehicleEdit() {
     }, [loadFeatureCatalog]);
 
     const handleChange = (e) => {
+        if (isPendingApproval) return;
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
     };
 
     const onToggleFeature = (featureId) => {
+        if (isPendingApproval) return;
         setSelectedFeatureIds((prev) => {
             if (prev.includes(featureId)) {
                 return prev.filter((item) => item !== featureId);
@@ -159,6 +165,10 @@ export default function OwnerVehicleEdit() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (isPendingApproval) {
+            setError('Xe đang trong trạng thái chờ duyệt, chưa thể chỉnh sửa vào lúc này.');
+            return;
+        }
         if (!ownerId) {
             setError('Thiếu thông tin chủ xe. Vui lòng đăng nhập lại.');
             return;
@@ -166,6 +176,7 @@ export default function OwnerVehicleEdit() {
 
         setSaving(true);
         setError('');
+        const wasRejected = String(vehicle?.status || '') === 'REJECTED';
 
         try {
             const payload = {
@@ -176,9 +187,10 @@ export default function OwnerVehicleEdit() {
                 description: form.description?.trim() || vehicle?.description || null,
                 currentKm: form.currentKm ? Number(form.currentKm) : vehicle?.currentKm,
                 location: {
-                    province: form.province?.trim() || vehicle?.location?.province || null,
-                    ward: form.ward?.trim() || vehicle?.location?.ward || null,
-                    addressDetail: form.addressDetail?.trim() || vehicle?.location?.addressDetail || null,
+                    province: form.province?.trim() || vehicle?.province || vehicle?.city || null,
+                    district: form.district?.trim() || vehicle?.district || null,
+                    ward: form.ward?.trim() || vehicle?.ward || null,
+                    addressDetail: form.addressDetail?.trim() || vehicle?.addressDetail || null,
                 },
                 deliveryEnabled: Boolean(form.deliveryEnabled),
                 freeDeliveryWithinKm: form.deliveryEnabled
@@ -212,7 +224,11 @@ export default function OwnerVehicleEdit() {
             }
 
             await loadVehicle();
-            alert('Cập nhật thông tin xe thành công!');
+            if (wasRejected) {
+                alert('Đã cập nhật và gửi lại yêu cầu duyệt xe thành công!');
+            } else {
+                alert('Cập nhật thông tin xe thành công!');
+            }
         } catch (err) {
             setError(err?.message || 'Không thể cập nhật thông tin xe');
         } finally {
@@ -226,6 +242,7 @@ export default function OwnerVehicleEdit() {
 
     // Các hàm ảnh giữ nguyên
     const onAddImageUrls = async () => {
+        if (isPendingApproval) return;
         if (!id || !ownerId || Number.isNaN(ownerId)) return;
         const urls = imageUrlsInput.split('\n').map(l => l.trim()).filter(Boolean);
         if (urls.length === 0) return;
@@ -245,6 +262,7 @@ export default function OwnerVehicleEdit() {
     };
 
     const onUploadImages = async () => {
+        if (isPendingApproval) return;
         if (!id || !ownerId || Number.isNaN(ownerId) || !uploadFiles.length) return;
 
         setImagesUpdating(true);
@@ -263,6 +281,7 @@ export default function OwnerVehicleEdit() {
     };
 
     const onSetMainImage = async (imageId) => {
+        if (isPendingApproval) return;
         if (!id || !ownerId || Number.isNaN(ownerId)) return;
         setImagesUpdating(true);
         setError('');
@@ -277,6 +296,7 @@ export default function OwnerVehicleEdit() {
     };
 
     const onDeleteImage = async (imageId) => {
+        if (isPendingApproval) return;
         if (!id || !ownerId || Number.isNaN(ownerId)) return;
         if (!window.confirm('Bạn có chắc muốn xóa ảnh này không?')) return;
 
@@ -314,66 +334,80 @@ export default function OwnerVehicleEdit() {
 
                 {error && <div className="fleet-alert" role="alert">{error}</div>}
 
+                {isPendingApproval && (
+                    <div className="fleet-alert" role="status">
+                        Xe đang chờ duyệt. Bạn chưa thể chỉnh sửa thông tin cho đến khi admin xử lý xong yêu cầu.
+                    </div>
+                )}
+
+                {isRejected && (
+                    <div className="fleet-alert" role="status">
+                        Xe đã bị từ chối duyệt. Hãy cập nhật thông tin/ảnh và bấm Lưu để gửi lại yêu cầu duyệt.
+                    </div>
+                )}
+
                 {loading ? (
                     <div className="fleet-loading">Đang tải...</div>
                 ) : (
                     <form onSubmit={handleSubmit}>
-                        <OwnerVehicleTypeSection
-                            brandName={brandName}
-                            modelName={modelName}
-                            typeName={typeName}
-                            immutable
-                        />
+                        <fieldset disabled={isPendingApproval}>
+                            <OwnerVehicleTypeSection
+                                brandName={brandName}
+                                modelName={modelName}
+                                typeName={typeName}
+                                immutable
+                            />
 
-                        <OwnerVehicleBasicSection form={form} handleChange={handleChange} immutable />
+                            <OwnerVehicleBasicSection form={form} handleChange={handleChange} immutable />
 
-                        <OwnerVehicleSpecsSection
-                            form={form}
-                            handleChange={handleChange}
-                            transmissionValues={TRANSMISSION_VALUES}
-                            fuelValues={FUEL_VALUES}
-                            formatEnumLabel={formatEnumLabel}
-                            immutable
-                        />
+                            <OwnerVehicleSpecsSection
+                                form={form}
+                                handleChange={handleChange}
+                                transmissionValues={TRANSMISSION_VALUES}
+                                fuelValues={FUEL_VALUES}
+                                formatEnumLabel={formatEnumLabel}
+                                immutable
+                            />
 
-                        <OwnerVehicleFeaturesSection
-                            featureCatalog={featureCatalog}
-                            selectedFeatureIds={selectedFeatureIds}
-                            onToggleFeature={onToggleFeature}
-                        />
+                            <OwnerVehicleFeaturesSection
+                                featureCatalog={featureCatalog}
+                                selectedFeatureIds={selectedFeatureIds}
+                                onToggleFeature={onToggleFeature}
+                            />
 
-                        <OwnerVehicleLocationSection
-                            form={form}
-                            handleChange={handleChange}
-                            setForm={setForm}
-                            statusValues={STATUS_VALUES}
-                            formatEnumLabel={formatEnumLabel}
-                        />
+                            <OwnerVehicleLocationSection
+                                form={form}
+                                handleChange={handleChange}
+                                setForm={setForm}
+                                statusValues={STATUS_VALUES}
+                                formatEnumLabel={formatEnumLabel}
+                            />
 
-                        <OwnerVehicleImagesSection
-                            vehicle={vehicle}
-                            imagesUpdating={imagesUpdating}
-                            onSetMainImage={onSetMainImage}
-                            onDeleteImage={onDeleteImage}
-                            imageUrlsInput={imageUrlsInput}
-                            setImageUrlsInput={setImageUrlsInput}
-                            onAddImageUrls={onAddImageUrls}
-                            uploadFiles={uploadFiles}
-                            setUploadFiles={setUploadFiles}
-                            onUploadImages={onUploadImages}
-                            invalidUploadNames={invalidUploadNames}
-                            onImageFileError={(message) => setError(message)}
-                            onInvalidUploadNamesChange={setInvalidUploadNames}
-                        />
+                            <OwnerVehicleImagesSection
+                                vehicle={vehicle}
+                                imagesUpdating={imagesUpdating}
+                                onSetMainImage={onSetMainImage}
+                                onDeleteImage={onDeleteImage}
+                                imageUrlsInput={imageUrlsInput}
+                                setImageUrlsInput={setImageUrlsInput}
+                                onAddImageUrls={onAddImageUrls}
+                                uploadFiles={uploadFiles}
+                                setUploadFiles={setUploadFiles}
+                                onUploadImages={onUploadImages}
+                                invalidUploadNames={invalidUploadNames}
+                                onImageFileError={(message) => setError(message)}
+                                onInvalidUploadNamesChange={setInvalidUploadNames}
+                            />
 
-                        <div className="action-bar">
-                            <button type="button" className="btn-cancel" onClick={handleCancel}>
-                                × Hủy thay đổi
-                            </button>
-                            <button type="submit" className="btn-primary" disabled={saving}>
-                                {saving ? 'Đang lưu...' : 'Lưu thông tin xe'}
-                            </button>
-                        </div>
+                            <div className="action-bar">
+                                <button type="button" className="btn-cancel" onClick={handleCancel}>
+                                    × Hủy thay đổi
+                                </button>
+                                <button type="submit" className="btn-primary" disabled={saving || isPendingApproval}>
+                                    {saving ? 'Đang lưu...' : isRejected ? 'Lưu & gửi lại duyệt' : 'Lưu thông tin xe'}
+                                </button>
+                            </div>
+                        </fieldset>
                     </form>
                 )}
             </section>

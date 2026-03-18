@@ -15,8 +15,9 @@ export const FALLBACK_CAR = {
     pricePerDay: 0,
     status: 'AVAILABLE',
     currentKm: 0,
-    city: 'Hồ Chí Minh',
+    province: 'Hồ Chí Minh',
     district: 'Quận 1',
+    ward: 'Bến Nghé',
     addressDetail: 'Đang cập nhật',
     ownerName: 'Chưa cập nhật',
     ownerPhone: 'Chưa cập nhật',
@@ -107,6 +108,8 @@ export const getTransmissionLabel = (transmission) => TRANSMISSION_LABELS[transm
 export const getFuelLabel = (fuelType) => FUEL_LABELS[fuelType] || fuelType || 'N/A';
 
 export const getFuelConsumptionLabel = (car) => {
+    const fuelType = String(car?.fuelType || '').trim().toUpperCase();
+    const isElectric = fuelType === 'ELECTRIC';
     const rawFuelConsumption = car?.fuelConsumption
         ?? car?.fuelEfficiency
         ?? car?.averageFuelConsumption
@@ -117,20 +120,21 @@ export const getFuelConsumptionLabel = (car) => {
     if (rawFuelConsumption === null || rawFuelConsumption === undefined) return 'N/A';
     const text = String(rawFuelConsumption).trim();
     if (!text) return 'N/A';
-    if (/l\s*\/\s*100\s*km/i.test(text)) return text;
-    return `${text}L/100km`;
+    if (/[a-zA-Z]/.test(text) || text.includes('/')) return text;
+    return isElectric ? `${text} km/lần sạc đầy` : `${text} L/100km`;
 };
 
 export const buildAddressInfo = (car) => {
-    const city = car?.city || car?.province || '';
-    const district = car?.district || car?.ward || '';
+    const province = car?.province || car?.city || '';
+    const district = car?.district || '';
+    const ward = car?.ward || '';
 
-    const addressText = [car?.addressDetail, district, city]
+    const addressText = [car?.addressDetail, ward, district, province]
         .filter(Boolean)
         .join(', ');
 
-    const locationDisplayText = [car?.addressDetail, car?.district].filter(Boolean).join(', ')
-        || [car?.district, car?.city].filter(Boolean).join(', ')
+    const locationDisplayText = [car?.addressDetail, ward, district].filter(Boolean).join(', ')
+        || [ward, district, province].filter(Boolean).join(', ')
         || addressText;
 
     return {
@@ -140,7 +144,7 @@ export const buildAddressInfo = (car) => {
     };
 };
 
-export const calculatePricing = ({ pricePerDay, selectedDays, enableExtraInsurance }) => {
+export const calculatePricing = ({ pricePerDay, selectedDays, enableExtraInsurance, voucherDiscountPercent = 0 }) => {
     const normalizedPricePerDay = Number(pricePerDay || 0);
     const bookingFeePerDay = Math.round(normalizedPricePerDay * 0.08);
     const insuranceFeePerDay = Math.round(normalizedPricePerDay * 0.03);
@@ -153,7 +157,11 @@ export const calculatePricing = ({ pricePerDay, selectedDays, enableExtraInsuran
 
     const subtotalPrice = rentalCost + bookingFee + insuranceFee + extraInsuranceFee;
     const promoDiscount = Math.round(normalizedPricePerDay * 0.05) * selectedDays;
-    const totalPrice = Math.max(0, subtotalPrice - promoDiscount);
+
+    const voucherPercent = Number(voucherDiscountPercent || 0);
+    const voucherDiscount = voucherPercent > 0 ? Math.round(subtotalPrice * voucherPercent / 100) : 0;
+
+    const totalPrice = Math.max(0, subtotalPrice - promoDiscount - voucherDiscount);
 
     const oldPrice = Math.round(normalizedPricePerDay * 1.06);
     const discountPercent = Math.max(1, Math.round(((oldPrice - normalizedPricePerDay) / oldPrice) * 100));
@@ -165,6 +173,7 @@ export const calculatePricing = ({ pricePerDay, selectedDays, enableExtraInsuran
         extraInsurancePerDay,
         subtotalPrice,
         promoDiscount,
+        voucherDiscount,
         totalPrice,
         discountPercent,
     };

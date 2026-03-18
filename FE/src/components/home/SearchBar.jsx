@@ -5,10 +5,28 @@ import '../../styles/SearchBar.css'
 import LocationModal from '../booking/LocationModal'
 import TimeModal from '../booking/TimeModal'
 
+const formatDateVi = (date) => {
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  return `${day}/${month}/${year}`
+}
+
+const getRealtimeDefaultDates = () => {
+  const now = new Date()
+  const pickup = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const returned = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+  return {
+    pickupDate: formatDateVi(pickup),
+    returnDate: formatDateVi(returned)
+  }
+}
+
 function SearchBar({ onSearch }) {
+  const defaultDates = getRealtimeDefaultDates()
   const [location, setLocation] = useState('TP. Hồ Chí Minh')
-  const [pickupDate, setPickupDate] = useState('21/01/2026')
-  const [returnDate, setReturnDate] = useState('22/01/2026')
+  const [pickupDate, setPickupDate] = useState(defaultDates.pickupDate)
+  const [returnDate, setReturnDate] = useState(defaultDates.returnDate)
   const [pickupTime, setPickupTime] = useState('21:00')
   const [returnTime, setReturnTime] = useState('20:00')
   const [showLocationModal, setShowLocationModal] = useState(false)
@@ -32,19 +50,10 @@ function SearchBar({ onSearch }) {
   }
 
   const handleTimeSelect = (timeData) => {
-    if (timeData.type === 'day') {
-      // timeData.startDate và endDate đã là định dạng 'dd/mm/yyyy' từ TimeModal
-      setPickupDate(timeData.startDate)
-      setReturnDate(timeData.endDate)
-      setPickupTime(timeData.startTime || '21:00')
-      setReturnTime(timeData.endTime || '20:00')
-    } else {
-      // Hour rental - chỉ hiển thị ngày, không thêm /01/2026
-      setPickupDate(timeData.startDate)
-      setReturnDate(timeData.startDate)
-      setPickupTime(timeData.startTime || '09:00')
-      setReturnTime(timeData.startTime || '09:00')
-    }
+    setPickupDate(timeData.startDate)
+    setReturnDate(timeData.endDate)
+    setPickupTime(timeData.startTime || '21:00')
+    setReturnTime(timeData.endTime || '20:00')
   }
 
   return (

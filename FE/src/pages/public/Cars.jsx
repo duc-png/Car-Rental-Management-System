@@ -120,7 +120,7 @@ function Cars() {
     const byNormalized = new Map()
 
     availableCars.forEach((car) => {
-      const rawCity = String(car.city || '').trim()
+      const rawCity = String(car.province || car.city || '').trim()
       if (!rawCity) return
 
       const normalizedCity = normalizeLocationName(rawCity)
@@ -144,7 +144,7 @@ function Cars() {
       const matchesTransmission = filters.transmission === 'all' || car.transmission === filters.transmission
       const matchesFuel = filters.fuel === 'all' || car.fuelType === filters.fuel
       const matchesSeats = filters.seats === 'all' || String(car.seatCount) === String(filters.seats)
-      const carCityNormalized = normalizeLocationName(car.city)
+      const carCityNormalized = normalizeLocationName(car.province || car.city)
       const matchesCity = filters.city === 'all' || carCityNormalized === filters.city
       const price = Number(car.pricePerDay || 0)
       const matchesPriceMin = !filters.priceMin || price >= Number(filters.priceMin)

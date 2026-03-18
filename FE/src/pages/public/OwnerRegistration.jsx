@@ -39,8 +39,11 @@ function OwnerRegistration() {
     const [customModelName, setCustomModelName] = useState('');
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
     const [provinceOptions, setProvinceOptions] = useState([]);
+    const [districtOptions, setDistrictOptions] = useState([]);
+    const [allWardOptions, setAllWardOptions] = useState([]);
     const [wardOptions, setWardOptions] = useState([]);
     const [selectedProvinceCode, setSelectedProvinceCode] = useState('');
+    const [selectedDistrictCode, setSelectedDistrictCode] = useState('');
     const [selectedWardCode, setSelectedWardCode] = useState('');
     const [streetDetail, setStreetDetail] = useState('');
     const [isAddressLoading, setIsAddressLoading] = useState(false);
@@ -53,7 +56,16 @@ function OwnerRegistration() {
     const previews = useMemo(() => images.map((file) => URL.createObjectURL(file)), [images]);
     const roleText = String(user?.role || user?.scope || '');
     const isAdminAccount = roleText.includes('ROLE_ADMIN') || roleText.includes('ADMIN');
+    const isOwnerAccount = roleText.includes('ROLE_CAR_OWNER') || roleText.includes('CAR_OWNER')
+        || roleText.includes('ROLE_EXPERT') || roleText.includes('EXPERT');
+    const isOwnerRegistrationBlocked = isAuthenticated && (isAdminAccount || isOwnerAccount);
     const isLoggedCustomerFlow = isAuthenticated && !isAdminAccount;
+
+    useEffect(() => {
+        if (isOwnerRegistrationBlocked) {
+            setShowForm(false);
+        }
+    }, [isOwnerRegistrationBlocked]);
 
     useEffect(() => {
         if (!isLoggedCustomerFlow) return;
@@ -144,6 +156,11 @@ function OwnerRegistration() {
         [wardOptions, selectedWardCode]
     );
 
+    const selectedDistrict = useMemo(
+        () => districtOptions.find((item) => String(item.code) === String(selectedDistrictCode)) || null,
+        [districtOptions, selectedDistrictCode]
+    );
+
     const formatFeeShort = (value) => {
         const fee = Number(value || 0);
         if (!Number.isFinite(fee) || fee <= 0) return '0';
@@ -151,6 +168,11 @@ function OwnerRegistration() {
     };
 
     const hasSelectedAddress = Boolean(String(formData.vehicle.addressDetail || '').trim());
+    const isElectricFuel = formData.vehicle.fuelType === 'ELECTRIC';
+    const fuelConsumptionDescription = isElectricFuel
+        ? 'Số km đi được trong 1 lần sạc đầy.'
+        : 'Số lít nhiên liệu cho quãng đường 100km.';
+    const fuelConsumptionPlaceholder = isElectricFuel ? 'Ví dụ: 350' : 'Ví dụ: 6.8';
 
     useEffect(() => {
         if (currentStep !== 2) return;
@@ -171,11 +193,13 @@ function OwnerRegistration() {
                 setAddressMapError('');
 
                 const parts = addressText.split(',').map((part) => part.trim()).filter(Boolean);
-                const city = parts.length > 0 ? parts[parts.length - 1] : '';
+                const province = parts.length > 0 ? parts[parts.length - 1] : '';
                 const district = parts.length > 1 ? parts[parts.length - 2] : '';
-                const detail = parts.length > 2 ? parts.slice(0, -2).join(', ') : addressText;
-                const variants = generateQueryVariants(detail, district, city);
-                const referenceQuery = [detail, district, city].filter(Boolean).join(', ');
+                const ward = parts.length > 2 ? parts[parts.length - 3] : '';
+                const detail = parts.length > 3 ? parts.slice(0, -3).join(', ') : addressText;
+                const detailWithWard = [detail, ward].filter(Boolean).join(', ');
+                const variants = generateQueryVariants(detailWithWard, district, province);
+                const referenceQuery = [detailWithWard, district, province].filter(Boolean).join(', ');
                 const result = await resolveBestGeocodeFromVariants(variants, referenceQuery, controller.signal);
 
                 if (!result?.lat || !result?.lon) {
@@ -288,6 +312,8 @@ function OwnerRegistration() {
 
     const loadWardsByProvince = async (provinceCode) => {
         if (!provinceCode) {
+            setDistrictOptions([]);
+            setAllWardOptions([]);
             setWardOptions([]);
             return;
         }
@@ -298,12 +324,20 @@ function OwnerRegistration() {
             const data = await response.json();
 
             const districts = Array.isArray(data?.districts) ? data.districts : [];
+            const nextDistricts = districts
+                .map((district) => ({ code: district?.code, name: district?.name || '' }))
+                .filter((district) => district.code)
+                .sort((left, right) => (left?.name || '').localeCompare(right?.name || '', 'vi'));
             const wardMap = new Map();
             districts.forEach((district) => {
                 const wards = Array.isArray(district?.wards) ? district.wards : [];
                 wards.forEach((ward) => {
                     if (!wardMap.has(ward.code)) {
-                        wardMap.set(ward.code, { ...ward, districtName: district?.name || '' });
+                        wardMap.set(ward.code, {
+                            ...ward,
+                            districtCode: district?.code,
+                            districtName: district?.name || ''
+                        });
                     }
                 });
             });
@@ -312,8 +346,12 @@ function OwnerRegistration() {
                 (left?.name || '').localeCompare(right?.name || '', 'vi')
             );
 
+            setDistrictOptions(nextDistricts);
+            setAllWardOptions(mergedWards);
             setWardOptions(mergedWards);
         } catch {
+            setDistrictOptions([]);
+            setAllWardOptions([]);
             setWardOptions([]);
             toast.error('Không tải được danh sách phường/xã');
         } finally {
@@ -331,9 +369,24 @@ function OwnerRegistration() {
 
     const handleProvinceChange = async (value) => {
         setSelectedProvinceCode(value);
+        setSelectedDistrictCode('');
         setSelectedWardCode('');
+        setDistrictOptions([]);
+        setAllWardOptions([]);
         setWardOptions([]);
         await loadWardsByProvince(value);
+    };
+
+    const handleDistrictChange = (value) => {
+        setSelectedDistrictCode(value);
+        setSelectedWardCode('');
+        if (!value) {
+            setWardOptions(allWardOptions);
+            return;
+        }
+        setWardOptions(
+            allWardOptions.filter((ward) => String(ward?.districtCode) === String(value))
+        );
     };
 
     const handleApplyAddress = () => {
@@ -341,10 +394,23 @@ function OwnerRegistration() {
             toast.error('Vui lòng nhập đường/địa chỉ cụ thể');
             return;
         }
+        if (!selectedProvince?.name) {
+            toast.error('Vui lòng chọn tỉnh/thành phố');
+            return;
+        }
+        if (!selectedDistrict?.name) {
+            toast.error('Vui lòng chọn quận/huyện');
+            return;
+        }
+        if (!selectedWard?.name) {
+            toast.error('Vui lòng chọn xã/phường');
+            return;
+        }
 
         const parts = [
             (streetDetail || '').trim(),
             selectedWard?.name,
+            selectedDistrict?.name,
             selectedProvince?.name
         ].filter(Boolean);
 
@@ -471,6 +537,11 @@ function OwnerRegistration() {
     const handleSubmit = async (event) => {
         event.preventDefault();
 
+        if (isOwnerRegistrationBlocked) {
+            toast.error('Tài khoản hiện tại không thể tạo thêm tài khoản chủ xe.');
+            return;
+        }
+
         if (!validateStep(currentStep)) {
             return;
         }
@@ -526,12 +597,6 @@ function OwnerRegistration() {
             navigate('/');
         } catch (error) {
             if (isLoggedCustomerFlow && Number(error?.code) === 2017) {
-                try {
-                    await sendOwnerRegistrationEmailOtp();
-                } catch {
-                    // ignore because backend submit may already trigger OTP send
-                }
-
                 toast.info('Email chưa xác thực. Hệ thống đã gửi OTP vào email của bạn.');
                 setOtpValue('');
                 setIsOtpModalOpen(true);
@@ -594,13 +659,30 @@ function OwnerRegistration() {
                     <button
                         type="button"
                         className="owner-registration-intro-cta"
+                        disabled={isOwnerRegistrationBlocked}
+                        title={isAdminAccount
+                            ? 'Admin là tài khoản quản lý hệ thống, không thể đăng ký chủ xe.'
+                            : (isOwnerAccount
+                                ? 'Bạn đã là chủ xe, không thể tạo thêm tài khoản chủ xe khi đang đăng nhập.'
+                                : '')}
                         onClick={() => {
+                            if (isOwnerRegistrationBlocked) {
+                                return;
+                            }
                             setShowForm(true);
                             setCurrentStep(1);
                         }}
                     >
                         Đăng ký xe tự lái
                     </button>
+
+                    {isOwnerRegistrationBlocked && (
+                        <p className="owner-registration-intro-policy">
+                            {isAdminAccount
+                                ? 'Admin là tài khoản quản lý hệ thống nên không thể đăng ký chủ xe.'
+                                : 'Bạn đã có tài khoản chủ xe nên không thể tạo thêm khi đang đăng nhập.'}
+                        </p>
+                    )}
 
                     <h2>Gia tăng thu nhập hàng tháng cùng CarRental!</h2>
 
@@ -825,14 +907,14 @@ function OwnerRegistration() {
 
                             <div className="owner-fuel-consumption-section">
                                 <h3>Mức tiêu thụ nhiên liệu</h3>
-                                <p>Số lít nhiên liệu cho quãng đường 100km.</p>
+                                <p>{fuelConsumptionDescription}</p>
                                 <input
                                     type="number"
                                     step="0.1"
                                     min="0"
                                     value={formData.vehicle.fuelConsumption}
                                     onChange={(event) => updateVehicle('fuelConsumption', event.target.value)}
-                                    placeholder="Ví Dụ: 6.8"
+                                    placeholder={fuelConsumptionPlaceholder}
                                 />
                             </div>
 
@@ -1054,11 +1136,25 @@ function OwnerRegistration() {
                             </label>
 
                             <label>
+                                Quận / Huyện
+                                <select
+                                    value={selectedDistrictCode}
+                                    onChange={(event) => handleDistrictChange(event.target.value)}
+                                    disabled={!selectedProvinceCode}
+                                >
+                                    <option value="">Chọn quận/huyện</option>
+                                    {districtOptions.map((district) => (
+                                        <option key={district.code} value={district.code}>{district.name}</option>
+                                    ))}
+                                </select>
+                            </label>
+
+                            <label>
                                 Xã / Phường
                                 <select
                                     value={selectedWardCode}
                                     onChange={(event) => setSelectedWardCode(event.target.value)}
-                                    disabled={!selectedProvinceCode}
+                                    disabled={!selectedProvinceCode || !selectedDistrictCode}
                                 >
                                     <option value="">Chọn xã/phường</option>
                                     {wardOptions.map((ward) => (

@@ -78,12 +78,11 @@ export const approveVehicle = async (vehicleId) => {
 export const rejectVehicle = async (vehicleId, reason) => {
     if (!vehicleId) throw new Error('Missing vehicleId');
     requireAuthToken();
-    const url = new URL(`${API_BASE_URL}/vehicles/${vehicleId}/reject`);
-    if (reason) url.searchParams.set('reason', reason);
 
-    const data = await requestJson(url.toString(), {
+    const data = await requestJson(`${API_BASE_URL}/vehicles/${vehicleId}/reject`, {
         method: 'PATCH',
-        headers: withAuthHeaders({ 'Content-Type': 'application/json' })
+        headers: withAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ reason: reason || '' })
     });
 
     return data || null;

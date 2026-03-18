@@ -26,13 +26,15 @@ public interface VehicleRepository extends JpaRepository<VehicleEntity, Integer>
                   and v.location is not null
                   and (
                       :address is null or :address = '' or
-                      lower(v.location.city) like lower(concat('%', :address, '%')) or
+                      lower(v.location.province) like lower(concat('%', :address, '%')) or
                       lower(v.location.district) like lower(concat('%', :address, '%')) or
+                      lower(v.location.ward) like lower(concat('%', :address, '%')) or
                       lower(v.location.addressDetail) like lower(concat('%', :address, '%')) or
                       lower(concat(
                           coalesce(v.location.addressDetail, ''), ', ',
+                          coalesce(v.location.ward, ''), ', ',
                           coalesce(v.location.district, ''), ', ',
-                          coalesce(v.location.city, '')
+                          coalesce(v.location.province, '')
                       )) like lower(concat('%', :address, '%'))
                   )
                   and v.id not in (

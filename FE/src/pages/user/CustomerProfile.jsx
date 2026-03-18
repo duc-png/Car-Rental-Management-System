@@ -253,6 +253,7 @@ function CustomerProfile() {
                 setFormData({
                     fullName: profile.fullName || '',
                     email: profile.email || '',
+                    isVerified: Boolean(profile.isVerified),
                     phone: profile.phone || '',
                     licenseNumber: profile.licenseNumber || '',
                     licenseFullName: profile.licenseFullName || profile.fullName || '',
@@ -896,6 +897,7 @@ function CustomerProfile() {
                         {activeMenu === MENU.ACCOUNT ? (
                             <AccountSection
                                 formData={formData}
+                                emailVerified={Boolean(formData.isVerified)}
                                 successTripsCount={successTrips.length}
                                 birthDateLabel={formatBirthDateLabel(formData.birthDate)}
                                 licenseBirthDateLabel={formatBirthDateLabel(formData.licenseBirthDate)}

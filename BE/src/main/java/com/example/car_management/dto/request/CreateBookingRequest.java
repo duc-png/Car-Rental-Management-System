@@ -25,4 +25,7 @@ public class CreateBookingRequest {
     @NotNull(message = "End date is required")
     @Future(message = "End date must be in the future")
     LocalDateTime endDate;
+
+    @Size(min = 8, max = 8, message = "Voucher code must be 8 characters")
+    String voucherCode;
 }

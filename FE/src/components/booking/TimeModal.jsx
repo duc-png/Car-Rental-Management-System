@@ -7,15 +7,13 @@ import '../../styles/TimeModal.css';
 function TimeModal({ isOpen, onClose, onSelect }) {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Reset time to compare dates only
+    const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
-    const [activeTab, setActiveTab] = useState('day');
     const [currentMonth, setCurrentMonth] = useState(new Date(today.getFullYear(), today.getMonth()));
-    const [startDate, setStartDate] = useState(null);
-    const [endDate, setEndDate] = useState(null);
+    const [startDate, setStartDate] = useState(today);
+    const [endDate, setEndDate] = useState(tomorrow);
     const [startTime, setStartTime] = useState('21:00');
     const [endTime, setEndTime] = useState('20:00');
-    const [rentalHours, setRentalHours] = useState(5);
-    const [showHourDropdown, setShowHourDropdown] = useState(false);
     const [showStartTimeDropdown, setShowStartTimeDropdown] = useState(false);
     const [showEndTimeDropdown, setShowEndTimeDropdown] = useState(false);
     const startTimeMenuRef = useRef(null);
@@ -25,14 +23,7 @@ function TimeModal({ isOpen, onClose, onSelect }) {
         `${String(i).padStart(2, '0')}:00`
     );
 
-    const hourOptions = [4, 5, 6, 7, 8];
     const currentMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-
-    const calculateEndTime = (start, duration) => {
-        const [hour] = start.split(':').map(Number);
-        const endHour = (hour + duration) % 24;
-        return `${String(endHour).padStart(2, '0')}:00`;
-    };
 
     // Tính số ngày thuê chính xác
     const calculateRentalDays = () => {
@@ -159,25 +150,17 @@ function TimeModal({ isOpen, onClose, onSelect }) {
         && currentMonth.getMonth() === currentMonthStart.getMonth();
 
     const handleConfirm = () => {
-        if (activeTab === 'day' && startDate && endDate) {
-            onSelect({
-                type: 'day',
-                startDate: startDate.toLocaleDateString('vi-VN'),
-                endDate: endDate.toLocaleDateString('vi-VN'),
-                startTime,
-                endTime,
-                rentalDays: calculateRentalDays(),
-            });
-            onClose();
-        } else if (activeTab === 'hour' && startDate) {
-            onSelect({
-                type: 'hour',
-                startDate: startDate.toLocaleDateString('vi-VN'),
-                startTime,
-                rentalHours,
-            });
-            onClose();
-        }
+        if (!startDate || !endDate) return;
+
+        onSelect({
+            type: 'day',
+            startDate: startDate.toLocaleDateString('vi-VN'),
+            endDate: endDate.toLocaleDateString('vi-VN'),
+            startTime,
+            endTime,
+            rentalDays: calculateRentalDays(),
+        });
+        onClose();
     };
 
     // Auto-scroll dropdown to active item
@@ -211,197 +194,111 @@ function TimeModal({ isOpen, onClose, onSelect }) {
                     </button>
                 </div>
 
-                {/* Tabs */}
-                <div className="time-modal-tabs">
-                    <button
-                        className={`time-tab ${activeTab === 'day' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('day')}
-                    >
-                        Thuê theo ngày
-                    </button>
-                    <button
-                        className={`time-tab ${activeTab === 'hour' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('hour')}
-                    >
-                        Thuê theo giờ
-                    </button>
-                </div>
-
                 <div className="time-modal-content">
-                    {activeTab === 'day' ? (
-                        // Day rental view
-                        <>
-                            <div className="calendar-container">
-                                <div className="calendar-header">
-                                    <button className="calendar-nav" onClick={prevMonth} disabled={isAtCurrentMonth}>
-                                        {'<'}
-                                    </button>
-                                    <h3>{month1}</h3>
-                                    <h3>{month2}</h3>
-                                    <button className="calendar-nav" onClick={nextMonth}>
-                                        {'>'}
-                                    </button>
-                                </div>
+                    <div className="calendar-container">
+                        <div className="calendar-header">
+                            <button className="calendar-nav" onClick={prevMonth} disabled={isAtCurrentMonth}>
+                                {'<'}
+                            </button>
+                            <h3>{month1}</h3>
+                            <h3>{month2}</h3>
+                            <button className="calendar-nav" onClick={nextMonth}>
+                                {'>'}
+                            </button>
+                        </div>
 
-                                <div className="calendars">
-                                    <div className="calendar">
-                                        <div className="calendar-weekdays">
-                                            {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((day) => (
-                                                <div key={day} className="calendar-weekday">
-                                                    {day}
-                                                </div>
-                                            ))}
+                        <div className="calendars">
+                            <div className="calendar">
+                                <div className="calendar-weekdays">
+                                    {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((day) => (
+                                        <div key={day} className="calendar-weekday">
+                                            {day}
                                         </div>
-                                        <div className="calendar-days">{calendarDays1}</div>
-                                    </div>
-
-                                    <div className="calendar">
-                                        <div className="calendar-weekdays">
-                                            {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((day) => (
-                                                <div key={day} className="calendar-weekday">
-                                                    {day}
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="calendar-days">{calendarDays2}</div>
-                                    </div>
+                                    ))}
                                 </div>
+                                <div className="calendar-days">{calendarDays1}</div>
                             </div>
 
-                            <div className="time-inputs">
-                                <div className="time-input-group">
-                                    <label>Nhận xe</label>
-                                    <div className="custom-time-dropdown">
-                                        <button
-                                            className="time-dropdown-button"
-                                            onClick={() => setShowStartTimeDropdown(!showStartTimeDropdown)}
-                                        >
-                                            {startTime}
-                                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <polyline points="2 4 6 8 10 4"></polyline>
-                                            </svg>
-                                        </button>
-                                        {showStartTimeDropdown && (
-                                            <div className="time-dropdown-menu" ref={startTimeMenuRef}>
-                                                {hours.map((hour) => (
-                                                    <button
-                                                        key={hour}
-                                                        className={`time-dropdown-item ${startTime === hour ? 'active' : ''}`}
-                                                        onClick={() => {
-                                                            setStartTime(hour);
-                                                            setShowStartTimeDropdown(false);
-                                                        }}
-                                                    >
-                                                        {hour}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
+                            <div className="calendar">
+                                <div className="calendar-weekdays">
+                                    {['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((day) => (
+                                        <div key={day} className="calendar-weekday">
+                                            {day}
+                                        </div>
+                                    ))}
                                 </div>
-
-                                <div className="time-reset">
-                                    <button type="button">↻</button>
-                                </div>
-
-                                <div className="time-input-group">
-                                    <label>Trả xe</label>
-                                    <div className="custom-time-dropdown">
-                                        <button
-                                            className="time-dropdown-button"
-                                            onClick={() => setShowEndTimeDropdown(!showEndTimeDropdown)}
-                                        >
-                                            {endTime}
-                                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <polyline points="2 4 6 8 10 4"></polyline>
-                                            </svg>
-                                        </button>
-                                        {showEndTimeDropdown && (
-                                            <div className="time-dropdown-menu" ref={endTimeMenuRef}>
-                                                {hours.map((hour) => (
-                                                    <button
-                                                        key={hour}
-                                                        className={`time-dropdown-item ${endTime === hour ? 'active' : ''}`}
-                                                        onClick={() => {
-                                                            setEndTime(hour);
-                                                            setShowEndTimeDropdown(false);
-                                                        }}
-                                                    >
-                                                        {hour}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
+                                <div className="calendar-days">{calendarDays2}</div>
                             </div>
-                        </>
-                    ) : (
-                        // Hour rental view
-                        <>
-                            <div className="hour-inputs">
-                                <div className="hour-input-group">
-                                    <label>Ngày bắt đầu</label>
-                                    <input
-                                        type="date"
-                                        value={startDate ? startDate.toISOString().split('T')[0] : ''}
-                                        min={today.toISOString().split('T')[0]}
-                                        onChange={(e) => {
-                                            if (e.target.value) {
-                                                setStartDate(new Date(e.target.value));
-                                            }
-                                        }}
-                                    />
-                                </div>
+                        </div>
+                    </div>
 
-                                <div className="hour-input-group">
-                                    <label>Giờ nhận xe</label>
-                                    <select value={startTime} onChange={(e) => setStartTime(e.target.value)}>
+                    <div className="time-inputs">
+                        <div className="time-input-group">
+                            <label>Nhận xe</label>
+                            <div className="custom-time-dropdown">
+                                <button
+                                    className="time-dropdown-button"
+                                    onClick={() => setShowStartTimeDropdown(!showStartTimeDropdown)}
+                                >
+                                    {startTime}
+                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <polyline points="2 4 6 8 10 4"></polyline>
+                                    </svg>
+                                </button>
+                                {showStartTimeDropdown && (
+                                    <div className="time-dropdown-menu" ref={startTimeMenuRef}>
                                         {hours.map((hour) => (
-                                            <option key={hour} value={hour}>
+                                            <button
+                                                key={hour}
+                                                className={`time-dropdown-item ${startTime === hour ? 'active' : ''}`}
+                                                onClick={() => {
+                                                    setStartTime(hour);
+                                                    setShowStartTimeDropdown(false);
+                                                }}
+                                            >
                                                 {hour}
-                                            </option>
+                                            </button>
                                         ))}
-                                    </select>
-                                </div>
-
-                                <div className="hour-input-group full-width">
-                                    <label>Thời gian thuê</label>
-                                    <div className="duration-select">
-                                        <button
-                                            type="button"
-                                            className="duration-display"
-                                            onClick={() => setShowHourDropdown(!showHourDropdown)}
-                                        >
-                                            <span>{rentalHours} giờ (kết thúc: {calculateEndTime(startTime, rentalHours)} {String(startDate).padStart(2, '0')}/01/2026)</span>
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <polyline points="6 9 12 15 18 9"></polyline>
-                                            </svg>
-                                        </button>
-                                        {showHourDropdown && (
-                                            <div className="duration-dropdown">
-                                                {hourOptions.map((option) => (
-                                                    <label key={option} className="duration-option">
-                                                        <input
-                                                            type="radio"
-                                                            name="duration"
-                                                            value={option}
-                                                            checked={rentalHours === option}
-                                                            onChange={(e) => {
-                                                                setRentalHours(Number(e.target.value));
-                                                                setShowHourDropdown(false);
-                                                            }}
-                                                        />
-                                                        <span>{option} giờ (kết thúc: {calculateEndTime(startTime, option)} {String(startDate).padStart(2, '0')}/01/2026)</span>
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        )}
                                     </div>
-                                </div>
+                                )}
                             </div>
-                        </>
-                    )}
+                        </div>
+
+                        <div className="time-reset">
+                            <button type="button">↻</button>
+                        </div>
+
+                        <div className="time-input-group">
+                            <label>Trả xe</label>
+                            <div className="custom-time-dropdown">
+                                <button
+                                    className="time-dropdown-button"
+                                    onClick={() => setShowEndTimeDropdown(!showEndTimeDropdown)}
+                                >
+                                    {endTime}
+                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <polyline points="2 4 6 8 10 4"></polyline>
+                                    </svg>
+                                </button>
+                                {showEndTimeDropdown && (
+                                    <div className="time-dropdown-menu" ref={endTimeMenuRef}>
+                                        {hours.map((hour) => (
+                                            <button
+                                                key={hour}
+                                                className={`time-dropdown-item ${endTime === hour ? 'active' : ''}`}
+                                                onClick={() => {
+                                                    setEndTime(hour);
+                                                    setShowEndTimeDropdown(false);
+                                                }}
+                                            >
+                                                {hour}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
 
                     {/* Duration info and confirm button */}
                     <div className="time-modal-footer">
@@ -412,15 +309,13 @@ function TimeModal({ isOpen, onClose, onSelect }) {
                                 {!startDate && 'Vui lòng chọn ngày'}
                             </span>
                             <span>
-                                Thời gian thuê: {activeTab === 'day'
-                                    ? `${calculateRentalDays()} ngày`
-                                    : `${rentalHours} giờ`}
+                                Thời gian thuê: {calculateRentalDays()} ngày
                             </span>
                         </div>
                         <button
                             className="confirm-button"
                             onClick={handleConfirm}
-                            disabled={activeTab === 'day' ? !startDate || !endDate : !startDate}
+                            disabled={!startDate || !endDate}
                         >
                             Tiếp tục
                         </button>
