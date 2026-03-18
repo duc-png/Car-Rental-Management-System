@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
-import { getConversationMessages, getMyConversations, sendMessage } from '../../api/chat'
+import { getConversationMessages, getMyConversations, sendMessage, subscribeConversationMessages } from '../../api/chat'
 import { useAuth } from '../../hooks/useAuth'
 import '../../styles/ChatPage.css'
 
@@ -181,6 +181,7 @@ export default function ChatPage() {
         }
 
         let mounted = true
+        let unsubscribe = null
 
         const loadMessages = async (showLoading = false) => {
             if (showLoading) {
@@ -202,13 +203,23 @@ export default function ChatPage() {
         }
 
         loadMessages(true)
-        const timer = window.setInterval(() => {
-            loadMessages(false)
-        }, 5000)
+        unsubscribe = subscribeConversationMessages(
+            activeConversationId,
+            (nextMessages) => {
+                if (!mounted) return
+                setMessages(Array.isArray(nextMessages) ? nextMessages : [])
+            },
+            () => {
+                if (!mounted) return
+                setError('Khong the dong bo tin nhan realtime.')
+            }
+        )
 
         return () => {
             mounted = false
-            window.clearInterval(timer)
+            if (typeof unsubscribe === 'function') {
+                unsubscribe()
+            }
         }
     }, [activeConversationId])
 
@@ -220,8 +231,7 @@ export default function ChatPage() {
 
         setSending(true)
         try {
-            const sent = await sendMessage(activeConversationId, content)
-            setMessages((prev) => [...prev, sent])
+            await sendMessage(activeConversationId, content)
             setConversations((prev) => prev.map((item) => (
                 Number(item?.id) === Number(activeConversationId)
                     ? { ...item, lastMessage: content }

@@ -1,5 +1,6 @@
 package com.example.car_management.service;
 
+import com.example.car_management.dto.request.UpdateCustomerStatusRequest;
 import com.example.car_management.dto.response.OwnerProfileResponse;
 import com.example.car_management.dto.response.OwnerPerformanceResponse;
 import com.example.car_management.dto.response.OwnerPublicProfileResponse;
@@ -14,4 +15,6 @@ public interface OwnerService {
     OwnerPerformanceResponse getOwnerPerformance(Integer ownerId);
 
     OwnerPublicProfileResponse getOwnerPublicProfile(Integer ownerId);
+
+    OwnerProfileResponse updateOwnerStatus(Integer ownerId, UpdateCustomerStatusRequest request);
 }

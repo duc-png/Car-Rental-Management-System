@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="d1a4e60f-8e04-4bc4-8e21-cc4b390f1037" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/FE/firebase.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BE/src/main/java/com/example/car_management/controller/OwnerController.java" beforeDir="false" afterPath="$PROJECT_DIR$/BE/src/main/java/com/example/car_management/controller/OwnerController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BE/src/main/java/com/example/car_management/dto/response/OwnerProfileResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/BE/src/main/java/com/example/car_management/dto/response/OwnerProfileResponse.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BE/src/main/java/com/example/car_management/exception/ErrorCode.java" beforeDir="false" afterPath="$PROJECT_DIR$/BE/src/main/java/com/example/car_management/exception/ErrorCode.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BE/src/main/java/com/example/car_management/service/OwnerService.java" beforeDir="false" afterPath="$PROJECT_DIR$/BE/src/main/java/com/example/car_management/service/OwnerService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BE/src/main/java/com/example/car_management/service/impl/OwnerServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/BE/src/main/java/com/example/car_management/service/impl/OwnerServiceImpl.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/BE/src/main/resources/application.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/BE/src/main/resources/application.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/FE/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/FE/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/App.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/App.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/api/chat.js" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/api/chat.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/api/owners.js" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/api/owners.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/components/layout/Navbar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/components/layout/Navbar.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/components/owner/fleet/FleetSidebar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/components/owner/fleet/FleetSidebar.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/pages/admin/AdminLayout.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/pages/admin/AdminLayout.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/pages/owner/OwnerResponseDashboard.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/pages/owner/OwnerResponseDashboard.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/pages/user/ChatPage.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/pages/user/ChatPage.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/FE/src/pages/user/MyBookings.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/FE/src/pages/user/MyBookings.jsx" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="427" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="JavaScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MavenImportPreferences">
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHomeTypeForPersistence" value="WRAPPER" />
+      </MavenGeneralSettings>
+    </option>
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 6
+}]]></component>
+  <component name="ProjectId" id="3B7anZmnTt4WyJPw6u8yyB2IwvU" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Node.js.firebase.js.executor": "Run",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Spring Boot.CarManagementApplication.executor": "Run",
+    "git-widget-placeholder": "main",
+    "kotlin-language-version-configured": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.31033.145" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="d1a4e60f-8e04-4bc4-8e21-cc4b390f1037" name="Changes" comment="" />
+      <created>1773842731689</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1773842731689</updated>
+      <workItem from="1773842733008" duration="13749000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>

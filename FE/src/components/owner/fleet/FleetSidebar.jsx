@@ -1,5 +1,19 @@
 import { Link, useLocation } from 'react-router-dom'
-import { BarChart3, CalendarDays, Car, LayoutGrid, LogOut, MessageSquareText, ReceiptText, Settings, ShieldCheck, UsersRound, Wallet, Wrench } from 'lucide-react'
+import {
+    BarChart3,
+    CalendarDays,
+    Car,
+    LayoutGrid,
+    LogOut,
+    MessageSquareText,
+    ReceiptText,
+    Settings,
+    ShieldAlert,
+    ShieldCheck,
+    UsersRound,
+    Wallet,
+    Wrench
+} from 'lucide-react'
 import '../../../styles/FleetSidebar.css'
 
 function FleetSidebar({ user, onLogout }) {
@@ -15,76 +29,84 @@ function FleetSidebar({ user, onLogout }) {
     const isCalendarRoute = location.pathname.startsWith('/owner/booking-calendar')
     const isWalletRoute = location.pathname.startsWith('/owner/wallet')
     const isAnalyticsRoute = location.pathname.startsWith('/owner/analytics')
+    const isIncidentRoute = location.pathname.startsWith('/owner/incident-reports')
 
     const navItems = [
         {
             key: 'overview',
             to: `/owner/fleet${ownerQuery}`,
             icon: LayoutGrid,
-            label: 'Tổng quan',
+            label: 'Tong quan',
             active: isOverviewRoute,
         },
         {
             key: 'vehicles',
             to: `/owner/fleet/vehicles${ownerQuery}`,
             icon: Car,
-            label: 'Xe của tôi',
+            label: 'Xe cua toi',
             active: isVehiclesRoute,
         },
         {
             key: 'maintenance',
             to: `/owner/maintenance${ownerQuery}`,
             icon: Wrench,
-            label: 'Bảo dưỡng xe',
+            label: 'Bao duong xe',
             active: isMaintenanceRoute,
         },
         {
             key: 'rentals',
             to: '/manage-rentals',
             icon: ReceiptText,
-            label: 'Đơn thuê',
+            label: 'Don thue',
             active: isRentalRoute,
         },
         {
             key: 'calendar',
             to: `/owner/booking-calendar${ownerQuery}`,
             icon: CalendarDays,
-            label: 'Lịch booking',
+            label: 'Lich booking',
             active: isCalendarRoute,
         },
         {
-            key: 'maintenance',
+            key: 'security',
             to: '/owner/maintenance',
             icon: ShieldCheck,
-            label: 'Bảo dưỡng',
+            label: 'Bao duong',
             active: isMaintenanceRoute,
         },
         {
             key: 'feedback',
             to: `/owner/feedback${ownerQuery}`,
             icon: MessageSquareText,
-            label: 'Phản hồi khách',
+            label: 'Phan hoi khach',
             active: isFeedbackRoute,
+        },
+        {
+            key: 'incident-reports',
+            to: `/owner/incident-reports${ownerQuery}`,
+            icon: ShieldAlert,
+            label: 'Report su co',
+            active: isIncidentRoute,
         },
         {
             key: 'customers',
             to: `/customers${ownerQuery}`,
             icon: UsersRound,
-            label: 'Khách hàng',
+            label: 'Khach hang',
             active: location.pathname.startsWith('/customers'),
         },
         {
-            key: 'stats',
+            key: 'wallet',
             to: `/owner/wallet${ownerQuery}`,
             icon: Wallet,
-            label: 'Ví của tôi',
+            label: 'Vi cua toi',
             active: isWalletRoute,
         },
         {
             key: 'analytics',
             to: `/owner/analytics${ownerQuery}`,
             icon: BarChart3,
-            label: 'Báo cáo & Thống kê',
+            label: 'Bao cao',
             active: isAnalyticsRoute,
         },
     ]
@@ -93,7 +115,7 @@ function FleetSidebar({ user, onLogout }) {
         <aside className="fleet-sidebar">
             <Link to="/" className="fleet-brand">
                 <div className="brand-icon">
-                    <img src="/favicon.svg" alt="Hệ thống CarRental" />
+                    <img src="/favicon.svg" alt="CarRental" />
                 </div>
                 <div>
                     <h3>Vehicle Rental</h3>
@@ -103,7 +125,7 @@ function FleetSidebar({ user, onLogout }) {
 
             <div className="fleet-sidebar-content">
                 <div className="fleet-nav">
-                    <p className="nav-section">Điều hướng</p>
+                    <p className="nav-section">Dieu huong</p>
                     {navItems.map((item) => {
                         const Icon = item.icon
                         return (
@@ -118,12 +140,12 @@ function FleetSidebar({ user, onLogout }) {
                 </div>
 
                 <div className="fleet-system">
-                    <p className="nav-section">Hệ thống</p>
+                    <p className="nav-section">He thong</p>
                     <Link to={`/owner/fleet${ownerQuery}`} className="nav-item">
                         <span className="nav-item-icon" aria-hidden="true">
                             <Settings size={20} strokeWidth={2.2} />
                         </span>
-                        <span>Cài đặt</span>
+                        <span>Cai dat</span>
                     </Link>
                 </div>
             </div>
@@ -132,8 +154,8 @@ function FleetSidebar({ user, onLogout }) {
                 <div className="fleet-user">
                     <div className="user-avatar">{(user?.fullName || 'CO').slice(0, 2).toUpperCase()}</div>
                     <div className="user-info">
-                        <p className="user-name">{user?.fullName || 'Chủ xe Luxury'}</p>
-                        <p className="user-email">{user?.email || 'owner@luxury.com'}</p>
+                        <p className="user-name">{user?.fullName || 'Chu xe'}</p>
+                        <p className="user-email">{user?.email || 'owner@example.com'}</p>
                     </div>
                 </div>
 
@@ -141,7 +163,7 @@ function FleetSidebar({ user, onLogout }) {
                     <span className="fleet-logout-icon" aria-hidden="true">
                         <LogOut size={16} strokeWidth={2.2} />
                     </span>
-                    <span>Đăng xuất</span>
+                    <span>Dang xuat</span>
                 </button>
             </div>
         </aside>

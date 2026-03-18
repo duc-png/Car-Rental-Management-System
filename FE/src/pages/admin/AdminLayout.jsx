@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
-import { BarChart4, CarFront, LayoutDashboard, LogOut, UserCheck, Users } from 'lucide-react'
+import { BarChart4, CarFront, LayoutDashboard, LogOut, ShieldAlert, User, UserCheck, Users } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import '../../styles/AdminLayout.css'
 
@@ -38,19 +38,19 @@ export default function AdminLayout() {
                         <div className="admin-layout-brand-icon">C</div>
                         <div>
                             <p className="admin-layout-brand-title">CarRental Pro</p>
-                            <p className="admin-layout-brand-subtitle">Bảng điều khiển quản trị</p>
+                            <p className="admin-layout-brand-subtitle">Bang dieu khien quan tri</p>
                         </div>
                     </NavLink>
 
                     <nav className="admin-layout-nav">
-                        <p className="admin-layout-nav-section">Điều hướng</p>
+                        <p className="admin-layout-nav-section">Dieu huong</p>
                         <NavLink
                             to="/admin/dashboard"
                             className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
                             state={{ from: location.pathname }}
                         >
                             <LayoutDashboard size={18} strokeWidth={2.2} aria-hidden="true" />
-                            <span>Tổng quan</span>
+                            <span>Tong quan</span>
                         </NavLink>
                         <NavLink
                             to="/admin/vehicles"
@@ -64,29 +64,43 @@ export default function AdminLayout() {
                             className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
                         >
                             <UserCheck size={18} strokeWidth={2.2} aria-hidden="true" />
-                            <span>Đăng ký chủ xe</span>
+                            <span>Dang ky chu xe</span>
                         </NavLink>
                         <NavLink
                             to="/admin/customers"
                             className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
                         >
                             <Users size={18} strokeWidth={2.2} aria-hidden="true" />
-                            <span>Khách hàng</span>
+                            <span>Khach hang</span>
+                        </NavLink>
+                        <NavLink
+                            to="/admin/owners"
+                            className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
+                        >
+                            <User size={18} strokeWidth={2.2} aria-hidden="true" />
+                            <span>Chu xe</span>
                         </NavLink>
                         <NavLink
                             to="/admin/reports"
                             className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
                         >
                             <BarChart4 size={18} strokeWidth={2.2} aria-hidden="true" />
-                            <span>Báo cáo</span>
+                            <span>Bao cao</span>
+                        </NavLink>
+                        <NavLink
+                            to="/admin/incident-reports"
+                            className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
+                        >
+                            <ShieldAlert size={18} strokeWidth={2.2} aria-hidden="true" />
+                            <span>Duyet report</span>
                         </NavLink>
                     </nav>
 
                     <nav className="admin-layout-nav">
-                        <p className="admin-layout-nav-section">Hệ thống</p>
+                        <p className="admin-layout-nav-section">He thong</p>
                         <button type="button" className="admin-layout-nav-item admin-layout-nav-logout" onClick={handleLogout}>
                             <LogOut size={18} strokeWidth={2.2} aria-hidden="true" />
-                            Đăng xuất
+                            Dang xuat
                         </button>
                     </nav>
 
