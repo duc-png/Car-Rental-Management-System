@@ -1,6 +1,7 @@
 package com.example.car_management.entity;
 
 import com.example.car_management.entity.enums.BookingStatus;
+import com.example.car_management.entity.enums.FuelLevel;
 import com.example.car_management.entity.enums.ReturnStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -146,10 +147,6 @@ public class BookingEntity {
 
     // ============ Return Status ============
     
-    @Enumerated(EnumType.STRING)
-    @Column(name = "return_status")
-    // Customer handover confirmation — set to true when customer confirms they've
-    // received the car
     @Column(name = "customer_confirmed_handover")
     @Builder.Default
     private Boolean customerConfirmedHandover = false;
