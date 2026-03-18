@@ -53,6 +53,13 @@ function FleetSidebar({ user, onLogout }) {
             active: isCalendarRoute,
         },
         {
+            key: 'maintenance',
+            to: '/owner/maintenance',
+            icon: ShieldCheck,
+            label: 'Bảo dưỡng',
+            active: isMaintenanceRoute,
+        },
+        {
             key: 'feedback',
             to: `/owner/feedback${ownerQuery}`,
             icon: MessageSquareText,
