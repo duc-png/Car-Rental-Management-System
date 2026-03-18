@@ -96,6 +96,7 @@ public enum ErrorCode {
     // IMAGE_DELETE_FAILED(2008,"Delete image failed",HttpStatus.BAD_REQUEST) {
     //
     // }
+    CANNOT_SEND_MESSAGE(6002, "Cannot send message to this dispute", HttpStatus.BAD_REQUEST);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;
