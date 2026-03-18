@@ -90,7 +90,13 @@ public enum ErrorCode {
     VOUCHER_ALREADY_USED(7002, "Voucher has been fully used", HttpStatus.BAD_REQUEST),
     VOUCHER_INVALID(7003, "Voucher is invalid or inactive", HttpStatus.BAD_REQUEST),
     VOUCHER_CODE_EXISTED(7004, "Voucher code already exists", HttpStatus.BAD_REQUEST),
-    VOUCHER_DISCOUNT_EXCEEDED(7005, "Discount percent must not exceed 30%", HttpStatus.BAD_REQUEST);
+    VOUCHER_DISCOUNT_EXCEEDED(7005, "Discount percent must not exceed 30%", HttpStatus.BAD_REQUEST),
+
+    // Incident Report
+    INCIDENT_REPORT_NOT_FOUND(8001, "Incident report not found", HttpStatus.NOT_FOUND),
+    INCIDENT_REPORT_INVALID_DECISION(8002, "Incident report decision is invalid", HttpStatus.BAD_REQUEST),
+    INCIDENT_REPORT_APPEAL_NOT_ALLOWED(8003, "Appeal is not allowed for this report", HttpStatus.BAD_REQUEST),
+    INCIDENT_REPORT_APPEAL_NOT_PENDING(8004, "Appeal is not pending", HttpStatus.BAD_REQUEST);
     // ===== Cloudinary / Image =====
     // IMAGE_UPLOAD_FAILED(2007, "Upload image failed", HttpStatus.BAD_REQUEST);
     //

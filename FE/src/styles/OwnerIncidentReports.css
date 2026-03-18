@@ -1,0 +1,52 @@
+.owner-incident-card {
+    border: 1px solid #dbe3ef;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.owner-incident-body {
+    padding: 14px;
+    display: grid;
+    gap: 8px;
+}
+
+.owner-incident-appeal-form {
+    display: grid;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.owner-incident-textarea {
+    width: 100%;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #0f172a;
+    padding: 10px 12px;
+    font: inherit;
+    resize: vertical;
+}
+
+.owner-incident-submit-btn {
+    justify-self: start;
+    border: none;
+    border-radius: 10px;
+    background: #2563eb;
+    color: #ffffff;
+    padding: 10px 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.owner-incident-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.owner-incident-appeal-result {
+    margin-top: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #ecfeff;
+    border: 1px solid #bae6fd;
+}

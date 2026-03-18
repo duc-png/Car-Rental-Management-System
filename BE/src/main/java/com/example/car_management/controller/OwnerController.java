@@ -1,12 +1,14 @@
 package com.example.car_management.controller;
 
 import com.example.car_management.dto.ApiResponse;
+import com.example.car_management.dto.request.UpdateCustomerStatusRequest;
 import com.example.car_management.dto.response.OwnerPerformanceResponse;
 import com.example.car_management.dto.response.OwnerProfileResponse;
 import com.example.car_management.dto.response.OwnerPublicProfileResponse;
 import com.example.car_management.service.OwnerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -53,6 +55,16 @@ public class OwnerController {
     public ResponseEntity<ApiResponse<OwnerPublicProfileResponse>> publicProfile(@PathVariable Integer ownerId) {
         OwnerPublicProfileResponse data = ownerService.getOwnerPublicProfile(ownerId);
         return ResponseEntity.ok(ApiResponse.<OwnerPublicProfileResponse>builder()
+                .code(1000).message("Success").result(data).build());
+    }
+
+    @PatchMapping("/{ownerId}/status")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ADMIN')")
+    public ResponseEntity<ApiResponse<OwnerProfileResponse>> updateOwnerStatus(
+            @PathVariable Integer ownerId,
+            @RequestBody UpdateCustomerStatusRequest request) {
+        OwnerProfileResponse data = ownerService.updateOwnerStatus(ownerId, request);
+        return ResponseEntity.ok(ApiResponse.<OwnerProfileResponse>builder()
                 .code(1000).message("Success").result(data).build());
     }
 }

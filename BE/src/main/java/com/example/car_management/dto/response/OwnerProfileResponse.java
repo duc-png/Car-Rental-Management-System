@@ -16,6 +16,7 @@ public class OwnerProfileResponse {
     private String email;
     private String avatar;
     private Boolean isVerified;
+    private Boolean isActive;
     private Instant joinedAt;
 
     private Double avgRating;

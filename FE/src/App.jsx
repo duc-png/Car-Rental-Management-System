@@ -8,6 +8,7 @@ import Footer from './components/layout/Footer'
 import Home from './pages/public/Home'
 import Cars from './pages/public/Cars'
 import MyBookings from './pages/user/MyBookings'
+import MyIncidentReports from './pages/user/MyIncidentReports'
 import CustomerProfile from './pages/user/CustomerProfile'
 import ChatPage from './pages/user/ChatPage'
 import CarDetails from './pages/public/CarDetails'
@@ -30,16 +31,21 @@ import PaymentCancel from './pages/PaymentCancel'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminCustomers from './pages/admin/AdminCustomers'
+import AdminOwners from './pages/admin/AdminOwners'
 import AdminVehicles from './pages/admin/AdminVehicles'
 import AdminVehicleRequestDetails from './pages/admin/AdminVehicleRequestDetails'
 import AdminOwnerRegistrations from './pages/admin/AdminOwnerRegistrations'
 import AdminOwnerRegistrationDetails from './pages/admin/AdminOwnerRegistrationDetails'
 import AdminCustomerLicenseReview from './pages/admin/AdminCustomerLicenseReview'
+import AdminIncidentReports from './pages/admin/AdminIncidentReports'
 import MaintenanceDashboard from './pages/MaintenanceDashboard'
 import Customers from './pages/Customers'
 import OwnerAnalytics from './pages/OwnerAnalytics'
 import AdminReports from './pages/AdminReports'
+import OwnerIncidentReports from './pages/owner/OwnerIncidentReports'
+import CustomerChatWidget from './components/chat/CustomerChatWidget'
 import { useAuth } from './hooks/useAuth'
+import { getDashboardPathByRole } from './utils/authUser'
 import './styles/App.css'
 import './index.css'
 
@@ -97,6 +103,7 @@ function AdminRoute({ children }) {
 
 function AppLayout() {
   const location = useLocation()
+  const { isAuthenticated, user } = useAuth()
 
   useEffect(() => {
     if ('scrollRestoration' in window.history) {
@@ -125,6 +132,10 @@ function AppLayout() {
   const isChatPage = /^\/chat(\/|$)/.test(location.pathname)
   const isOwnerDashboard = isOwnerArea || isOwnerRentalsArea || isAdminArea
   const isCarDetailsPage = location.pathname.startsWith('/car/') || (location.pathname.startsWith('/cars/') && location.pathname !== '/cars')
+  const isAuthPage = /^\/(login|register|owner\/login|forgot-password|oauth2\/callback)(\/|$)/.test(location.pathname)
+  const dashboardPath = getDashboardPathByRole(user)
+  const isCustomerAccount = isAuthenticated && dashboardPath === '/my-bookings'
+  const shouldShowCustomerChatWidget = isCustomerAccount && !isOwnerDashboard && !isChatPage && !isAuthPage
 
   return (
     <>
@@ -138,6 +149,7 @@ function AppLayout() {
           <Route path="/owners/:ownerId" element={<OwnerPublicProfile />} />
           <Route path="/become-owner" element={<OwnerRegistration />} />
           <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/my-reports" element={<MyIncidentReports />} />
           <Route path="/profile" element={<CustomerProfile />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/manage-rentals" element={<OwnerRoute><ManageRentals /></OwnerRoute>} />
@@ -157,6 +169,7 @@ function AppLayout() {
           <Route path="/owner/wallet" element={<OwnerRoute><OwnerWallet /></OwnerRoute>} />
           <Route path="/owner/maintenance" element={<OwnerRoute><MaintenanceDashboard /></OwnerRoute>} />
           <Route path="/owner/analytics" element={<OwnerRoute><OwnerAnalytics /></OwnerRoute>} />
+          <Route path="/owner/incident-reports" element={<OwnerRoute><OwnerIncidentReports /></OwnerRoute>} />
           <Route path="/customers" element={<OwnerRoute><Customers /></OwnerRoute>} />
           <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
             <Route index element={<Navigate to="/admin/dashboard" replace />} />
@@ -165,13 +178,16 @@ function AppLayout() {
             <Route path="vehicles/:id" element={<AdminVehicleRequestDetails />} />
             <Route path="owner-registrations" element={<AdminOwnerRegistrations />} />
             <Route path="owner-registrations/:id" element={<AdminOwnerRegistrationDetails />} />
+            <Route path="owners" element={<AdminOwners />} />
             <Route path="customers" element={<AdminCustomers />} />
             <Route path="customers/:id/license-review" element={<AdminCustomerLicenseReview />} />
             <Route path="reports" element={<AdminReports />} />
+            <Route path="incident-reports" element={<AdminIncidentReports />} />
           </Route>
         </Routes>
       </main>
       {!isOwnerDashboard && !isChatPage && <Footer />}
+      {shouldShowCustomerChatWidget && <CustomerChatWidget />}
     </>
   )
 }

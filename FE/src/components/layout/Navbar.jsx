@@ -17,7 +17,6 @@ function Navbar({ sticky = true }) {
   const dashboardPath = getDashboardPathByRole(user)
   const isCustomerAccount = isAuthenticated && dashboardPath === '/my-bookings'
 
-
   return (
     <nav className={`navbar ${sticky ? '' : 'non-sticky'}`.trim()}>
       <div className="navbar-container">
@@ -30,7 +29,7 @@ function Navbar({ sticky = true }) {
           className="mobile-menu-btn"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
-          ☰
+          menu
         </button>
 
         <ul className={`nav-menu ${isMobileMenuOpen ? 'active' : ''}`}>
@@ -46,9 +45,23 @@ function Navbar({ sticky = true }) {
           </li>
           <li>
             <Link to="/become-owner" onClick={() => setIsMobileMenuOpen(false)}>
-              Trở thành chủ xe
+              Tro thanh chu xe
             </Link>
           </li>
+          {isCustomerAccount && (
+            <li>
+              <Link to="/my-bookings" onClick={() => setIsMobileMenuOpen(false)}>
+                My Bookings
+              </Link>
+            </li>
+          )}
+          {isCustomerAccount && (
+            <li>
+              <Link to="/my-reports" onClick={() => setIsMobileMenuOpen(false)}>
+                My Reports
+              </Link>
+            </li>
+          )}
         </ul>
 
         <div className="nav-actions">
@@ -57,7 +70,7 @@ function Navbar({ sticky = true }) {
             onClick={toggleTheme}
             aria-label="Toggle theme"
           >
-            {theme === 'light' ? '🌙' : '☀️'}
+            {theme === 'light' ? 'moon' : 'sun'}
           </button>
 
           {isCustomerAccount ? (
@@ -95,5 +108,3 @@ function Navbar({ sticky = true }) {
 }
 
 export default Navbar
-
-
