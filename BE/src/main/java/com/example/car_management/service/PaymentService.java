@@ -48,9 +48,7 @@ public class PaymentService {
             if (price < 2000)
                 price = 2000;
 
-            // PayOS strictly requires description to contain only letters, numbers, and
-            // spaces
-            // (Regex: ^[a-zA-Z0-9 ]*$)
+
             description = description.replaceAll("[^a-zA-Z0-9 ]", "");
 
             // Limit description length (PayOS requires short description)

@@ -60,6 +60,7 @@ public enum ErrorCode {
 
     // ===== Booking =====
     BOOKING_NOT_FOUND(3007, "Booking not found", HttpStatus.NOT_FOUND),
+    VEHICLE_LOCKED_BY_VIEWER(3017, "Xe đang được khách khác xem. Vui lòng thử lại sau ít phút.", HttpStatus.CONFLICT),
     BOOKING_NOT_ONGOING(3008, "Booking is not in ONGOING status", HttpStatus.BAD_REQUEST),
     BOOKING_ALREADY_INSPECTED(3009, "Booking already has return inspection", HttpStatus.BAD_REQUEST),
     BOOKING_NOT_INSPECTED(3010, "Booking has not been inspected yet", HttpStatus.BAD_REQUEST),
@@ -96,7 +97,7 @@ public enum ErrorCode {
     // IMAGE_DELETE_FAILED(2008,"Delete image failed",HttpStatus.BAD_REQUEST) {
     //
     // }
-    CANNOT_SEND_MESSAGE(6002, "Cannot send message to this dispute", HttpStatus.BAD_REQUEST);
+
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

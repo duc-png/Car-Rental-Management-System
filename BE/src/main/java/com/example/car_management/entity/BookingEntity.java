@@ -145,12 +145,7 @@ public class BookingEntity {
     @Column(name = "discount_amount", precision = 12, scale = 2)
     private BigDecimal discountAmount;
 
-    // ============ Return Status ============
-    
-    @Enumerated(EnumType.STRING)
-    @Column(name = "return_status")
     // Customer handover confirmation — set to true when customer confirms they've
-    // received the car
     @Column(name = "customer_confirmed_handover")
     @Builder.Default
     private Boolean customerConfirmedHandover = false;

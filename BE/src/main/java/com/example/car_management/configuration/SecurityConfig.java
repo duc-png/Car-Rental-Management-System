@@ -29,11 +29,14 @@ public class SecurityConfig {
         };
 
         private final CustomJwtDecoder customJwtDecoder;
+        private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
         @Bean
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
                 http.authorizeHttpRequests(request -> request
                                 .requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+                                // Allow OAuth2 login endpoints
+                                .requestMatchers("/login/oauth2/**", "/oauth2/**").permitAll()
                                 // Allow public GET access to vehicles (for browsing)
                                 .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/**").permitAll()
                                 // Allow public GET access to vehicle models (for dropdowns)
@@ -51,6 +54,8 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/api/v1/bookings/vehicle/*/booked-dates").permitAll()
                                 // Allow public GET access to owner public info (car details page)
                                 .requestMatchers(HttpMethod.GET, "/api/v1/owners/**").permitAll()
+                                // Allow public GET for viewing lock status
+                                .requestMatchers(HttpMethod.GET, "/api/v1/vehicles/*/viewing-lock").permitAll()
                                 // Allow PayOS Webhook
                                 .requestMatchers(HttpMethod.POST, "/api/v1/payments/payos-webhook").permitAll()
                                 // Allow Test PayOS
@@ -68,6 +73,10 @@ public class SecurityConfig {
 
                 // Enable CORS
                 http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
+
+                // OAuth2 Login (Google)
+                http.oauth2Login(oauth2 -> oauth2
+                                .successHandler(oAuth2SuccessHandler));
 
                 // Disable CSRF
                 http.csrf(AbstractHttpConfigurer::disable);

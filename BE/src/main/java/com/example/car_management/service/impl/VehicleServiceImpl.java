@@ -52,7 +52,6 @@ public class VehicleServiceImpl implements VehicleService {
 
         VehicleModelEntity model = vehicleModelRepository.findByIdWithBrandAndType(req.getModelId())
                 .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
-
         LocationEntity location = resolveLocation(req.getLocationId(), req.getLocation());
 
         VehicleEntity v = VehicleEntity.builder()

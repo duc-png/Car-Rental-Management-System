@@ -6,6 +6,7 @@ import { getOwnerById, getOwnerPerformance } from '../../api/owners';
 import { createBooking } from '../../api/bookings';
 import { startConversationByVehicle } from '../../api/chat';
 import { addMyFavoriteVehicle, getMyFavoriteVehicles, removeMyFavoriteVehicle } from '../../api/customers';
+import { acquireViewingLock, releaseViewingLock, getViewingLockStatus } from '../../api/vehicleLock';
 import { validateVoucher } from '../../api/vouchers';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'sonner';
@@ -76,6 +77,20 @@ export default function CarDetails() {
     const { user, token } = useAuth();
     const [favoriteLoading, setFavoriteLoading] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
+    const [viewingLock, setViewingLock] = useState(null); // { locked, lockedByMe, expiresAt, message }
+    const [lockCountdown, setLockCountdown] = useState(null); // seconds remaining
+    const lockIntervalRef = useRef(null);
+    const lockAcquiredRef = useRef(false);
+
+    const isCustomer = (() => {
+        const roleScope = String(user?.role || user?.scope || '');
+        return roleScope.includes('ROLE_USER');
+    })();
+
+    const isOwner = (() => {
+        if (!user || !car) return false;
+        return car.ownerId === user.id || car.ownerId === user.userId;
+    })();
 
     const specsRef = useRef(null);
     const docsRef = useRef(null);
@@ -164,6 +179,78 @@ export default function CarDetails() {
 
         checkFavorite();
     }, [car?.id, token, user?.role, user?.scope]);
+
+    // ===== Viewing Lock Logic =====
+    useEffect(() => {
+        if (!car?.id) return;
+
+        let cancelled = false;
+
+        const doAcquire = async () => {
+            if (!user || !isCustomer || isOwner) {
+                // Not logged in or not a customer: just poll for lock status
+                try {
+                    const status = await getViewingLockStatus(car.id);
+                    if (!cancelled) setViewingLock(status);
+                } catch (_) { }
+                return;
+            }
+            try {
+                const result = await acquireViewingLock(car.id);
+                if (!cancelled) {
+                    setViewingLock(result);
+                    if (result?.lockedByMe) lockAcquiredRef.current = true;
+                }
+            } catch (_) { }
+        };
+
+        doAcquire();
+
+        // Poll every 5 minutes to renew lock
+        const pollInterval = setInterval(doAcquire, 5 * 60 * 1000);
+
+        return () => {
+            cancelled = true;
+            clearInterval(pollInterval);
+
+            // Release lock when leaving page
+            if (lockAcquiredRef.current) {
+                lockAcquiredRef.current = false;
+                try {
+                    // Use sendBeacon for reliability on tab close
+                    if (navigator.sendBeacon) {
+                        navigator.sendBeacon(`/api/v1/vehicles/${car.id}/viewing-lock`);
+                    }
+                    releaseViewingLock(car.id).catch(() => { });
+                } catch (_) { }
+            }
+        };
+    }, [car?.id, user, isCustomer, isOwner]);
+
+    // Countdown timer for lock
+    useEffect(() => {
+        if (lockIntervalRef.current) clearInterval(lockIntervalRef.current);
+
+        if (!viewingLock?.locked || !viewingLock?.expiresAt || viewingLock?.lockedByMe) {
+            setLockCountdown(null);
+            return;
+        }
+
+        const updateCountdown = () => {
+            const remaining = Math.max(0, Math.floor((new Date(viewingLock.expiresAt) - Date.now()) / 1000));
+            setLockCountdown(remaining);
+            if (remaining <= 0) {
+                clearInterval(lockIntervalRef.current);
+                // Refresh lock status
+                getViewingLockStatus(car?.id).then(setViewingLock).catch(() => { });
+            }
+        };
+        updateCountdown();
+        lockIntervalRef.current = setInterval(updateCountdown, 1000);
+        return () => clearInterval(lockIntervalRef.current);
+    }, [viewingLock, car?.id]);
+
+    const isLockedByOther = viewingLock?.locked && !viewingLock?.lockedByMe;
 
     useEffect(() => {
         if (!car?.id) return;
@@ -483,7 +570,6 @@ export default function CarDetails() {
         setBookingLoading(true);
         try {
             await createBooking(car.id, fmt(startDt), fmt(endDt), appliedVoucherCode || null);
-            await createBooking(car.id, fmt(startDt), fmt(endDt));
             setShowBookingConfirm(false);
             toast.success('Đặt xe thành công! Vui lòng chờ chủ xe duyệt.');
             navigate('/my-bookings');
@@ -1035,13 +1121,28 @@ export default function CarDetails() {
                                 <b>{formatVndNumber(totalPrice)}</b>
                             </div>
 
+                            {isLockedByOther && (
+                                <div className="viewing-lock-banner">
+                                    <span className="viewing-lock-icon">🔒</span>
+                                    <div className="viewing-lock-text">
+                                        <strong>Có người đang xem xe này rồi!</strong>
+                                        {lockCountdown != null && lockCountdown > 0 && (
+                                            <span className="viewing-lock-countdown">
+                                                Còn {Math.floor(lockCountdown / 60)}:{String(lockCountdown % 60).padStart(2, '0')} phút
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
                             <button
                                 type="button"
-                                className="btn-primary full-width"
+                                className={`btn-primary full-width${isLockedByOther ? ' btn-locked' : ''}`}
                                 onClick={handleBooking}
-                                disabled={bookingLoading}
+                                disabled={bookingLoading || isLockedByOther}
+                                title={isLockedByOther ? 'Xe đang được khách khác xem, vui lòng thử lại sau' : undefined}
                             >
-                                {bookingLoading ? 'Đang đặt xe...' : 'CHỌN THUÊ'}
+                                {bookingLoading ? 'Đang đặt xe...' : isLockedByOther ? '🔒 Xe đang được xem' : 'CHỌN THUÊ'}
                             </button>
 
                         </div>

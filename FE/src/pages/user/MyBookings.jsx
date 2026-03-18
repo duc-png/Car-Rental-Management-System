@@ -37,11 +37,9 @@ function MyBookings() {
       setLoading(false)
     }
   }, [navigate])
-
   useEffect(() => {
     fetchBookings()
   }, [fetchBookings])
-
   const handleCancelBooking = async (id) => {
     if (!confirm('Bạn có chắc muốn hủy đặt xe này?')) return
     try {
@@ -55,7 +53,6 @@ function MyBookings() {
       setCancellingId(null)
     }
   }
-
   const handleConfirmHandover = async (id) => {
     if (!confirm('Xac nhan da nhan xe tu chu xe?')) return
     try {
@@ -69,7 +66,6 @@ function MyBookings() {
       setConfirmingHandoverId(null)
     }
   }
-
   const formatDate = (dateString) => {
     if (!dateString) return ''
     return new Date(dateString).toLocaleDateString('vi-VN', {
@@ -77,9 +73,7 @@ function MyBookings() {
       hour: '2-digit', minute: '2-digit'
     })
   }
-
   const canCancel = (status) => status === 'PENDING' || status === 'CONFIRMED'
-
   const STEPS = [
     { key: 'PENDING', label: 'Đặt xe', icon: '📋' },
     { key: 'CONFIRMED', label: 'Chủ xe duyệt', icon: '✅' },
@@ -87,7 +81,6 @@ function MyBookings() {
     { key: 'ONGOING', label: 'Đang thuê', icon: '🚗' },
     { key: 'COMPLETED', label: 'Hoàn thành', icon: '🏁' },
   ]
-
   const getActiveStep = (status, paymentStatus) => {
     if (status === 'CANCELLED') return -1
     if (status === 'COMPLETED') return 4
@@ -96,7 +89,6 @@ function MyBookings() {
     if (status === 'CONFIRMED') return 1
     return 0
   }
-
   const BookingSteps = ({ status, paymentStatus }) => {
     const isCancelled = status === 'CANCELLED'
     const activeStep = getActiveStep(status, paymentStatus)
@@ -117,7 +109,6 @@ function MyBookings() {
       </div>
     )
   }
-
   if (loading) {
     return (
       <div className="bookings-page">
@@ -128,7 +119,6 @@ function MyBookings() {
       </div>
     )
   }
-
   if (error) {
     return (
       <div className="bookings-page">
@@ -139,14 +129,12 @@ function MyBookings() {
       </div>
     )
   }
-
   return (
     <div className="bookings-page">
       <div className="bookings-header">
         <h1>Đặt xe của tôi</h1>
         <p>Quản lý các chuyến đi của bạn</p>
       </div>
-
       {bookings.length > 0 ? (
         <div className="bookings-list">
           {bookings.map(booking => {
@@ -226,7 +214,6 @@ function MyBookings() {
                       Thanh toán 85% còn lại
                     </button>
                   )}
-
                 {booking.status === 'ONGOING' && !booking.customerConfirmedHandover && (
                   <button
                     className="btn-pay"
@@ -355,5 +342,4 @@ function MyBookings() {
     </div>
   )
 }
-
 export default MyBookings
