@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { CalendarDays, Car, LayoutGrid, LogOut, MessageSquareText, ReceiptText, Settings, UsersRound, Wallet } from 'lucide-react'
+import { BarChart3, CalendarDays, Car, LayoutGrid, LogOut, MessageSquareText, ReceiptText, Settings, ShieldCheck, UsersRound, Wallet, Wrench } from 'lucide-react'
 import '../../../styles/FleetSidebar.css'
 
 function FleetSidebar({ user, onLogout }) {
@@ -7,12 +7,14 @@ function FleetSidebar({ user, onLogout }) {
     const ownerId = user?.userId || user?.id
     const ownerQuery = ownerId ? `?ownerId=${ownerId}` : ''
 
-    const isOverviewRoute = location.pathname === '/owner/overview'
+    const isOverviewRoute = location.pathname === '/owner/fleet'
     const isVehiclesRoute = location.pathname.startsWith('/owner/fleet') || location.pathname.startsWith('/owner/vehicles')
     const isRentalRoute = location.pathname.startsWith('/manage-rentals')
+    const isMaintenanceRoute = location.pathname.startsWith('/owner/maintenance')
     const isFeedbackRoute = location.pathname.startsWith('/owner/feedback')
     const isCalendarRoute = location.pathname.startsWith('/owner/booking-calendar')
     const isWalletRoute = location.pathname.startsWith('/owner/wallet')
+    const isAnalyticsRoute = location.pathname.startsWith('/owner/analytics')
 
     const navItems = [
         {
@@ -30,6 +32,13 @@ function FleetSidebar({ user, onLogout }) {
             active: isVehiclesRoute,
         },
         {
+            key: 'maintenance',
+            to: `/owner/maintenance${ownerQuery}`,
+            icon: Wrench,
+            label: 'Bảo dưỡng xe',
+            active: isMaintenanceRoute,
+        },
+        {
             key: 'rentals',
             to: '/manage-rentals',
             icon: ReceiptText,
@@ -38,31 +47,45 @@ function FleetSidebar({ user, onLogout }) {
         },
         {
             key: 'calendar',
-            to: '/owner/booking-calendar',
+            to: `/owner/booking-calendar${ownerQuery}`,
             icon: CalendarDays,
             label: 'Lịch booking',
             active: isCalendarRoute,
         },
         {
+            key: 'maintenance',
+            to: '/owner/maintenance',
+            icon: ShieldCheck,
+            label: 'Bảo dưỡng',
+            active: isMaintenanceRoute,
+        },
+        {
             key: 'feedback',
-            to: '/owner/feedback',
+            to: `/owner/feedback${ownerQuery}`,
             icon: MessageSquareText,
             label: 'Phản hồi khách',
             active: isFeedbackRoute,
         },
         {
             key: 'customers',
-            to: `/owner/fleet${ownerQuery}`,
+            to: `/customers${ownerQuery}`,
             icon: UsersRound,
             label: 'Khách hàng',
-            active: false,
+            active: location.pathname.startsWith('/customers'),
         },
         {
             key: 'stats',
-            to: '/owner/wallet',
+            to: `/owner/wallet${ownerQuery}`,
             icon: Wallet,
             label: 'Ví của tôi',
             active: isWalletRoute,
+        },
+        {
+            key: 'analytics',
+            to: `/owner/analytics${ownerQuery}`,
+            icon: BarChart3,
+            label: 'Báo cáo & Thống kê',
+            active: isAnalyticsRoute,
         },
     ]
 

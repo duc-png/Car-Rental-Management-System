@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
     BarChart,
@@ -12,6 +12,7 @@ import {
     Cell
 } from 'recharts'
 import { useAuth } from '../hooks/useAuth'
+import FleetSidebar from '../components/owner/fleet/FleetSidebar'
 import { getRevenueReport, getUsageReport, getBookingStats } from '../api/reports'
 import '../styles/CarOwnerFleet.css'
 import '../styles/OwnerAnalytics.css'
@@ -72,7 +73,6 @@ const CHART_COLORS = ['#0f172a', '#334155', '#475569', '#64748b', '#94a3b8']
 
 export default function OwnerAnalytics() {
     const navigate = useNavigate()
-    const location = useLocation()
     const { token, user, logout } = useAuth()
     const defaultDates = getDefaultDates()
     const [fromDate, setFromDate] = useState(defaultDates.fromDate)
@@ -89,7 +89,9 @@ export default function OwnerAnalytics() {
             navigate('/login')
             return
         }
-        if (!user?.role?.includes('ROLE_EXPERT')) {
+        const scope = String(user?.role || user?.scope || '')
+        const isCarOwner = scope.includes('ROLE_CAR_OWNER') || scope.includes('CAR_OWNER') || scope.includes('ROLE_EXPERT')
+        if (!isCarOwner) {
             navigate('/')
             return
         }
@@ -126,7 +128,11 @@ export default function OwnerAnalytics() {
     }, [token, fromDate, toDate, granularity])
 
     useEffect(() => {
-        if (!token || !user?.role?.includes('ROLE_EXPERT')) return
+        if (!token) return
+        const scope = String(user?.role || user?.scope || '')
+        const isCarOwner = scope.includes('ROLE_CAR_OWNER') || scope.includes('CAR_OWNER') || scope.includes('ROLE_EXPERT')
+        if (!isCarOwner) return
+
         setLoading(true)
         if (tab === 'revenue') {
             loadRevenue().finally(() => setLoading(false))
@@ -144,39 +150,7 @@ export default function OwnerAnalytics() {
 
     return (
         <div className="fleet-dashboard owner-analytics-page">
-            <aside className="fleet-sidebar">
-                <Link to="/" className="fleet-brand">
-                    <div className="brand-icon">
-                        CR
-                    </div>
-                    <div>
-                        <h3>CarRental System</h3>
-                        <p>Owner Portal</p>
-                    </div>
-                </Link>
-
-                <div className="fleet-nav">
-                    <p className="nav-section">Navigation</p>
-                    <Link to="/owner/fleet" className={`nav-item ${location.pathname === '/owner/fleet' ? 'active' : ''}`}>Fleet</Link>
-                    <Link to="/owner/analytics" className={`nav-item ${location.pathname === '/owner/analytics' ? 'active' : ''}`}>Analytics</Link>
-                </div>
-
-                <div className="fleet-system">
-                    <p className="nav-section">System</p>
-                    <button type="button" className="nav-item">Settings</button>
-                </div>
-
-                <div className="fleet-user">
-                    <div className="fleet-user-row">
-                        <div className="user-avatar">CO</div>
-                        <div className="user-info">
-                            <p className="user-name">Car Owner</p>
-                            <p className="user-email">{user?.email || '—'}</p>
-                        </div>
-                    </div>
-                    <button type="button" className="fleet-logout-btn" onClick={handleLogout}>Đăng xuất</button>
-                </div>
-            </aside>
+            <FleetSidebar user={user} onLogout={handleLogout} />
 
             <section className="fleet-main owner-analytics-main">
                 <header className="reports-header">

@@ -32,6 +32,10 @@ import com.example.car_management.service.OwnerRegistrationService;
 import com.example.car_management.service.NotificationService;
 import com.example.car_management.service.cloud.CloudinaryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -43,6 +47,9 @@ import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
@@ -62,25 +69,53 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
     private final CloudinaryService cloudinaryService;
     private final OwnerRegistrationNotificationService ownerRegistrationNotificationService;
     private final NotificationService notificationService;
+    private final ObjectProvider<JavaMailSender> mailSenderProvider;
 
     private static final int MAX_IMAGES = 5;
     private static final BigDecimal DEFAULT_PRICE_PER_DAY = new BigDecimal("1.00");
     private static final String DEFAULT_CAR_TYPE_NAME = "Unknown";
+    private static final long OWNER_EMAIL_OTP_EXPIRE_SECONDS = 300;
+
+    @Value("${app.mail.enabled:false}")
+    private boolean mailEnabled;
+
+    @Value("${spring.mail.username:no-reply@carrental.local}")
+    private String fromEmail;
+
+    private final Map<Integer, OwnerEmailOtpSession> ownerEmailOtpSessions = new ConcurrentHashMap<>();
 
     @Override
     @Transactional
     public OwnerRegistrationRequestResponse submit(CreateOwnerRegistrationRequest request,
             List<MultipartFile> images) {
+        UserEntity authenticatedUser = getAuthenticatedUserOrNull();
+        CreateOwnerRegistrationRequest.OwnerInfo ownerInfo = request.getOwner();
+
+        if (authenticatedUser == null && ownerInfo == null) {
+            throw new AppException(ErrorCode.INVALID_KEY);
+        }
+
+        if (authenticatedUser != null && authenticatedUser.getRoleId() == UserRole.ADMIN) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (authenticatedUser != null && !Boolean.TRUE.equals(authenticatedUser.getIsVerified())) {
+            issueOwnerEmailOtp(authenticatedUser);
+            throw new AppException(ErrorCode.OWNER_REGISTRATION_EMAIL_NOT_VERIFIED);
+        }
+
         // Chuan hoa key truoc khi check trung de tranh sai lech do hoa/thuong va khoang
         // trang.
-        String normalizedEmail = normalizeEmail(request.getOwner().getEmail());
+        String normalizedEmail = authenticatedUser != null
+                ? normalizeEmail(authenticatedUser.getEmail())
+                : normalizeEmail(ownerInfo.getEmail());
         String normalizedLicensePlate = normalizeLicensePlate(request.getVehicle().getLicensePlate());
 
         // Bat buoc co anh va gioi han so luong anh theo rule dang ky.
         validateImages(images);
 
-        // Check ho so neu email/bien so da ton tai o user/xe that hoac dang pending.
-        if (userRepository.existsByEmail(normalizedEmail)) {
+        // Guest flow: khong cho dang ky bang email da ton tai tai khoan.
+        if (authenticatedUser == null && userRepository.existsByEmail(normalizedEmail)) {
             throw new AppException(ErrorCode.EMAIL_EXISTED);
         }
 
@@ -101,10 +136,17 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
         }
 
         OwnerRegistration entity = OwnerRegistration.builder()
-                .fullName(request.getOwner().getFullName().trim())
+                .fullName(authenticatedUser != null
+                        ? authenticatedUser.getFullName()
+                        : ownerInfo.getFullName().trim())
                 .email(normalizedEmail)
-                .phone(request.getOwner().getPhone().trim())
-                .passwordHash(passwordEncoder.encode(request.getOwner().getPassword()))
+                .phone(authenticatedUser != null
+                        ? String.valueOf(authenticatedUser.getPhone() == null ? "" : authenticatedUser.getPhone())
+                                .trim()
+                        : ownerInfo.getPhone().trim())
+                .passwordHash(authenticatedUser != null
+                        ? authenticatedUser.getPassword()
+                        : passwordEncoder.encode(ownerInfo.getPassword()))
                 .licensePlate(normalizedLicensePlate)
                 .brandName(request.getVehicle().getBrand().trim())
                 .modelName(request.getVehicle().getModel().trim())
@@ -170,28 +212,45 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
 
         assertPending(entity);
 
-        // Buoc 2: check lai rang buoc duy nhat truoc khi tao account/xe that.
-        if (userRepository.existsByEmail(entity.getEmail())) {
-            throw new AppException(ErrorCode.EMAIL_EXISTED);
-        }
-
+        // Buoc 2: check rang buoc duy nhat cho xe truoc khi tao du lieu that.
         if (vehicleRepository.existsByLicensePlate(entity.getLicensePlate())) {
             throw new AppException(ErrorCode.LICENSE_PLATE_EXISTED);
         }
 
-        UserEntity owner = UserEntity.builder()
-                .fullName(entity.getFullName())
-                .email(entity.getEmail())
-                .password(entity.getPasswordHash())
-                .phone(entity.getPhone())
-                .isVerified(false)
-                .isActive(true)
-                .createdAt(Instant.now())
-                .roleId(UserRole.CAR_OWNER)
-                .build();
-
-        // Buoc 3: tao tai khoan chu xe tu thong tin dang ky.
-        UserEntity savedOwner = userRepository.save(owner);
+        // Buoc 3: neu email da co tai khoan customer thi nang quyen len owner,
+        // neu chua co thi tao tai khoan owner moi.
+        UserEntity savedOwner = userRepository.findByEmail(entity.getEmail())
+                .map(existingUser -> {
+                    if (existingUser.getRoleId() == UserRole.ADMIN) {
+                        throw new AppException(ErrorCode.UNAUTHORIZED);
+                    }
+                    if (existingUser.getRoleId() != UserRole.CAR_OWNER) {
+                        existingUser.setRoleId(UserRole.CAR_OWNER);
+                    }
+                    if (existingUser.getIsActive() == null) {
+                        existingUser.setIsActive(true);
+                    }
+                    if (existingUser.getPhone() == null || existingUser.getPhone().isBlank()) {
+                        existingUser.setPhone(entity.getPhone());
+                    }
+                    if (existingUser.getFullName() == null || existingUser.getFullName().isBlank()) {
+                        existingUser.setFullName(entity.getFullName());
+                    }
+                    return userRepository.save(existingUser);
+                })
+                .orElseGet(() -> {
+                    UserEntity owner = UserEntity.builder()
+                            .fullName(entity.getFullName())
+                            .email(entity.getEmail())
+                            .password(entity.getPasswordHash())
+                            .phone(entity.getPhone())
+                            .isVerified(false)
+                            .isActive(true)
+                            .createdAt(Instant.now())
+                            .roleId(UserRole.CAR_OWNER)
+                            .build();
+                    return userRepository.save(owner);
+                });
         Instant vehicleReviewedAt = Instant.now();
 
         // Buoc 4: tao xe that va dua vao trang thai AVAILABLE sau khi admin duyet.
@@ -250,6 +309,45 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
         ownerRegistrationNotificationService.sendApprovedEmail(savedRegistration);
         notificationService.notifyOwnerVehicleApproved(savedVehicle);
         return toResponse(savedRegistration);
+    }
+
+    @Override
+    @Transactional
+    public void sendOwnerEmailVerificationOtp(Integer userId) {
+        UserEntity user = getUserForOwnerRegistration(userId);
+        if (Boolean.TRUE.equals(user.getIsVerified())) {
+            return;
+        }
+        issueOwnerEmailOtp(user);
+    }
+
+    @Override
+    @Transactional
+    public void verifyOwnerEmailVerificationOtp(Integer userId, String otp) {
+        UserEntity user = getUserForOwnerRegistration(userId);
+
+        OwnerEmailOtpSession session = ownerEmailOtpSessions.get(user.getId());
+        if (session == null) {
+            throw new AppException(ErrorCode.EMAIL_OTP_NOT_FOUND);
+        }
+
+        if (Instant.now().isAfter(session.expireAt())) {
+            ownerEmailOtpSessions.remove(user.getId());
+            throw new AppException(ErrorCode.EMAIL_OTP_EXPIRED);
+        }
+
+        if (!session.email().equalsIgnoreCase(String.valueOf(user.getEmail() == null ? "" : user.getEmail()).trim())) {
+            throw new AppException(ErrorCode.EMAIL_OTP_INVALID);
+        }
+
+        String normalizedOtp = String.valueOf(otp == null ? "" : otp).trim();
+        if (!session.otp().equals(normalizedOtp)) {
+            throw new AppException(ErrorCode.EMAIL_OTP_INVALID);
+        }
+
+        user.setIsVerified(true);
+        userRepository.save(user);
+        ownerEmailOtpSessions.remove(user.getId());
     }
 
     private void enforceRegistrationVehicleApproved(Integer ownerId, String licensePlate, Instant reviewedAt) {
@@ -328,22 +426,25 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
             return null;
         }
 
-        // Tach city/district tu address string de tao location phu hop cho xe vua duoc
-        // duyet.
+        // Tach province/district/ward tu address string de tao location phu hop cho xe
+        // vua
+        // duoc duyet.
         String normalizedAddress = normalizeAddressDetail(addressDetailRaw);
         List<String> parts = Arrays.stream(normalizedAddress.split(","))
                 .map(String::trim)
                 .filter(part -> !part.isEmpty())
                 .toList();
 
-        String city = truncate(parts.isEmpty() ? normalizedAddress : parts.get(parts.size() - 1), 100);
-        String district = truncate(parts.size() >= 2 ? parts.get(parts.size() - 2) : city, 100);
+        String province = truncate(parts.isEmpty() ? normalizedAddress : parts.get(parts.size() - 1), 100);
+        String district = truncate(parts.size() >= 3 ? parts.get(parts.size() - 2) : "Chưa rõ", 100);
+        String ward = truncate(parts.size() >= 4 ? parts.get(parts.size() - 3)
+                : (parts.size() >= 2 ? parts.get(parts.size() - 2) : "Chưa rõ"), 100);
         String addressDetail = truncate(normalizedAddress, 255);
 
         LocationEntity location = LocationEntity.builder()
-                .city(city == null || city.isBlank() ? "Chưa rõ" : city)
-                .district(district == null || district.isBlank() ? (city == null || city.isBlank() ? "Chưa rõ" : city)
-                        : district)
+                .province(province == null || province.isBlank() ? "Chưa rõ" : province)
+                .district(district == null || district.isBlank() ? "Chưa rõ" : district)
+                .ward(ward == null || ward.isBlank() ? "Chưa rõ" : ward)
                 .addressDetail(addressDetail)
                 .build();
 
@@ -399,6 +500,72 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
         String email = authentication.getName();
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+    }
+
+    private UserEntity getAuthenticatedUserOrNull() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return null;
+        }
+
+        String email = String.valueOf(authentication.getName() == null ? "" : authentication.getName()).trim();
+        if (email.isEmpty() || "anonymousUser".equalsIgnoreCase(email)) {
+            return null;
+        }
+
+        return userRepository.findByEmail(email).orElse(null);
+    }
+
+    private UserEntity getUserForOwnerRegistration(Integer userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if (user.getRoleId() == UserRole.ADMIN) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        return user;
+    }
+
+    private void issueOwnerEmailOtp(UserEntity user) {
+        String email = normalizeEmail(user.getEmail());
+        if (email == null || email.isBlank()) {
+            throw new AppException(ErrorCode.EMAIL_OTP_SEND_FAILED);
+        }
+
+        String otp = String.format("%06d", ThreadLocalRandom.current().nextInt(0, 1_000_000));
+        Instant expireAt = Instant.now().plusSeconds(OWNER_EMAIL_OTP_EXPIRE_SECONDS);
+
+        ownerEmailOtpSessions.put(user.getId(), new OwnerEmailOtpSession(email, otp, expireAt));
+        sendOwnerEmailOtp(email, user.getFullName(), otp);
+    }
+
+    private void sendOwnerEmailOtp(String toEmail, String fullName, String otp) {
+        if (!mailEnabled) {
+            throw new AppException(ErrorCode.EMAIL_OTP_SEND_FAILED);
+        }
+
+        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
+        if (mailSender == null) {
+            throw new AppException(ErrorCode.EMAIL_OTP_SEND_FAILED);
+        }
+
+        try {
+            String displayName = (fullName == null || fullName.isBlank()) ? "Ban" : fullName.trim();
+
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject("[CarRental] Ma OTP xac thuc email de tro thanh chu xe");
+            message.setText("Xin chao " + displayName + ",\n\n"
+                    + "Ma OTP de xac thuc email truoc khi dang ky tro thanh chu xe la: " + otp + "\n"
+                    + "Ma co hieu luc trong 5 phut.\n\n"
+                    + "CarRental");
+
+            mailSender.send(message);
+        } catch (Exception ex) {
+            throw new AppException(ErrorCode.EMAIL_OTP_SEND_FAILED);
+        }
     }
 
     private String normalizeEmail(String email) {
@@ -494,5 +661,8 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
             toSave.add(img);
         }
         imageRepository.saveAll(toSave);
+    }
+
+    private record OwnerEmailOtpSession(String email, String otp, Instant expireAt) {
     }
 }

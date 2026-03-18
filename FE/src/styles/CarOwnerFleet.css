@@ -16,154 +16,6 @@
     color: #111827;
 }
 
-.fleet-sidebar {
-    background: #ffffff;
-    border-right: 1px solid var(--fleet-border);
-    padding: 28px 22px;
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-}
-
-.fleet-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    text-decoration: none;
-    color: inherit;
-}
-
-.brand-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-    background: #0f172a;
-    color: #ffffff;
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    font-weight: 800;
-    letter-spacing: 0.04em;
-}
-
-.brand-icon img {
-    display: none;
-}
-
-.fleet-brand h3 {
-    font-size: 16px;
-    margin-bottom: 2px;
-}
-
-.fleet-brand p {
-    font-size: 12px;
-    color: var(--fleet-muted);
-}
-
-.nav-section {
-    text-transform: uppercase;
-    font-size: 11px;
-    color: var(--fleet-muted);
-    letter-spacing: 1px;
-    margin-bottom: 10px;
-}
-
-.fleet-nav,
-.fleet-system {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.nav-item {
-    background: transparent;
-    border: 1px solid transparent;
-    padding: 10px 14px;
-    text-align: left;
-    border-radius: 10px;
-    font-weight: 600;
-    color: #111827;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.nav-item.active,
-.nav-item:hover {
-    background: #f3f4f6;
-    border-color: #e5e7eb;
-    color: var(--fleet-primary);
-}
-
-.fleet-nav a.nav-item {
-    text-decoration: none;
-    display: block;
-}
-
-.fleet-user {
-    margin-top: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    padding-top: 18px;
-    border-top: 1px solid var(--fleet-border);
-}
-
-.fleet-user-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.fleet-logout-btn {
-    padding: 8px 14px;
-    border-radius: 10px;
-    border: 1px solid var(--fleet-border);
-    background: transparent;
-    color: var(--fleet-muted);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    width: 100%;
-}
-
-.fleet-logout-btn:hover {
-    background: #fef2f2;
-    border-color: #fecaca;
-    color: #b91c1c;
-}
-
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: #111827;
-    color: #ffffff;
-    display: grid;
-    place-items: center;
-    font-weight: 700;
-    font-size: 14px;
-}
-
-.user-info {
-    display: flex;
-    flex-direction: column;
-}
-
-.user-name {
-    font-size: 14px;
-    font-weight: 700;
-}
-
-.user-email {
-    font-size: 12px;
-    color: var(--fleet-muted);
-}
-
->>>>>>> duong
 .fleet-main {
     padding: 22px 24px 34px;
     display: flex;
@@ -764,7 +616,6 @@
     box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
 }
 
-<<<<<<< HEAD
 .search-icon {
     position: absolute;
     left: 12px;
@@ -775,7 +626,9 @@
 }
 
 /* removed icon for cleaner UI */
-.search-icon { display: none; }
+.search-icon {
+    display: none;
+}
 
 .fleet-filters select {
     padding: 11px 12px;

@@ -192,7 +192,7 @@ public class CustomerService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        if (user.getRoleId() != UserRole.USER) {
+        if (!isCustomerCapableRole(user.getRoleId())) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
@@ -307,7 +307,7 @@ public class CustomerService {
         UserEntity user = userRepository.findById(customerId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        if (user.getRoleId() != UserRole.USER) {
+        if (!isCustomerCapableRole(user.getRoleId())) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
@@ -586,7 +586,7 @@ public class CustomerService {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
-        if (user.getRoleId() != UserRole.USER) {
+        if (!isCustomerCapableRole(user.getRoleId())) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
@@ -595,6 +595,10 @@ public class CustomerService {
 
     private String normalizeEmail(String value) {
         return String.valueOf(value == null ? "" : value).trim().toLowerCase(Locale.ROOT);
+    }
+
+    private boolean isCustomerCapableRole(UserRole role) {
+        return role == UserRole.USER || role == UserRole.CAR_OWNER;
     }
 
     private void sendOtpEmail(String toEmail, String fullName, String otp) {
@@ -697,6 +701,7 @@ public class CustomerService {
                 .licenseVerifiedAt(verifiedAt)
                 .avatar(user.getAvatar())
                 .address(user.getAddress())
+                .isVerified(Boolean.TRUE.equals(user.getIsVerified()))
                 .isActive(user.getIsActive() == null || user.getIsActive())
                 .createdAt(user.getCreatedAt())
                 .totalBookings(totalBookings)

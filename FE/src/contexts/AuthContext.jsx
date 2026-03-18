@@ -192,14 +192,20 @@ export function AuthProvider({ children }) {
                 setUser((prev) => {
                     const nextFullName = profile.fullName || prev?.fullName
                     const nextAvatar = profile.avatar || prev?.avatar || ''
-                    if (prev?.fullName === nextFullName && (prev?.avatar || '') === nextAvatar) {
+                    const nextIsVerified = Boolean(profile.isVerified)
+                    if (
+                        prev?.fullName === nextFullName
+                        && (prev?.avatar || '') === nextAvatar
+                        && Boolean(prev?.isVerified) === nextIsVerified
+                    ) {
                         return prev
                     }
 
                     return {
                         ...prev,
                         fullName: nextFullName,
-                        avatar: nextAvatar
+                        avatar: nextAvatar,
+                        isVerified: nextIsVerified
                     }
                 })
             }

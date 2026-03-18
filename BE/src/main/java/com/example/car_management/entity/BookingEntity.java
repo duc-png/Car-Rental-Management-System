@@ -1,6 +1,8 @@
 package com.example.car_management.entity;
 
 import com.example.car_management.entity.enums.BookingStatus;
+import com.example.car_management.entity.enums.FuelLevel;
+import com.example.car_management.entity.enums.ReturnStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -39,7 +41,12 @@ public class BookingEntity {
     private BigDecimal totalPrice;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 50)
     private BookingStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "return_status")
+    private ReturnStatus returnStatus;
 
     @Column(name = "created_at")
     private Instant createdAt;
@@ -67,11 +74,78 @@ public class BookingEntity {
     @Column(name = "payos_full_order_code")
     private Long payosFullOrderCode;
 
+    @Column(name = "payos_penalty_order_code")
+    private Long payosPenaltyOrderCode;
+
     @Column(name = "checkout_url", length = 500)
     private String checkoutUrl;
 
+    // Car handover & return tracking
+    @Column(name = "start_km")
+    private Integer startKm;
+
+    @Column(name = "end_km")
+    private Integer endKm;
+
+    @Column(name = "start_fuel_level")
+    private Integer startFuelLevel; // 0-100 (%)
+
+    @Column(name = "end_fuel_level")
+    private Integer endFuelLevel; // 0-100 (%)
+
+    @Column(name = "surcharge_amount", precision = 12, scale = 2)
+    private BigDecimal surchargeAmount;
+
+    // ============ Return Inspection Fields ============
+    
+    @Column(name = "actual_return_date")
+    private LocalDateTime actualReturnDate;
+
+    @Column(name = "odometer_start")
+    private Integer odometerStart;
+
+    @Column(name = "odometer_end")
+    private Integer odometerEnd;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "fuel_level_start")
+    private FuelLevel fuelLevelStart;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "fuel_level_end")
+    private FuelLevel fuelLevelEnd;
+
+    // ============ Additional Fees ============
+    
+    @Column(name = "late_fee", precision = 12, scale = 2)
+    private BigDecimal lateFee;
+
+    @Column(name = "fuel_fee", precision = 12, scale = 2)
+    private BigDecimal fuelFee;
+
+    @Column(name = "damage_fee", precision = 12, scale = 2)
+    private BigDecimal damageFee;
+
+    @Column(name = "total_additional_fees", precision = 12, scale = 2)
+    private BigDecimal totalAdditionalFees;
+
+    @Column(name = "damage_description", length = 1000)
+    private String damageDescription;
+
+    @ElementCollection
+    @CollectionTable(name = "booking_damage_images", joinColumns = @JoinColumn(name = "booking_id"))
+    @Column(name = "image_url")
+    private java.util.List<String> damageImages;
+
+    // ============ Voucher ============
+
+    @Column(name = "voucher_code", length = 8)
+    private String voucherCode;
+
+    @Column(name = "discount_amount", precision = 12, scale = 2)
+    private BigDecimal discountAmount;
+
     // Customer handover confirmation — set to true when customer confirms they've
-    // received the car
     @Column(name = "customer_confirmed_handover")
     @Builder.Default
     private Boolean customerConfirmedHandover = false;

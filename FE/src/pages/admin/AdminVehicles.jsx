@@ -32,7 +32,7 @@ const vehicleSubtitle = (vehicle) => {
 
 const addressText = (vehicle) => {
     if (vehicle?.addressDetail) return vehicle.addressDetail
-    const parts = [vehicle?.district, vehicle?.city].filter(Boolean)
+    const parts = [vehicle?.ward, vehicle?.district, vehicle?.province || vehicle?.city].filter(Boolean)
     return parts.length ? parts.join(', ') : '—'
 }
 

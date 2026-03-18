@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { getMyBookings, updateBookingStatus } from '../api/bookings'
+import ReturnInspectionModal from '../components/ReturnInspectionModal'
+import DisputeChatModal from '../components/DisputeChatModal'
 import { useAuth } from '../hooks/useAuth'
 import FleetSidebar from '../components/owner/fleet/FleetSidebar'
 import DashboardNotificationBell from '../components/layout/DashboardNotificationBell'
@@ -13,6 +15,7 @@ const STATUS_COLORS = {
     PENDING: 'pending',
     CONFIRMED: 'confirmed',
     ONGOING: 'ongoing',
+    PENALTY_PAYMENT_PENDING: 'ongoing',
     COMPLETED: 'completed',
     CANCELLED: 'cancelled',
 }
@@ -27,6 +30,8 @@ function ManageRentals() {
     const navigate = useNavigate()
     const [rentals, setRentals] = useState([])
     const [loading, setLoading] = useState(true)
+    const [selectedForInspection, setSelectedForInspection] = useState(null)
+    const [selectedForDisputeChat, setSelectedForDisputeChat] = useState(null)
     const { user, isAuthenticated, logout } = useAuth()
     const canManage = Boolean(user?.role?.includes('ROLE_CAR_OWNER') || user?.role?.includes('ROLE_ADMIN'))
 
@@ -85,9 +90,13 @@ function ManageRentals() {
         handleStatusUpdate(booking.id, 'ONGOING')
     }
 
-    const handleCompleteTrip = (booking) => {
-        if (!window.confirm('🏁 Xác nhận hoàn thành chuyến?\n\nCar đã được trả về thành công.')) return
-        handleStatusUpdate(booking.id, 'COMPLETED')
+    const handleOpenInspection = (booking) => {
+        setSelectedForInspection(booking)
+    }
+
+    const handleInspectionSuccess = () => {
+        fetchRentals()
+        setSelectedForInspection(null)
     }
 
     const handleCancel = (booking) => {
@@ -157,14 +166,17 @@ function ManageRentals() {
                     </div>
                 </header>
 
-                <div className="bookings-grid">
+                <div className="bookings-list owner-rentals-list">
                     {rentals.length === 0 ? (
-                        <div className="no-bookings">
-                            <p>Chưa có đơn thuê nào.</p>
+                        <div className="empty-state owner-rentals-empty">
+                            <div className="empty-icon">📂</div>
+                            <h3>Chưa có yêu cầu thuê</h3>
+                            <p>Khi khách đặt xe của bạn, đơn thuê sẽ hiển thị tại đây.</p>
                         </div>
                     ) : (
                         rentals.map((booking) => (
                             <div key={booking.id} className={`booking-card ${getStatusColor(booking.status)}`}>
+                                {/* Left: Image */}
                                 <div className="booking-image">
                                     <img
                                         src={booking.vehicleImage || '/placeholder.svg'}
@@ -172,11 +184,12 @@ function ManageRentals() {
                                     />
                                 </div>
 
+                                {/* Middle: Info */}
                                 <div className="booking-details">
-                                    <h3>{booking.vehicleName || `Vehicle #${booking.vehicleId}`}</h3>
+                                    <h3>{booking.vehicleName}</h3>
                                     <div className="booking-info">
-                                        <p><strong>Khách thuê:</strong> {booking.renterName || 'N/A'} {booking.renterEmail && `(${booking.renterEmail})`}</p>
-                                        <p><strong>Thời gian:</strong> {booking.startDate ? new Date(booking.startDate).toLocaleDateString('vi-VN') : 'N/A'} - {booking.endDate ? new Date(booking.endDate).toLocaleDateString('vi-VN') : 'N/A'}</p>
+                                        <p><strong>Khách thuê:</strong> {booking.renterName} ({booking.renterEmail})</p>
+                                        <p><strong>Thời gian:</strong> {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}</p>
                                         <p><strong>Tổng tiền:</strong> {formatVndCurrency(booking.totalPrice)}</p>
                                         {booking.depositAmount && (
                                             <p><strong>Cọc 15%:</strong> {formatVndCurrency(booking.depositAmount)}</p>
@@ -218,10 +231,21 @@ function ManageRentals() {
                                             <span className={`status-badge ${getStatusColor(booking.status)}`}>
                                                 {getBookingStatusLabel(booking.status)}
                                             </span>
+                                            {booking.returnStatus && (
+                                                <span className="status-badge return-status">
+                                                    {booking.returnStatus === 'NOT_RETURNED' && 'Chưa trả xe'}
+                                                    {booking.returnStatus === 'PENDING_INSPECTION' && 'Chờ kiểm tra trả xe'}
+                                                    {booking.returnStatus === 'FEES_CALCULATED' && 'Đã tính phí, chờ khách'}
+                                                    {booking.returnStatus === 'CUSTOMER_CONFIRMED' && 'Khách đã xác nhận phí'}
+                                                    {booking.returnStatus === 'DISPUTED' && 'Đang tranh chấp phí'}
+                                                    {booking.returnStatus === 'RESOLVED' && 'Phí đã giải quyết'}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
 
+                                {/* Right: Actions */}
                                 <div className="booking-actions">
                                     {/* PENDING: Confirm or Cancel */}
                                     {booking.status === 'PENDING' && (
@@ -231,13 +255,13 @@ function ManageRentals() {
                                                 style={ACTION_BUTTON_STYLES.confirm}
                                                 onClick={() => handleConfirm(booking)}
                                             >
-                                                Xác nhận
+                                                ✅ Duyệt đơn
                                             </button>
                                             <button
                                                 className="btn-cancel"
                                                 onClick={() => handleCancel(booking)}
                                             >
-                                                Từ chối
+                                                ❌ Từ chối
                                             </button>
                                         </>
                                     )}
@@ -306,14 +330,36 @@ function ManageRentals() {
                                         </>
                                     )}
 
-                                    {/* ONGOING: Complete Trip */}
-                                    {booking.status === 'ONGOING' && (
+                                    {/* ONGOING: Return inspection / fee calculation */}
+                                    {booking.status === 'ONGOING' && booking.returnStatus !== 'FEES_CALCULATED' && (
                                         <button
                                             className="btn-view"
                                             style={ACTION_BUTTON_STYLES.completeTrip}
-                                            onClick={() => handleCompleteTrip(booking)}
+                                            onClick={() => handleOpenInspection(booking)}
                                         >
-                                            Hoàn thành chuyến
+                                            Kiểm tra trả xe & tính phí
+                                        </button>
+                                    )}
+
+                                    {booking.status === 'ONGOING' && booking.returnStatus === 'FEES_CALCULATED' && (
+                                        <div style={{
+                                            marginTop: '8px',
+                                            padding: '8px 10px',
+                                            borderRadius: '8px',
+                                            background: '#e0f2fe',
+                                            color: '#0369a1',
+                                            fontSize: '0.85rem'
+                                        }}>
+                                            Đã kiểm tra trả xe, chờ khách xác nhận phí.
+                                        </div>
+                                    )}
+
+                                    {booking.returnStatus === 'DISPUTED' && (
+                                        <button
+                                            className="btn-view"
+                                            onClick={() => setSelectedForDisputeChat(booking)}
+                                        >
+                                            Xem chat tranh chấp phí
                                         </button>
                                     )}
                                 </div>
@@ -321,6 +367,22 @@ function ManageRentals() {
                         ))
                     )}
                 </div>
+
+                {selectedForInspection && (
+                    <ReturnInspectionModal
+                        booking={selectedForInspection}
+                        onClose={() => setSelectedForInspection(null)}
+                        onSuccess={handleInspectionSuccess}
+                    />
+                )}
+                {selectedForDisputeChat && (
+                    <DisputeChatModal
+                        booking={selectedForDisputeChat}
+                        isOwner={true}
+                        onClose={() => setSelectedForDisputeChat(null)}
+                        onResolved={fetchRentals}
+                    />
+                )}
             </section>
         </div>
     )

@@ -17,6 +17,7 @@ export const createEmptyVehicleForm = () => ({
     description: '',
     currentKm: '',
     province: '',
+    district: '',
     ward: '',
     addressDetail: '',
     deliveryEnabled: true,

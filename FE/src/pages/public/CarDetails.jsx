@@ -6,6 +6,8 @@ import { getOwnerById, getOwnerPerformance } from '../../api/owners';
 import { createBooking } from '../../api/bookings';
 import { startConversationByVehicle } from '../../api/chat';
 import { addMyFavoriteVehicle, getMyFavoriteVehicles, removeMyFavoriteVehicle } from '../../api/customers';
+import { acquireViewingLock, releaseViewingLock, getViewingLockStatus } from '../../api/vehicleLock';
+import { validateVoucher } from '../../api/vouchers';
 import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'sonner';
 import MapModal from '../../components/booking/MapModal';
@@ -64,10 +66,31 @@ export default function CarDetails() {
     const [contactLoading, setContactLoading] = useState(false);
     const [showBookingConfirm, setShowBookingConfirm] = useState(false);
 
+    // Voucher state
+    const [voucherInput, setVoucherInput] = useState('');
+    const [voucherLoading, setVoucherLoading] = useState(false);
+    const [voucherResult, setVoucherResult] = useState(null); // { discountPercent, remainingUses }
+    const [voucherError, setVoucherError] = useState('');
+    const [appliedVoucherCode, setAppliedVoucherCode] = useState(null);
+
     const navigate = useNavigate();
     const { user, token } = useAuth();
     const [favoriteLoading, setFavoriteLoading] = useState(false);
     const [isFavorite, setIsFavorite] = useState(false);
+    const [viewingLock, setViewingLock] = useState(null); // { locked, lockedByMe, expiresAt, message }
+    const [lockCountdown, setLockCountdown] = useState(null); // seconds remaining
+    const lockIntervalRef = useRef(null);
+    const lockAcquiredRef = useRef(false);
+
+    const isCustomer = (() => {
+        const roleScope = String(user?.role || user?.scope || '');
+        return roleScope.includes('ROLE_USER');
+    })();
+
+    const isOwner = (() => {
+        if (!user || !car) return false;
+        return car.ownerId === user.id || car.ownerId === user.userId;
+    })();
 
     const specsRef = useRef(null);
     const docsRef = useRef(null);
@@ -157,6 +180,78 @@ export default function CarDetails() {
         checkFavorite();
     }, [car?.id, token, user?.role, user?.scope]);
 
+    // ===== Viewing Lock Logic =====
+    useEffect(() => {
+        if (!car?.id) return;
+
+        let cancelled = false;
+
+        const doAcquire = async () => {
+            if (!user || !isCustomer || isOwner) {
+                // Not logged in or not a customer: just poll for lock status
+                try {
+                    const status = await getViewingLockStatus(car.id);
+                    if (!cancelled) setViewingLock(status);
+                } catch (_) { }
+                return;
+            }
+            try {
+                const result = await acquireViewingLock(car.id);
+                if (!cancelled) {
+                    setViewingLock(result);
+                    if (result?.lockedByMe) lockAcquiredRef.current = true;
+                }
+            } catch (_) { }
+        };
+
+        doAcquire();
+
+        // Poll every 5 minutes to renew lock
+        const pollInterval = setInterval(doAcquire, 5 * 60 * 1000);
+
+        return () => {
+            cancelled = true;
+            clearInterval(pollInterval);
+
+            // Release lock when leaving page
+            if (lockAcquiredRef.current) {
+                lockAcquiredRef.current = false;
+                try {
+                    // Use sendBeacon for reliability on tab close
+                    if (navigator.sendBeacon) {
+                        navigator.sendBeacon(`/api/v1/vehicles/${car.id}/viewing-lock`);
+                    }
+                    releaseViewingLock(car.id).catch(() => { });
+                } catch (_) { }
+            }
+        };
+    }, [car?.id, user, isCustomer, isOwner]);
+
+    // Countdown timer for lock
+    useEffect(() => {
+        if (lockIntervalRef.current) clearInterval(lockIntervalRef.current);
+
+        if (!viewingLock?.locked || !viewingLock?.expiresAt || viewingLock?.lockedByMe) {
+            setLockCountdown(null);
+            return;
+        }
+
+        const updateCountdown = () => {
+            const remaining = Math.max(0, Math.floor((new Date(viewingLock.expiresAt) - Date.now()) / 1000));
+            setLockCountdown(remaining);
+            if (remaining <= 0) {
+                clearInterval(lockIntervalRef.current);
+                // Refresh lock status
+                getViewingLockStatus(car?.id).then(setViewingLock).catch(() => { });
+            }
+        };
+        updateCountdown();
+        lockIntervalRef.current = setInterval(updateCountdown, 1000);
+        return () => clearInterval(lockIntervalRef.current);
+    }, [viewingLock, car?.id]);
+
+    const isLockedByOther = viewingLock?.locked && !viewingLock?.lockedByMe;
+
     useEffect(() => {
         if (!car?.id) return;
 
@@ -164,12 +259,13 @@ export default function CarDetails() {
 
         const run = async () => {
             try {
-                const city = (car.city || car.province || '').trim();
-                const district = (car.district || car.ward || '').trim();
-                const detail = (car.addressDetail || '').trim();
+                const province = (car.province || car.city || '').trim();
+                const district = (car.district || '').trim();
+                const ward = (car.ward || '').trim();
+                const detail = [car.addressDetail, ward].filter(Boolean).join(', ').trim();
 
-                const variants = generateQueryVariants(detail, district, city);
-                const referenceQuery = [detail, district, city].filter(Boolean).join(', ');
+                const variants = generateQueryVariants(detail, district, province);
+                const referenceQuery = [detail, district, province].filter(Boolean).join(', ');
                 const result = await resolveBestGeocodeFromVariants(variants, referenceQuery, controller.signal);
 
                 if (!result) {
@@ -186,7 +282,7 @@ export default function CarDetails() {
 
         run();
         return () => controller.abort();
-    }, [car?.id, car?.addressDetail, car?.district, car?.ward, car?.city, car?.province]);
+    }, [car?.id, car?.addressDetail, car?.ward, car?.district, car?.province, car?.city]);
 
     useEffect(() => {
         if (!carCoords || !deliveryCoords) {
@@ -369,10 +465,12 @@ export default function CarDetails() {
         promoDiscount,
         totalPrice,
         discountPercent,
+        voucherDiscount,
     } = calculatePricing({
         pricePerDay: car.pricePerDay,
         selectedDays,
         enableExtraInsurance,
+        voucherDiscountPercent: voucherResult?.discountPercent || 0,
     });
     const defaultContact = 'Chưa cập nhật';
     const ownerName = owner?.fullName || car.ownerName;
@@ -471,7 +569,7 @@ export default function CarDetails() {
 
         setBookingLoading(true);
         try {
-            await createBooking(car.id, fmt(startDt), fmt(endDt));
+            await createBooking(car.id, fmt(startDt), fmt(endDt), appliedVoucherCode || null);
             setShowBookingConfirm(false);
             toast.success('Đặt xe thành công! Vui lòng chờ chủ xe duyệt.');
             navigate('/my-bookings');
@@ -552,6 +650,50 @@ export default function CarDetails() {
             setReturnDate(new Date(pickupDate.getTime() + DAY_MS));
         }
         setIsTimeModalOpen(false);
+    };
+
+    const handleApplyVoucher = async () => {
+        const code = voucherInput.trim().toUpperCase();
+        if (!code || code.length !== 8) {
+            setVoucherError('Mã giảm giá phải có 8 ký tự');
+            setVoucherResult(null);
+            setAppliedVoucherCode(null);
+            return;
+        }
+
+        if (!user) {
+            toast.error('Vui lòng đăng nhập để sử dụng mã giảm giá!');
+            return;
+        }
+
+        setVoucherLoading(true);
+        setVoucherError('');
+        try {
+            const result = await validateVoucher(code);
+            if (result.valid) {
+                setVoucherResult(result);
+                setAppliedVoucherCode(code);
+                setVoucherError('');
+                toast.success(`Áp dụng mã giảm ${result.discountPercent}% thành công!`);
+            } else {
+                setVoucherResult(null);
+                setAppliedVoucherCode(null);
+                setVoucherError('Mã giảm giá đã hết lượt sử dụng');
+            }
+        } catch (err) {
+            setVoucherResult(null);
+            setAppliedVoucherCode(null);
+            setVoucherError(err.message || 'Mã giảm giá không hợp lệ');
+        } finally {
+            setVoucherLoading(false);
+        }
+    };
+
+    const handleRemoveVoucher = () => {
+        setVoucherInput('');
+        setVoucherResult(null);
+        setAppliedVoucherCode(null);
+        setVoucherError('');
     };
 
     return (
@@ -933,9 +1075,44 @@ export default function CarDetails() {
                                     <b>-{formatVndNumber(promoDiscount)}</b>
                                 </div>
 
-                                <div className="promo-code">
-                                    <span>Mã khuyến mãi</span>
-                                    <button type="button">Áp dụng</button>
+                                {voucherResult && voucherDiscount > 0 && (
+                                    <div className="fee-row voucher-discount">
+                                        <span>Mã giảm giá ({voucherResult.discountPercent}%)</span>
+                                        <b>-{formatVndNumber(voucherDiscount)}</b>
+                                    </div>
+                                )}
+
+                                <div className="promo-code-input">
+                                    <span>Mã giảm giá</span>
+                                    {appliedVoucherCode ? (
+                                        <div className="voucher-applied-row">
+                                            <span className="voucher-applied-badge">✓ {appliedVoucherCode} (-{voucherResult?.discountPercent}%)</span>
+                                            <button type="button" className="voucher-remove-btn" onClick={handleRemoveVoucher}>Xoá</button>
+                                        </div>
+                                    ) : (
+                                        <div className="voucher-input-row">
+                                            <input
+                                                type="text"
+                                                placeholder="Nhập mã 8 ký tự"
+                                                maxLength={8}
+                                                value={voucherInput}
+                                                onChange={(e) => {
+                                                    setVoucherInput(e.target.value);
+                                                    setVoucherError('');
+                                                }}
+                                                className={`voucher-input ${voucherError ? 'error' : ''}`}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="voucher-apply-btn"
+                                                onClick={handleApplyVoucher}
+                                                disabled={voucherLoading || !voucherInput.trim()}
+                                            >
+                                                {voucherLoading ? '...' : 'Áp dụng'}
+                                            </button>
+                                        </div>
+                                    )}
+                                    {voucherError && <p className="voucher-error">{voucherError}</p>}
                                 </div>
                             </div>
 
@@ -944,13 +1121,28 @@ export default function CarDetails() {
                                 <b>{formatVndNumber(totalPrice)}</b>
                             </div>
 
+                            {isLockedByOther && (
+                                <div className="viewing-lock-banner">
+                                    <span className="viewing-lock-icon">🔒</span>
+                                    <div className="viewing-lock-text">
+                                        <strong>Có người đang xem xe này rồi!</strong>
+                                        {lockCountdown != null && lockCountdown > 0 && (
+                                            <span className="viewing-lock-countdown">
+                                                Còn {Math.floor(lockCountdown / 60)}:{String(lockCountdown % 60).padStart(2, '0')} phút
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
                             <button
                                 type="button"
-                                className="btn-primary full-width"
+                                className={`btn-primary full-width${isLockedByOther ? ' btn-locked' : ''}`}
                                 onClick={handleBooking}
-                                disabled={bookingLoading}
+                                disabled={bookingLoading || isLockedByOther}
+                                title={isLockedByOther ? 'Xe đang được khách khác xem, vui lòng thử lại sau' : undefined}
                             >
-                                {bookingLoading ? 'Đang đặt xe...' : 'CHỌN THUÊ'}
+                                {bookingLoading ? 'Đang đặt xe...' : isLockedByOther ? '🔒 Xe đang được xem' : 'CHỌN THUÊ'}
                             </button>
 
                         </div>

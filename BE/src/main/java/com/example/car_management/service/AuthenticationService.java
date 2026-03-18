@@ -16,21 +16,26 @@ import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import java.util.Optional;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.Date;
 import java.util.StringJoiner;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.UUID;
 
 @Service
@@ -42,6 +47,10 @@ public class AuthenticationService {
     PasswordEncoder passwordEncoder;
     InvalidatedTokenRepository invalidatedTokenRepository;
     UserMapper userMapper;
+    ObjectProvider<JavaMailSender> mailSenderProvider;
+
+    private static final long REGISTRATION_EMAIL_OTP_EXPIRE_SECONDS = 300;
+    private final Map<Integer, RegistrationEmailOtpSession> registrationEmailOtpSessions = new ConcurrentHashMap<>();
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -54,6 +63,14 @@ public class AuthenticationService {
     @NonFinal
     @Value("${jwt.refreshable-duration}")
     protected long REFRESHABLE_DURATION;
+
+    @NonFinal
+    @Value("${app.mail.enabled:true}")
+    protected boolean mailEnabled;
+
+    @NonFinal
+    @Value("${spring.mail.username:no-reply@carrental.local}")
+    protected String fromEmail;
 
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
         var token = request.getToken();
@@ -84,6 +101,8 @@ public class AuthenticationService {
 
         UserEntity savedUser = userRepository.save(user);
 
+        issueRegistrationEmailOtp(savedUser);
+
         String token = generateToken(savedUser);
 
         return AuthenticationResponse.builder()
@@ -92,10 +111,61 @@ public class AuthenticationService {
                 .build();
     }
 
+    public void resendRegistrationEmailOtp(Integer userId) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if (Boolean.TRUE.equals(user.getIsVerified())) {
+            return;
+        }
+
+        issueRegistrationEmailOtp(user);
+    }
+
+    public void verifyRegistrationEmailOtp(Integer userId, String otp) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if (Boolean.TRUE.equals(user.getIsVerified())) {
+            registrationEmailOtpSessions.remove(user.getId());
+            return;
+        }
+
+        RegistrationEmailOtpSession session = registrationEmailOtpSessions.get(user.getId());
+        if (session == null) {
+            throw new AppException(ErrorCode.EMAIL_OTP_NOT_FOUND);
+        }
+
+        if (Instant.now().isAfter(session.expireAt())) {
+            registrationEmailOtpSessions.remove(user.getId());
+            throw new AppException(ErrorCode.EMAIL_OTP_EXPIRED);
+        }
+
+        String normalizedEmail = String.valueOf(user.getEmail() == null ? "" : user.getEmail()).trim().toLowerCase();
+        if (!session.email().equalsIgnoreCase(normalizedEmail)) {
+            throw new AppException(ErrorCode.EMAIL_OTP_INVALID);
+        }
+
+        String normalizedOtp = String.valueOf(otp == null ? "" : otp).trim();
+        if (!session.otp().equals(normalizedOtp)) {
+            throw new AppException(ErrorCode.EMAIL_OTP_INVALID);
+        }
+
+        user.setIsVerified(true);
+        userRepository.save(user);
+        registrationEmailOtpSessions.remove(user.getId());
+    }
+
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         var user = userRepository
                 .findByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.EMAIL_NOT_EXISTED));
+
+        boolean isCustomer = user.getRoleId() == UserRole.USER;
+        if (isCustomer && !Boolean.TRUE.equals(user.getIsVerified())) {
+            issueRegistrationEmailOtp(user);
+            throw new AppException(ErrorCode.EMAIL_NOT_VERIFIED);
+        }
 
         if (user.getIsActive() != null && !user.getIsActive()) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
@@ -202,22 +272,69 @@ public class AuthenticationService {
         }
     }
 
-    public void forgotPassword(Long id)  {
-            UserEntity user = userRepository.findById(id);
+    public void forgotPassword(Long id) {
+        UserEntity user = userRepository.findById(id);
 
-            String hashedPassword = passwordEncoder.encode("123456");
-            user.setPassword(hashedPassword);
-            userRepository.save(user);
-}
+        String hashedPassword = passwordEncoder.encode("123456");
+        user.setPassword(hashedPassword);
+        userRepository.save(user);
+    }
 
     private String buildScope(UserEntity user) {
         StringJoiner stringJoiner = new StringJoiner(" ");
 
         if (user.getRoleId() != null) {
             stringJoiner.add("ROLE_" + user.getRoleId().name());
+            if (user.getRoleId() == UserRole.CAR_OWNER) {
+                // Keep customer capabilities after becoming owner.
+                stringJoiner.add("ROLE_USER");
+            }
         }
 
         return stringJoiner.toString();
+    }
+
+    private void issueRegistrationEmailOtp(UserEntity user) {
+        String email = String.valueOf(user.getEmail() == null ? "" : user.getEmail()).trim().toLowerCase();
+        if (email.isBlank()) {
+            throw new AppException(ErrorCode.EMAIL_OTP_SEND_FAILED);
+        }
+
+        String otp = String.format("%06d", ThreadLocalRandom.current().nextInt(0, 1_000_000));
+        Instant expireAt = Instant.now().plusSeconds(REGISTRATION_EMAIL_OTP_EXPIRE_SECONDS);
+        registrationEmailOtpSessions.put(user.getId(), new RegistrationEmailOtpSession(email, otp, expireAt));
+        sendRegistrationOtpEmail(email, user.getFullName(), otp);
+    }
+
+    private void sendRegistrationOtpEmail(String toEmail, String fullName, String otp) {
+        if (!mailEnabled) {
+            throw new AppException(ErrorCode.EMAIL_OTP_SEND_FAILED);
+        }
+
+        JavaMailSender mailSender = mailSenderProvider.getIfAvailable();
+        if (mailSender == null) {
+            throw new AppException(ErrorCode.EMAIL_OTP_SEND_FAILED);
+        }
+
+        try {
+            String displayName = (fullName == null || fullName.isBlank()) ? "Ban" : fullName.trim();
+
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject("[CarRental] Ma OTP xac minh email tai khoan");
+            message.setText("Xin chao " + displayName + ",\n\n"
+                    + "Ma OTP xac minh email dang ky tai khoan cua ban la: " + otp + "\n"
+                    + "Ma co hieu luc trong 5 phut.\n\n"
+                    + "CarRental");
+
+            mailSender.send(message);
+        } catch (Exception ex) {
+            throw new AppException(ErrorCode.EMAIL_OTP_SEND_FAILED);
+        }
+    }
+
+    private record RegistrationEmailOtpSession(String email, String otp, Instant expireAt) {
     }
 
 }

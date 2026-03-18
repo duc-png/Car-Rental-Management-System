@@ -13,11 +13,14 @@ public class LocationEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, length = 100)
-    private String city;
+    @Column(name = "city", nullable = false, length = 100)
+    private String province;
 
     @Column(nullable = false, length = 100)
     private String district;
+
+    @Column(nullable = false, length = 100)
+    private String ward;
 
     @Column(name = "address_detail", length = 255)
     private String addressDetail;

@@ -130,7 +130,7 @@ function OwnerPublicProfile() {
                                 <img src={vehicle.images[0]?.imageUrl || '/placeholder.svg'} alt={vehicle.modelName || 'Vehicle'} />
                                 <div className="owner-vehicle-info">
                                     <strong>{vehicle.brandName} {vehicle.modelName}</strong>
-                                    <p>{vehicle.carTypeName || 'Xe tự lái'} • {[vehicle.addressDetail, vehicle.district, vehicle.city].filter(Boolean).join(', ')}</p>
+                                    <p>{vehicle.carTypeName || 'Xe tự lái'} • {[vehicle.addressDetail, vehicle.ward, vehicle.district, vehicle.province || vehicle.city].filter(Boolean).join(', ')}</p>
                                     <b>{formatCurrency(vehicle.pricePerDay)}</b>
                                 </div>
                             </Link>

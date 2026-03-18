@@ -17,6 +17,7 @@ export const SUCCESS_TRIP_STATUS = new Set(['COMPLETED'])
 export const EMPTY_PROFILE_FORM = {
     fullName: '',
     email: '',
+    isVerified: false,
     phone: '',
     licenseNumber: '',
     licenseFullName: '',

@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { submitOwnerRegistration } from '../../api/ownerRegistrations';
+import {
+    sendOwnerRegistrationEmailOtp,
+    submitOwnerRegistration,
+    verifyOwnerRegistrationEmailOtp
+} from '../../api/ownerRegistrations';
+import { useAuth } from '../../hooks/useAuth';
 import { useVehicleCatalogs } from '../../hooks/useVehicleCatalogs';
 import { generateQueryVariants, resolveBestGeocodeFromVariants } from '../../utils/carDetailsUtils';
 import {
@@ -15,12 +20,17 @@ import 'leaflet/dist/leaflet.css';
 
 function OwnerRegistration() {
     const navigate = useNavigate();
+    const { isAuthenticated, user } = useAuth();
     const [showForm, setShowForm] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
     const [formData, setFormData] = useState(() => createEmptyOwnerRegistrationForm());
     const [images, setImages] = useState([]);
     const [invalidImageNames, setInvalidImageNames] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isOtpModalOpen, setIsOtpModalOpen] = useState(false);
+    const [otpValue, setOtpValue] = useState('');
+    const [isOtpVerifying, setIsOtpVerifying] = useState(false);
+    const [isOtpResending, setIsOtpResending] = useState(false);
     const {
         featureCatalog,
         brands: brandCatalog,
@@ -29,8 +39,11 @@ function OwnerRegistration() {
     const [customModelName, setCustomModelName] = useState('');
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
     const [provinceOptions, setProvinceOptions] = useState([]);
+    const [districtOptions, setDistrictOptions] = useState([]);
+    const [allWardOptions, setAllWardOptions] = useState([]);
     const [wardOptions, setWardOptions] = useState([]);
     const [selectedProvinceCode, setSelectedProvinceCode] = useState('');
+    const [selectedDistrictCode, setSelectedDistrictCode] = useState('');
     const [selectedWardCode, setSelectedWardCode] = useState('');
     const [streetDetail, setStreetDetail] = useState('');
     const [isAddressLoading, setIsAddressLoading] = useState(false);
@@ -41,6 +54,33 @@ function OwnerRegistration() {
     const addressMapRef = useRef(null);
 
     const previews = useMemo(() => images.map((file) => URL.createObjectURL(file)), [images]);
+    const roleText = String(user?.role || user?.scope || '');
+    const isAdminAccount = roleText.includes('ROLE_ADMIN') || roleText.includes('ADMIN');
+    const isOwnerAccount = roleText.includes('ROLE_CAR_OWNER') || roleText.includes('CAR_OWNER')
+        || roleText.includes('ROLE_EXPERT') || roleText.includes('EXPERT');
+    const isOwnerRegistrationBlocked = isAuthenticated && (isAdminAccount || isOwnerAccount);
+    const isLoggedCustomerFlow = isAuthenticated && !isAdminAccount;
+
+    useEffect(() => {
+        if (isOwnerRegistrationBlocked) {
+            setShowForm(false);
+        }
+    }, [isOwnerRegistrationBlocked]);
+
+    useEffect(() => {
+        if (!isLoggedCustomerFlow) return;
+
+        setFormData((prev) => ({
+            ...prev,
+            owner: {
+                ...prev.owner,
+                email: String(user?.email || user?.sub || '').trim(),
+                phone: String(user?.phone || '').trim(),
+                fullName: String(user?.fullName || user?.name || '').trim(),
+                password: ''
+            }
+        }));
+    }, [isLoggedCustomerFlow, user]);
 
     useEffect(() => {
         return () => {
@@ -116,6 +156,11 @@ function OwnerRegistration() {
         [wardOptions, selectedWardCode]
     );
 
+    const selectedDistrict = useMemo(
+        () => districtOptions.find((item) => String(item.code) === String(selectedDistrictCode)) || null,
+        [districtOptions, selectedDistrictCode]
+    );
+
     const formatFeeShort = (value) => {
         const fee = Number(value || 0);
         if (!Number.isFinite(fee) || fee <= 0) return '0';
@@ -123,6 +168,11 @@ function OwnerRegistration() {
     };
 
     const hasSelectedAddress = Boolean(String(formData.vehicle.addressDetail || '').trim());
+    const isElectricFuel = formData.vehicle.fuelType === 'ELECTRIC';
+    const fuelConsumptionDescription = isElectricFuel
+        ? 'Số km đi được trong 1 lần sạc đầy.'
+        : 'Số lít nhiên liệu cho quãng đường 100km.';
+    const fuelConsumptionPlaceholder = isElectricFuel ? 'Ví dụ: 350' : 'Ví dụ: 6.8';
 
     useEffect(() => {
         if (currentStep !== 2) return;
@@ -143,11 +193,13 @@ function OwnerRegistration() {
                 setAddressMapError('');
 
                 const parts = addressText.split(',').map((part) => part.trim()).filter(Boolean);
-                const city = parts.length > 0 ? parts[parts.length - 1] : '';
+                const province = parts.length > 0 ? parts[parts.length - 1] : '';
                 const district = parts.length > 1 ? parts[parts.length - 2] : '';
-                const detail = parts.length > 2 ? parts.slice(0, -2).join(', ') : addressText;
-                const variants = generateQueryVariants(detail, district, city);
-                const referenceQuery = [detail, district, city].filter(Boolean).join(', ');
+                const ward = parts.length > 2 ? parts[parts.length - 3] : '';
+                const detail = parts.length > 3 ? parts.slice(0, -3).join(', ') : addressText;
+                const detailWithWard = [detail, ward].filter(Boolean).join(', ');
+                const variants = generateQueryVariants(detailWithWard, district, province);
+                const referenceQuery = [detailWithWard, district, province].filter(Boolean).join(', ');
                 const result = await resolveBestGeocodeFromVariants(variants, referenceQuery, controller.signal);
 
                 if (!result?.lat || !result?.lon) {
@@ -260,6 +312,8 @@ function OwnerRegistration() {
 
     const loadWardsByProvince = async (provinceCode) => {
         if (!provinceCode) {
+            setDistrictOptions([]);
+            setAllWardOptions([]);
             setWardOptions([]);
             return;
         }
@@ -270,12 +324,20 @@ function OwnerRegistration() {
             const data = await response.json();
 
             const districts = Array.isArray(data?.districts) ? data.districts : [];
+            const nextDistricts = districts
+                .map((district) => ({ code: district?.code, name: district?.name || '' }))
+                .filter((district) => district.code)
+                .sort((left, right) => (left?.name || '').localeCompare(right?.name || '', 'vi'));
             const wardMap = new Map();
             districts.forEach((district) => {
                 const wards = Array.isArray(district?.wards) ? district.wards : [];
                 wards.forEach((ward) => {
                     if (!wardMap.has(ward.code)) {
-                        wardMap.set(ward.code, { ...ward, districtName: district?.name || '' });
+                        wardMap.set(ward.code, {
+                            ...ward,
+                            districtCode: district?.code,
+                            districtName: district?.name || ''
+                        });
                     }
                 });
             });
@@ -284,8 +346,12 @@ function OwnerRegistration() {
                 (left?.name || '').localeCompare(right?.name || '', 'vi')
             );
 
+            setDistrictOptions(nextDistricts);
+            setAllWardOptions(mergedWards);
             setWardOptions(mergedWards);
         } catch {
+            setDistrictOptions([]);
+            setAllWardOptions([]);
             setWardOptions([]);
             toast.error('Không tải được danh sách phường/xã');
         } finally {
@@ -303,9 +369,24 @@ function OwnerRegistration() {
 
     const handleProvinceChange = async (value) => {
         setSelectedProvinceCode(value);
+        setSelectedDistrictCode('');
         setSelectedWardCode('');
+        setDistrictOptions([]);
+        setAllWardOptions([]);
         setWardOptions([]);
         await loadWardsByProvince(value);
+    };
+
+    const handleDistrictChange = (value) => {
+        setSelectedDistrictCode(value);
+        setSelectedWardCode('');
+        if (!value) {
+            setWardOptions(allWardOptions);
+            return;
+        }
+        setWardOptions(
+            allWardOptions.filter((ward) => String(ward?.districtCode) === String(value))
+        );
     };
 
     const handleApplyAddress = () => {
@@ -313,10 +394,23 @@ function OwnerRegistration() {
             toast.error('Vui lòng nhập đường/địa chỉ cụ thể');
             return;
         }
+        if (!selectedProvince?.name) {
+            toast.error('Vui lòng chọn tỉnh/thành phố');
+            return;
+        }
+        if (!selectedDistrict?.name) {
+            toast.error('Vui lòng chọn quận/huyện');
+            return;
+        }
+        if (!selectedWard?.name) {
+            toast.error('Vui lòng chọn xã/phường');
+            return;
+        }
 
         const parts = [
             (streetDetail || '').trim(),
             selectedWard?.name,
+            selectedDistrict?.name,
             selectedProvince?.name
         ].filter(Boolean);
 
@@ -332,7 +426,8 @@ function OwnerRegistration() {
 
     const validateStep = (step) => {
         if (step === 1) {
-            if (!formData.owner.email || !formData.owner.phone || !formData.owner.fullName || !formData.owner.password) {
+            if (!isLoggedCustomerFlow
+                && (!formData.owner.email || !formData.owner.phone || !formData.owner.fullName || !formData.owner.password)) {
                 toast.error('Vui lòng nhập đầy đủ thông tin chủ xe');
                 return false;
             }
@@ -442,6 +537,11 @@ function OwnerRegistration() {
     const handleSubmit = async (event) => {
         event.preventDefault();
 
+        if (isOwnerRegistrationBlocked) {
+            toast.error('Tài khoản hiện tại không thể tạo thêm tài khoản chủ xe.');
+            return;
+        }
+
         if (!validateStep(currentStep)) {
             return;
         }
@@ -452,7 +552,7 @@ function OwnerRegistration() {
         }
 
         const payload = {
-            owner: {
+            owner: isLoggedCustomerFlow ? null : {
                 email: formData.owner.email.trim(),
                 phone: formData.owner.phone.trim(),
                 fullName: formData.owner.fullName.trim(),
@@ -496,9 +596,47 @@ function OwnerRegistration() {
             setCurrentStep(1);
             navigate('/');
         } catch (error) {
+            if (isLoggedCustomerFlow && Number(error?.code) === 2017) {
+                toast.info('Email chưa xác thực. Hệ thống đã gửi OTP vào email của bạn.');
+                setOtpValue('');
+                setIsOtpModalOpen(true);
+                return;
+            }
             toast.error(error.message || 'Gửi yêu cầu thất bại');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const handleVerifyOtp = async () => {
+        const normalizedOtp = String(otpValue || '').trim();
+        if (normalizedOtp.length !== 6) {
+            toast.error('Vui lòng nhập OTP gồm 6 số');
+            return;
+        }
+
+        try {
+            setIsOtpVerifying(true);
+            await verifyOwnerRegistrationEmailOtp(normalizedOtp);
+            setIsOtpModalOpen(false);
+            setOtpValue('');
+            toast.success('Xác thực email thành công. Vui lòng bấm Gửi yêu cầu lại.');
+        } catch (error) {
+            toast.error(error.message || 'OTP không hợp lệ');
+        } finally {
+            setIsOtpVerifying(false);
+        }
+    };
+
+    const handleResendOtp = async () => {
+        try {
+            setIsOtpResending(true);
+            await sendOwnerRegistrationEmailOtp();
+            toast.success('Đã gửi lại OTP vào email của bạn');
+        } catch (error) {
+            toast.error(error.message || 'Không thể gửi lại OTP');
+        } finally {
+            setIsOtpResending(false);
         }
     };
 
@@ -521,13 +659,30 @@ function OwnerRegistration() {
                     <button
                         type="button"
                         className="owner-registration-intro-cta"
+                        disabled={isOwnerRegistrationBlocked}
+                        title={isAdminAccount
+                            ? 'Admin là tài khoản quản lý hệ thống, không thể đăng ký chủ xe.'
+                            : (isOwnerAccount
+                                ? 'Bạn đã là chủ xe, không thể tạo thêm tài khoản chủ xe khi đang đăng nhập.'
+                                : '')}
                         onClick={() => {
+                            if (isOwnerRegistrationBlocked) {
+                                return;
+                            }
                             setShowForm(true);
                             setCurrentStep(1);
                         }}
                     >
                         Đăng ký xe tự lái
                     </button>
+
+                    {isOwnerRegistrationBlocked && (
+                        <p className="owner-registration-intro-policy">
+                            {isAdminAccount
+                                ? 'Admin là tài khoản quản lý hệ thống nên không thể đăng ký chủ xe.'
+                                : 'Bạn đã có tài khoản chủ xe nên không thể tạo thêm khi đang đăng nhập.'}
+                        </p>
+                    )}
 
                     <h2>Gia tăng thu nhập hàng tháng cùng CarRental!</h2>
 
@@ -581,51 +736,53 @@ function OwnerRegistration() {
 
                 <form className="owner-registration-form" onSubmit={handleSubmit}>
                     {currentStep === 1 && <>
-                        <div className="form-section">
-                            <h2>Thông tin chủ xe</h2>
-                            <div className="form-grid">
-                                <label>
-                                    Họ và tên
-                                    <input
-                                        type="text"
-                                        value={formData.owner.fullName}
-                                        onChange={(event) => updateOwner('fullName', event.target.value)}
-                                        placeholder="Ví Dụ: Nguyễn Văn A"
-                                        required
-                                    />
-                                </label>
-                                <label>
-                                    Email
-                                    <input
-                                        type="email"
-                                        value={formData.owner.email}
-                                        onChange={(event) => updateOwner('email', event.target.value)}
-                                        placeholder="Ví Dụ:owner@email.com"
-                                        required
-                                    />
-                                </label>
-                                <label>
-                                    Số điện thoại
-                                    <input
-                                        type="tel"
-                                        value={formData.owner.phone}
-                                        onChange={(event) => updateOwner('phone', event.target.value)}
-                                        placeholder="Ví Dụ:0901234567"
-                                        required
-                                    />
-                                </label>
-                                <label>
-                                    Mật khẩu
-                                    <input
-                                        type="password"
-                                        value={formData.owner.password}
-                                        onChange={(event) => updateOwner('password', event.target.value)}
-                                        placeholder="********"
-                                        required
-                                    />
-                                </label>
+                        {!isLoggedCustomerFlow && (
+                            <div className="form-section">
+                                <h2>Thông tin chủ xe</h2>
+                                <div className="form-grid">
+                                    <label>
+                                        Họ và tên
+                                        <input
+                                            type="text"
+                                            value={formData.owner.fullName}
+                                            onChange={(event) => updateOwner('fullName', event.target.value)}
+                                            placeholder="Ví Dụ: Nguyễn Văn A"
+                                            required
+                                        />
+                                    </label>
+                                    <label>
+                                        Email
+                                        <input
+                                            type="email"
+                                            value={formData.owner.email}
+                                            onChange={(event) => updateOwner('email', event.target.value)}
+                                            placeholder="Ví Dụ:owner@email.com"
+                                            required
+                                        />
+                                    </label>
+                                    <label>
+                                        Số điện thoại
+                                        <input
+                                            type="tel"
+                                            value={formData.owner.phone}
+                                            onChange={(event) => updateOwner('phone', event.target.value)}
+                                            placeholder="Ví Dụ:0901234567"
+                                            required
+                                        />
+                                    </label>
+                                    <label>
+                                        Mật khẩu
+                                        <input
+                                            type="password"
+                                            value={formData.owner.password}
+                                            onChange={(event) => updateOwner('password', event.target.value)}
+                                            placeholder="********"
+                                            required
+                                        />
+                                    </label>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         <div className="form-section owner-vehicle-license-section">
                             <h2>Biển số xe</h2>
@@ -750,14 +907,14 @@ function OwnerRegistration() {
 
                             <div className="owner-fuel-consumption-section">
                                 <h3>Mức tiêu thụ nhiên liệu</h3>
-                                <p>Số lít nhiên liệu cho quãng đường 100km.</p>
+                                <p>{fuelConsumptionDescription}</p>
                                 <input
                                     type="number"
                                     step="0.1"
                                     min="0"
                                     value={formData.vehicle.fuelConsumption}
                                     onChange={(event) => updateVehicle('fuelConsumption', event.target.value)}
-                                    placeholder="Ví Dụ: 6.8"
+                                    placeholder={fuelConsumptionPlaceholder}
                                 />
                             </div>
 
@@ -979,11 +1136,25 @@ function OwnerRegistration() {
                             </label>
 
                             <label>
+                                Quận / Huyện
+                                <select
+                                    value={selectedDistrictCode}
+                                    onChange={(event) => handleDistrictChange(event.target.value)}
+                                    disabled={!selectedProvinceCode}
+                                >
+                                    <option value="">Chọn quận/huyện</option>
+                                    {districtOptions.map((district) => (
+                                        <option key={district.code} value={district.code}>{district.name}</option>
+                                    ))}
+                                </select>
+                            </label>
+
+                            <label>
                                 Xã / Phường
                                 <select
                                     value={selectedWardCode}
                                     onChange={(event) => setSelectedWardCode(event.target.value)}
-                                    disabled={!selectedProvinceCode}
+                                    disabled={!selectedProvinceCode || !selectedDistrictCode}
                                 >
                                     <option value="">Chọn xã/phường</option>
                                     {wardOptions.map((ward) => (
@@ -1018,6 +1189,57 @@ function OwnerRegistration() {
                             >
                                 Hủy bỏ
                             </button>
+                        </div>
+                    </div>
+                )}
+
+                {isOtpModalOpen && (
+                    <div className="owner-address-modal-overlay" onClick={() => setIsOtpModalOpen(false)}>
+                        <div className="owner-address-modal owner-otp-modal" onClick={(event) => event.stopPropagation()}>
+                            <button
+                                type="button"
+                                className="owner-address-modal-close"
+                                onClick={() => setIsOtpModalOpen(false)}
+                                aria-label="Đóng"
+                            >
+                                ×
+                            </button>
+
+                            <h3>Xác thực email</h3>
+                            <p className="owner-otp-modal-note">
+                                Vui lòng nhập mã OTP 6 số đã gửi tới email tài khoản của bạn để tiếp tục đăng ký chủ xe.
+                            </p>
+
+                            <label>
+                                Mã OTP
+                                <input
+                                    type="text"
+                                    value={otpValue}
+                                    onChange={(event) => setOtpValue(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                                    placeholder="Nhập 6 số"
+                                    inputMode="numeric"
+                                    maxLength={6}
+                                />
+                            </label>
+
+                            <div className="owner-otp-modal-actions">
+                                <button
+                                    type="button"
+                                    className="owner-address-cancel-btn"
+                                    onClick={handleResendOtp}
+                                    disabled={isOtpResending || isOtpVerifying}
+                                >
+                                    {isOtpResending ? 'Đang gửi lại...' : 'Gửi lại OTP'}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="owner-address-apply-btn"
+                                    onClick={handleVerifyOtp}
+                                    disabled={isOtpVerifying || isOtpResending}
+                                >
+                                    {isOtpVerifying ? 'Đang xác thực...' : 'Xác thực'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

@@ -65,6 +65,36 @@
     min-height: 280px;
     margin: 0 auto;
     width: 100%;
+
+    /* Override MyBookings .empty-state so icon/title/subtitle stack and center. */
+    max-width: 100%;
+    padding: 48px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.owner-rentals-page .owner-rentals-empty .empty-icon {
+    display: block;
+    font-size: 84px;
+    line-height: 1;
+    margin: 0 0 18px;
+}
+
+.owner-rentals-page .owner-rentals-empty h3 {
+    margin: 0 0 8px;
+    font-size: 50px;
+    line-height: 1.12;
+    color: #0f172a;
+}
+
+.owner-rentals-page .owner-rentals-empty p {
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.4;
+    color: #94a3b8;
 }
 
 .owner-rentals-loading {

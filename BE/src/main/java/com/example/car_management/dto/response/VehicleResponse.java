@@ -47,8 +47,10 @@ public class VehicleResponse {
     private BigDecimal extraFeePerKm;
 
     private Integer locationId;
-    private String city;
+    private String province;
     private String district;
+    private String ward;
+    private String city;
     private String addressDetail;
 
     private List<VehicleImageResponse> images;

@@ -30,11 +30,15 @@ function Cars() {
 
   const [filters, setFilters] = useState({
     search: '',
+    brand: 'all',
+    model: 'all',
     type: 'all',
     transmission: 'all',
     fuel: 'all',
     seats: 'all',
-    city: 'all'
+    city: 'all',
+    priceMin: '',
+    priceMax: ''
   })
 
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search])
@@ -104,11 +108,19 @@ function Cars() {
   const transmissionOptions = ['all', ...optionFromField('transmission')]
   const fuelOptions = ['all', ...optionFromField('fuelType')]
   const seatOptions = ['all', ...optionFromField('seatCount')]
+  const brandOptions = ['all', ...optionFromField('brandName')]
+  const modelOptions = useMemo(() => {
+    const source = filters.brand === 'all'
+      ? availableCars
+      : availableCars.filter(car => car.brandName === filters.brand)
+    const values = Array.from(new Set(source.map(car => car.modelName).filter(Boolean)))
+    return ['all', ...values]
+  }, [availableCars, filters.brand])
   const cityOptions = useMemo(() => {
     const byNormalized = new Map()
 
     availableCars.forEach((car) => {
-      const rawCity = String(car.city || '').trim()
+      const rawCity = String(car.province || car.city || '').trim()
       if (!rawCity) return
 
       const normalizedCity = normalizeLocationName(rawCity)
@@ -126,14 +138,28 @@ function Cars() {
     const text = filters.search.trim().toLowerCase()
     return availableCars.filter(car => {
       const matchesText = !text || `${car.brandName} ${car.modelName}`.toLowerCase().includes(text)
+      const matchesBrand = filters.brand === 'all' || car.brandName === filters.brand
+      const matchesModel = filters.model === 'all' || car.modelName === filters.model
       const matchesType = filters.type === 'all' || car.carTypeName === filters.type
       const matchesTransmission = filters.transmission === 'all' || car.transmission === filters.transmission
       const matchesFuel = filters.fuel === 'all' || car.fuelType === filters.fuel
       const matchesSeats = filters.seats === 'all' || String(car.seatCount) === String(filters.seats)
-      const carCityNormalized = normalizeLocationName(car.city)
+      const carCityNormalized = normalizeLocationName(car.province || car.city)
       const matchesCity = filters.city === 'all' || carCityNormalized === filters.city
+      const price = Number(car.pricePerDay || 0)
+      const matchesPriceMin = !filters.priceMin || price >= Number(filters.priceMin)
+      const matchesPriceMax = !filters.priceMax || price <= Number(filters.priceMax)
 
-      return matchesText && matchesType && matchesTransmission && matchesFuel && matchesSeats && matchesCity
+      return matchesText
+        && matchesBrand
+        && matchesModel
+        && matchesType
+        && matchesTransmission
+        && matchesFuel
+        && matchesSeats
+        && matchesCity
+        && matchesPriceMin
+        && matchesPriceMax
     })
   }, [availableCars, filters])
 
@@ -152,11 +178,28 @@ function Cars() {
   }, [filteredCars, sortBy])
 
   const handleChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }))
+    setFilters(prev => {
+      const next = { ...prev, [key]: value }
+      if (key === 'brand') {
+        next.model = 'all'
+      }
+      return next
+    })
   }
 
   const clearFilters = () => {
-    setFilters({ search: '', type: 'all', transmission: 'all', fuel: 'all', seats: 'all', city: 'all' })
+    setFilters({
+      search: '',
+      brand: 'all',
+      model: 'all',
+      type: 'all',
+      transmission: 'all',
+      fuel: 'all',
+      seats: 'all',
+      city: 'all',
+      priceMin: '',
+      priceMax: ''
+    })
   }
 
   return (
@@ -175,6 +218,36 @@ function Cars() {
               />
               <Search className="cars-filter-search-icon" size={16} aria-hidden="true" />
             </div>
+          </div>
+
+          <div className="cars-filter-group">
+            <h3>Hãng xe</h3>
+            {brandOptions.map(opt => (
+              <label key={opt}>
+                <input
+                  type="radio"
+                  name="brand"
+                  checked={filters.brand === opt}
+                  onChange={() => handleChange('brand', opt)}
+                />
+                {opt === 'all' ? 'Tất cả' : opt}
+              </label>
+            ))}
+          </div>
+
+          <div className="cars-filter-group">
+            <h3>Dòng xe</h3>
+            {modelOptions.map(opt => (
+              <label key={opt}>
+                <input
+                  type="radio"
+                  name="model"
+                  checked={filters.model === opt}
+                  onChange={() => handleChange('model', opt)}
+                />
+                {opt === 'all' ? 'Tất cả' : opt}
+              </label>
+            ))}
           </div>
 
           <div className="cars-filter-group">
@@ -235,6 +308,28 @@ function Cars() {
                 {opt === 'all' ? 'Tất cả' : `${opt}`}
               </label>
             ))}
+          </div>
+
+          <div className="cars-filter-group">
+            <h3>Khoảng giá (VND/ngày)</h3>
+            <div className="price-range-inputs">
+              <input
+                type="number"
+                placeholder="Từ"
+                value={filters.priceMin}
+                onChange={(e) => handleChange('priceMin', e.target.value)}
+                className="filter-input"
+                min="0"
+              />
+              <input
+                type="number"
+                placeholder="Đến"
+                value={filters.priceMax}
+                onChange={(e) => handleChange('priceMax', e.target.value)}
+                className="filter-input"
+                min="0"
+              />
+            </div>
           </div>
 
           <div className="cars-filter-group">

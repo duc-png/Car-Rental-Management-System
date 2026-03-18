@@ -5,6 +5,9 @@ import { toast } from 'sonner'
 import { getMyBookings, cancelBooking, confirmHandover } from '../../api/bookings'
 import { formatVndCurrency, getBookingStatusLabel } from '../../utils/bookingUtils'
 import '../../styles/MyBookings.css'
+import ReturnConfirmationModal from '../../components/ReturnConfirmationModal'
+import DisputeChatModal from '../../components/DisputeChatModal'
+import BookingJourneyModal from '../../components/BookingJourneyModal'
 
 function MyBookings() {
   const navigate = useNavigate()
@@ -13,6 +16,9 @@ function MyBookings() {
   const [error, setError] = useState(null)
   const [cancellingId, setCancellingId] = useState(null)
   const [confirmingHandoverId, setConfirmingHandoverId] = useState(null)
+  const [selectedForReturnFees, setSelectedForReturnFees] = useState(null)
+  const [selectedForDisputeChat, setSelectedForDisputeChat] = useState(null)
+  const [selectedForJourney, setSelectedForJourney] = useState(null)
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -31,11 +37,9 @@ function MyBookings() {
       setLoading(false)
     }
   }, [navigate])
-
   useEffect(() => {
     fetchBookings()
   }, [fetchBookings])
-
   const handleCancelBooking = async (id) => {
     if (!confirm('Bạn có chắc muốn hủy đặt xe này?')) return
     try {
@@ -49,7 +53,6 @@ function MyBookings() {
       setCancellingId(null)
     }
   }
-
   const handleConfirmHandover = async (id) => {
     if (!confirm('Xac nhan da nhan xe tu chu xe?')) return
     try {
@@ -63,7 +66,6 @@ function MyBookings() {
       setConfirmingHandoverId(null)
     }
   }
-
   const formatDate = (dateString) => {
     if (!dateString) return ''
     return new Date(dateString).toLocaleDateString('vi-VN', {
@@ -71,9 +73,7 @@ function MyBookings() {
       hour: '2-digit', minute: '2-digit'
     })
   }
-
   const canCancel = (status) => status === 'PENDING' || status === 'CONFIRMED'
-
   const STEPS = [
     { key: 'PENDING', label: 'Đặt xe', icon: '📋' },
     { key: 'CONFIRMED', label: 'Chủ xe duyệt', icon: '✅' },
@@ -81,16 +81,14 @@ function MyBookings() {
     { key: 'ONGOING', label: 'Đang thuê', icon: '🚗' },
     { key: 'COMPLETED', label: 'Hoàn thành', icon: '🏁' },
   ]
-
   const getActiveStep = (status, paymentStatus) => {
     if (status === 'CANCELLED') return -1
     if (status === 'COMPLETED') return 4
-    if (status === 'ONGOING') return 3
+    if (status === 'ONGOING' || status === 'PENALTY_PAYMENT_PENDING') return 3
     if (paymentStatus === 'DEPOSIT_PAID' || paymentStatus === 'PENDING_FULL_PAYMENT' || paymentStatus === 'FULLY_PAID') return 2
     if (status === 'CONFIRMED') return 1
     return 0
   }
-
   const BookingSteps = ({ status, paymentStatus }) => {
     const isCancelled = status === 'CANCELLED'
     const activeStep = getActiveStep(status, paymentStatus)
@@ -111,7 +109,6 @@ function MyBookings() {
       </div>
     )
   }
-
   if (loading) {
     return (
       <div className="bookings-page">
@@ -122,7 +119,6 @@ function MyBookings() {
       </div>
     )
   }
-
   if (error) {
     return (
       <div className="bookings-page">
@@ -133,17 +129,40 @@ function MyBookings() {
       </div>
     )
   }
-
   return (
     <div className="bookings-page">
       <div className="bookings-header">
         <h1>Đặt xe của tôi</h1>
         <p>Quản lý các chuyến đi của bạn</p>
       </div>
-
       {bookings.length > 0 ? (
         <div className="bookings-list">
-          {bookings.map(booking => (
+          {bookings.map(booking => {
+            const isReturnFlowActive = [
+              'PENDING_INSPECTION',
+              'FEES_CALCULATED',
+              'DISPUTED',
+              'CUSTOMER_CONFIRMED',
+              'RESOLVED'
+            ].includes(booking.returnStatus)
+
+            const shouldShowDepositButton =
+              booking.status !== 'CANCELLED' &&
+              booking.status !== 'COMPLETED' &&
+              booking.status !== 'PENALTY_PAYMENT_PENDING' &&
+              !isReturnFlowActive &&
+              booking.paymentStatus === 'PENDING_DEPOSIT' &&
+              !!booking.checkoutUrl
+
+            const shouldShowFullPaymentButton =
+              booking.status !== 'CANCELLED' &&
+              booking.status !== 'COMPLETED' &&
+              booking.status !== 'PENALTY_PAYMENT_PENDING' &&
+              !isReturnFlowActive &&
+              booking.paymentStatus === 'PENDING_FULL_PAYMENT' &&
+              !!booking.checkoutUrl
+
+            return (
             <div key={booking.id} className={`booking-card ${booking.status?.toLowerCase()}`}>
               <div className="booking-image">
                 <img
@@ -165,12 +184,21 @@ function MyBookings() {
                   <span className={`status-badge ${booking.status?.toLowerCase()}`}>
                     {getBookingStatusLabel(booking.status)}
                   </span>
+                  {booking.returnStatus && (
+                    <span className="status-badge return-status">
+                      {booking.returnStatus === 'NOT_RETURNED' && 'Chưa trả xe'}
+                      {booking.returnStatus === 'PENDING_INSPECTION' && 'Chờ chủ xe kiểm tra'}
+                      {booking.returnStatus === 'FEES_CALCULATED' && 'Đã có phí trả xe'}
+                      {booking.returnStatus === 'CUSTOMER_CONFIRMED' && 'Đã xác nhận phí trả xe'}
+                      {booking.returnStatus === 'DISPUTED' && 'Đang tranh chấp phí'}
+                      {booking.returnStatus === 'RESOLVED' && 'Phí đã được giải quyết'}
+                    </span>
+                  )}
                 </div>
               </div>
               <BookingSteps status={booking.status} paymentStatus={booking.paymentStatus} />
               <div className="booking-actions">
-                {booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED'
-                  && booking.paymentStatus === 'PENDING_DEPOSIT' && booking.checkoutUrl && (
+                {shouldShowDepositButton && (
                     <button
                       className="btn-pay"
                       onClick={() => window.open(booking.checkoutUrl, '_blank')}
@@ -178,8 +206,7 @@ function MyBookings() {
                       Thanh toán cọc 15%
                     </button>
                   )}
-                {booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED'
-                  && booking.paymentStatus === 'PENDING_FULL_PAYMENT' && booking.checkoutUrl && (
+                {shouldShowFullPaymentButton && (
                     <button
                       className="btn-pay full-payment"
                       onClick={() => window.open(booking.checkoutUrl, '_blank')}
@@ -187,7 +214,6 @@ function MyBookings() {
                       Thanh toán 85% còn lại
                     </button>
                   )}
-
                 {booking.status === 'ONGOING' && !booking.customerConfirmedHandover && (
                   <button
                     className="btn-pay"
@@ -204,11 +230,62 @@ function MyBookings() {
                   </div>
                 )}
 
+                {booking.returnStatus === 'FEES_CALCULATED' && (
+                  <button
+                    className="btn-pay"
+                    style={{ background: '#0ea5e9', border: 'none' }}
+                    onClick={() => setSelectedForReturnFees(booking)}
+                  >
+                    Xem & xác nhận phí trả xe
+                  </button>
+                )}
+
+                {booking.returnStatus === 'DISPUTED' && (
+                  <button
+                    className="btn-view"
+                    onClick={() => setSelectedForDisputeChat(booking)}
+                  >
+                    Thảo luận phí với chủ xe
+                  </button>
+                )}
+
+                {booking.returnStatus === 'RESOLVED'
+                  && booking.status !== 'COMPLETED'
+                  && booking.status !== 'CANCELLED'
+                  && booking.checkoutUrl && (
+                  <button
+                    className="btn-pay"
+                    style={{ background: '#ef4444', border: 'none' }}
+                    onClick={() => window.open(booking.checkoutUrl, '_blank')}
+                  >
+                    Thanh toán phí phạt
+                  </button>
+                )}
+
+                {booking.returnStatus === 'CUSTOMER_CONFIRMED'
+                  && booking.status !== 'COMPLETED'
+                  && booking.status !== 'CANCELLED'
+                  && booking.checkoutUrl && (
+                  <button
+                    className="btn-pay"
+                    style={{ background: '#ef4444', border: 'none' }}
+                    onClick={() => window.open(booking.checkoutUrl, '_blank')}
+                  >
+                    Thanh toán phí phạt
+                  </button>
+                )}
+
                 <button
                   className="btn-view"
                   onClick={() => navigate(`/cars/${booking.vehicleId}`)}
                 >
                   Xem xe
+                </button>
+                <button
+                  className="btn-view"
+                  onClick={() => setSelectedForJourney(booking.id)}
+                >
+                  Xem chi tiết booking
                 </button>
                 {canCancel(booking.status) && (
                   <button
@@ -221,7 +298,7 @@ function MyBookings() {
                 )}
               </div>
             </div>
-          ))}
+          )})}
         </div>
       ) : (
         <div className="empty-state">
@@ -232,8 +309,37 @@ function MyBookings() {
           </button>
         </div>
       )}
+
+      {selectedForReturnFees && (
+        <ReturnConfirmationModal
+          booking={selectedForReturnFees}
+          onClose={() => setSelectedForReturnFees(null)}
+          onSuccess={fetchBookings}
+          onDispute={() => {
+            setSelectedForDisputeChat(selectedForReturnFees)
+            setSelectedForReturnFees(null)
+          }}
+        />
+      )}
+
+      {selectedForDisputeChat && (
+        <DisputeChatModal
+          booking={selectedForDisputeChat}
+          isOwner={false}
+          onClose={() => setSelectedForDisputeChat(null)}
+          onResolved={() => {
+            fetchBookings()
+          }}
+        />
+      )}
+
+      {selectedForJourney && (
+        <BookingJourneyModal
+          bookingId={selectedForJourney}
+          onClose={() => setSelectedForJourney(null)}
+        />
+      )}
     </div>
   )
 }
-
 export default MyBookings
