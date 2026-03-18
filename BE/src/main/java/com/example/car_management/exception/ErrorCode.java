@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatusCode;
 
 @Getter
 public enum ErrorCode {
+    USER_NOT_EXISTED(4004,"User Not Existed",HttpStatus.NOT_FOUND),
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_KEY(1001, "Uncategorized error", HttpStatus.BAD_REQUEST),
     USER_EXISTED(1002, "User existed", HttpStatus.BAD_REQUEST),
@@ -87,13 +88,6 @@ public enum ErrorCode {
     VOUCHER_INVALID(7003, "Voucher is invalid or inactive", HttpStatus.BAD_REQUEST),
     VOUCHER_CODE_EXISTED(7004, "Voucher code already exists", HttpStatus.BAD_REQUEST),
     VOUCHER_DISCOUNT_EXCEEDED(7005, "Discount percent must not exceed 30%", HttpStatus.BAD_REQUEST);
-    // ===== Cloudinary / Image =====
-    // IMAGE_UPLOAD_FAILED(2007, "Upload image failed", HttpStatus.BAD_REQUEST);
-    //
-    // IMAGE_DELETE_FAILED(2008,"Delete image failed",HttpStatus.BAD_REQUEST) {
-    //
-    // }
-    CANNOT_SEND_MESSAGE(6002, "Cannot send message to this dispute", HttpStatus.BAD_REQUEST);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

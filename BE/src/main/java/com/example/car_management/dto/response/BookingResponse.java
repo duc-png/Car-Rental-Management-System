@@ -1,12 +1,14 @@
 package com.example.car_management.dto.response;
 
 import com.example.car_management.entity.enums.BookingStatus;
+import com.example.car_management.entity.enums.FuelLevel;
 import com.example.car_management.entity.enums.ReturnStatus;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
