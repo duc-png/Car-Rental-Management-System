@@ -37,6 +37,7 @@ public class CreateVehicleRequest {
 
     @NotNull
     @DecimalMin(value = "0.0", inclusive = false)
+    @DecimalMax(value = "10000000.0", inclusive = true)
     private BigDecimal pricePerDay;
 
     @Size(max = 2000)

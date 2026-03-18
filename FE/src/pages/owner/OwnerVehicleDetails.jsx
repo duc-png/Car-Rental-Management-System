@@ -118,13 +118,25 @@ export default function OwnerVehicleDetails() {
     }
 
     const province = vehicle?.province || vehicle?.city || ''
-    const ward = vehicle?.ward || vehicle?.district || ''
+    const district = vehicle?.district || ''
+    const ward = vehicle?.ward || ''
     const carType = formatCarTypeLabel(vehicle?.carTypeName || vehicle?.typeName)
+    const fuelConsumptionDisplay = (() => {
+        const raw = vehicle?.fuelConsumption
+        if (raw == null || raw === '') return '—'
+        const text = String(raw).trim()
+        if (!text) return '—'
+        if (/[a-zA-Z]/.test(text) || text.includes('/')) return text
+        return String(vehicle?.fuelType || '').toUpperCase() === 'ELECTRIC'
+            ? `${text} km/lần sạc đầy`
+            : `${text} L/100km`
+    })()
     const featureList = Array.isArray(vehicle?.features)
         ? vehicle.features
             .map((feature) => String(feature?.name || '').trim())
             .filter(Boolean)
         : []
+    const canEditVehicle = String(vehicle?.status || '') !== 'PENDING_APPROVAL'
 
     return (
         <div className="fleet-dashboard owner-vehicle-details-page">
@@ -140,9 +152,15 @@ export default function OwnerVehicleDetails() {
                         <Link className="btn-outline" to={ownerId ? `/owner/fleet?ownerId=${ownerId}` : '/owner/fleet'}>
                             Quay lại
                         </Link>
-                        <Link className="btn-outline btn-outline-dark" to={ownerId ? `/owner/vehicles/${id}/edit?ownerId=${ownerId}` : `/owner/vehicles/${id}/edit`}>
-                            ✏️ Sửa
-                        </Link>
+                        {canEditVehicle ? (
+                            <Link className="btn-outline btn-outline-dark" to={ownerId ? `/owner/vehicles/${id}/edit?ownerId=${ownerId}` : `/owner/vehicles/${id}/edit`}>
+                                ✏️ Sửa
+                            </Link>
+                        ) : (
+                            <button type="button" className="btn-outline btn-outline-dark" disabled title="Xe đang chờ duyệt, chưa thể chỉnh sửa">
+                                ✏️ Sửa
+                            </button>
+                        )}
                     </div>
                 </header>
 
@@ -256,7 +274,7 @@ export default function OwnerVehicleDetails() {
                                         </div>
                                         <div className="vehicle-field">
                                             <span className="vehicle-label">Mức tiêu thụ</span>
-                                            <span className="vehicle-value">{vehicle?.fuelConsumption ?? '—'}</span>
+                                            <span className="vehicle-value">{fuelConsumptionDisplay}</span>
                                         </div>
                                         <div className="vehicle-field">
                                             <span className="vehicle-label">Số km hiện tại</span>
@@ -265,7 +283,7 @@ export default function OwnerVehicleDetails() {
                                         <div className="vehicle-field owner-vehicle-address-field">
                                             <span className="vehicle-label">Địa chỉ</span>
                                             <span className="vehicle-value">
-                                                {[province, ward, vehicle?.addressDetail].filter(Boolean).join(', ') || '—'}
+                                                {[vehicle?.addressDetail, ward, district, province].filter(Boolean).join(', ') || '—'}
                                             </span>
                                         </div>
                                     </div>

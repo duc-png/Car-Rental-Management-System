@@ -22,6 +22,10 @@ export default function OwnerVehicleLocationSection({ form, handleChange, setFor
                     <input name="province" value={form.province} onChange={handleChange} />
                 </label>
                 <label>
+                    Quận/Huyện
+                    <input name="district" value={form.district} onChange={handleChange} />
+                </label>
+                <label>
                     Phường/Xã
                     <input name="ward" value={form.ward} onChange={handleChange} />
                 </label>

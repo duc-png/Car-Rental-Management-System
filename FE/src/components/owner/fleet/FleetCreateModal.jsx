@@ -63,6 +63,11 @@ function FleetCreateModal({
     }
 
     const invalidClass = (field) => (getFieldError(field) ? 'fleet-input-invalid' : '')
+    const isElectricFuel = String(createForm.fuelType || '').toUpperCase() === 'ELECTRIC'
+    const fuelConsumptionLabel = isElectricFuel
+        ? 'Số km đi được trong 1 lần sạc đầy'
+        : 'Mức tiêu thụ nhiên liệu (L/100km)'
+    const fuelConsumptionPlaceholder = isElectricFuel ? 'VD: 350' : 'VD: 6.8'
 
     const onToggleDeliveryEnabled = (event) => {
         const checked = event.target.checked
@@ -277,6 +282,20 @@ function FleetCreateModal({
                                     />
                                     {getFieldError('currentKm') && <span className="fleet-field-error">{getFieldError('currentKm')}</span>}
                                 </label>
+
+                                <label>
+                                    {fuelConsumptionLabel}
+                                    <input
+                                        className={invalidClass('fuelConsumption')}
+                                        type="number"
+                                        min="0"
+                                        step="0.1"
+                                        placeholder={fuelConsumptionPlaceholder}
+                                        value={createForm.fuelConsumption}
+                                        onChange={(event) => updateCreateField('fuelConsumption', event.target.value)}
+                                    />
+                                    {getFieldError('fuelConsumption') && <span className="fleet-field-error">{getFieldError('fuelConsumption')}</span>}
+                                </label>
                             </div>
                         </section>
 
@@ -296,7 +315,7 @@ function FleetCreateModal({
 
                         <section className="fleet-form-section">
                             <h3 className="fleet-form-section-title">Vị trí xe</h3>
-                            <div className="fleet-create-grid fleet-create-grid--3">
+                            <div className="fleet-create-grid fleet-create-grid--4">
                                 <label>
                                     Tỉnh/Thành phố
                                     <input
@@ -306,6 +325,16 @@ function FleetCreateModal({
                                         onChange={(event) => updateCreateField('province', event.target.value)}
                                     />
                                     {getFieldError('province') && <span className="fleet-field-error">{getFieldError('province')}</span>}
+                                </label>
+                                <label>
+                                    Quận/Huyện
+                                    <input
+                                        className={invalidClass('district')}
+                                        type="text"
+                                        value={createForm.district}
+                                        onChange={(event) => updateCreateField('district', event.target.value)}
+                                    />
+                                    {getFieldError('district') && <span className="fleet-field-error">{getFieldError('district')}</span>}
                                 </label>
                                 <label>
                                     Xã/Phường

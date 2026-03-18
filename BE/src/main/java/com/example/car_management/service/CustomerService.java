@@ -701,6 +701,7 @@ public class CustomerService {
                 .licenseVerifiedAt(verifiedAt)
                 .avatar(user.getAvatar())
                 .address(user.getAddress())
+                .isVerified(Boolean.TRUE.equals(user.getIsVerified()))
                 .isActive(user.getIsActive() == null || user.getIsActive())
                 .createdAt(user.getCreatedAt())
                 .totalBookings(totalBookings)

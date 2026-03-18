@@ -10,6 +10,8 @@ import {
 } from '../../../utils/ownerFleetUtils'
 
 export function FleetGridCard({ vehicle, onViewDetails, onEdit, onDelete, onMaintenance }) {
+    const canEdit = String(vehicle?.status || '') !== 'PENDING_APPROVAL'
+
     return (
         <article className="fleet-card">
             <div className="fleet-image">
@@ -77,6 +79,8 @@ export function FleetGridCard({ vehicle, onViewDetails, onEdit, onDelete, onMain
                             type="button"
                             className="btn-outline btn-outline-warning"
                             onClick={() => onEdit(vehicle)}
+                            disabled={!canEdit}
+                            title={canEdit ? 'Sửa thông tin xe' : 'Xe đang chờ duyệt, chưa thể sửa'}
                         >
                             <Pencil size={15} />
                             <span>Sửa</span>

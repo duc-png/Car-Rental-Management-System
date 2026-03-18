@@ -15,8 +15,9 @@ export const FALLBACK_CAR = {
     pricePerDay: 0,
     status: 'AVAILABLE',
     currentKm: 0,
-    city: 'Hồ Chí Minh',
+    province: 'Hồ Chí Minh',
     district: 'Quận 1',
+    ward: 'Bến Nghé',
     addressDetail: 'Đang cập nhật',
     ownerName: 'Chưa cập nhật',
     ownerPhone: 'Chưa cập nhật',
@@ -107,6 +108,8 @@ export const getTransmissionLabel = (transmission) => TRANSMISSION_LABELS[transm
 export const getFuelLabel = (fuelType) => FUEL_LABELS[fuelType] || fuelType || 'N/A';
 
 export const getFuelConsumptionLabel = (car) => {
+    const fuelType = String(car?.fuelType || '').trim().toUpperCase();
+    const isElectric = fuelType === 'ELECTRIC';
     const rawFuelConsumption = car?.fuelConsumption
         ?? car?.fuelEfficiency
         ?? car?.averageFuelConsumption
@@ -117,20 +120,21 @@ export const getFuelConsumptionLabel = (car) => {
     if (rawFuelConsumption === null || rawFuelConsumption === undefined) return 'N/A';
     const text = String(rawFuelConsumption).trim();
     if (!text) return 'N/A';
-    if (/l\s*\/\s*100\s*km/i.test(text)) return text;
-    return `${text}L/100km`;
+    if (/[a-zA-Z]/.test(text) || text.includes('/')) return text;
+    return isElectric ? `${text} km/lần sạc đầy` : `${text} L/100km`;
 };
 
 export const buildAddressInfo = (car) => {
-    const city = car?.city || car?.province || '';
-    const district = car?.district || car?.ward || '';
+    const province = car?.province || car?.city || '';
+    const district = car?.district || '';
+    const ward = car?.ward || '';
 
-    const addressText = [car?.addressDetail, district, city]
+    const addressText = [car?.addressDetail, ward, district, province]
         .filter(Boolean)
         .join(', ');
 
-    const locationDisplayText = [car?.addressDetail, car?.district].filter(Boolean).join(', ')
-        || [car?.district, car?.city].filter(Boolean).join(', ')
+    const locationDisplayText = [car?.addressDetail, ward, district].filter(Boolean).join(', ')
+        || [ward, district, province].filter(Boolean).join(', ')
         || addressText;
 
     return {

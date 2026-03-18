@@ -162,8 +162,12 @@ public class VehicleController {
         @org.springframework.security.access.prepost.PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ADMIN')")
         public ResponseEntity<ApiResponse<VehicleResponse>> reject(
                         @PathVariable Integer id,
+                        @RequestBody(required = false) RejectVehicleRequest req,
                         @RequestParam(required = false) String reason) {
-                VehicleResponse data = vehicleService.rejectVehicle(id, reason);
+                String resolvedReason = (req != null && req.getReason() != null && !req.getReason().isBlank())
+                                ? req.getReason()
+                                : reason;
+                VehicleResponse data = vehicleService.rejectVehicle(id, resolvedReason);
                 return ResponseEntity.ok(ApiResponse.<VehicleResponse>builder()
                                 .code(1000).message("Rejected").result(data).build());
         }

@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { BarChart3, CalendarDays, Car, LayoutGrid, LogOut, MessageSquareText, ReceiptText, Settings, UsersRound, Wallet, Wrench } from 'lucide-react'
+import { BarChart3, CalendarDays, Car, LayoutGrid, LogOut, MessageSquareText, ReceiptText, Settings, ShieldCheck, UsersRound, Wallet, Wrench } from 'lucide-react'
 import '../../../styles/FleetSidebar.css'
 
 function FleetSidebar({ user, onLogout }) {

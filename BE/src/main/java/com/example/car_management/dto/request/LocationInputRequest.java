@@ -14,6 +14,9 @@ public class LocationInputRequest {
     private String province;
 
     @Size(max = 100)
+    private String district;
+
+    @Size(max = 100)
     private String ward;
 
     @Size(max = 255)

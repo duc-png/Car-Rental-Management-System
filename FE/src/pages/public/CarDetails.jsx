@@ -172,12 +172,13 @@ export default function CarDetails() {
 
         const run = async () => {
             try {
-                const city = (car.city || car.province || '').trim();
-                const district = (car.district || car.ward || '').trim();
-                const detail = (car.addressDetail || '').trim();
+                const province = (car.province || car.city || '').trim();
+                const district = (car.district || '').trim();
+                const ward = (car.ward || '').trim();
+                const detail = [car.addressDetail, ward].filter(Boolean).join(', ').trim();
 
-                const variants = generateQueryVariants(detail, district, city);
-                const referenceQuery = [detail, district, city].filter(Boolean).join(', ');
+                const variants = generateQueryVariants(detail, district, province);
+                const referenceQuery = [detail, district, province].filter(Boolean).join(', ');
                 const result = await resolveBestGeocodeFromVariants(variants, referenceQuery, controller.signal);
 
                 if (!result) {
@@ -194,7 +195,7 @@ export default function CarDetails() {
 
         run();
         return () => controller.abort();
-    }, [car?.id, car?.addressDetail, car?.district, car?.ward, car?.city, car?.province]);
+    }, [car?.id, car?.addressDetail, car?.ward, car?.district, car?.province, car?.city]);
 
     useEffect(() => {
         if (!carCoords || !deliveryCoords) {

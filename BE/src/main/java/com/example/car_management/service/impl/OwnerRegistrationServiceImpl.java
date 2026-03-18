@@ -426,22 +426,25 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
             return null;
         }
 
-        // Tach city/district tu address string de tao location phu hop cho xe vua duoc
-        // duyet.
+        // Tach province/district/ward tu address string de tao location phu hop cho xe
+        // vua
+        // duoc duyet.
         String normalizedAddress = normalizeAddressDetail(addressDetailRaw);
         List<String> parts = Arrays.stream(normalizedAddress.split(","))
                 .map(String::trim)
                 .filter(part -> !part.isEmpty())
                 .toList();
 
-        String city = truncate(parts.isEmpty() ? normalizedAddress : parts.get(parts.size() - 1), 100);
-        String district = truncate(parts.size() >= 2 ? parts.get(parts.size() - 2) : city, 100);
+        String province = truncate(parts.isEmpty() ? normalizedAddress : parts.get(parts.size() - 1), 100);
+        String district = truncate(parts.size() >= 3 ? parts.get(parts.size() - 2) : "Chưa rõ", 100);
+        String ward = truncate(parts.size() >= 4 ? parts.get(parts.size() - 3)
+                : (parts.size() >= 2 ? parts.get(parts.size() - 2) : "Chưa rõ"), 100);
         String addressDetail = truncate(normalizedAddress, 255);
 
         LocationEntity location = LocationEntity.builder()
-                .city(city == null || city.isBlank() ? "Chưa rõ" : city)
-                .district(district == null || district.isBlank() ? (city == null || city.isBlank() ? "Chưa rõ" : city)
-                        : district)
+                .province(province == null || province.isBlank() ? "Chưa rõ" : province)
+                .district(district == null || district.isBlank() ? "Chưa rõ" : district)
+                .ward(ward == null || ward.isBlank() ? "Chưa rõ" : ward)
                 .addressDetail(addressDetail)
                 .build();
 

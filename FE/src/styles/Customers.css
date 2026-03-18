@@ -1,6 +1,6 @@
 .customers-page {
     min-height: 100vh;
-    background: #f5f7fb;
+    background: radial-gradient(circle at 15% 12%, #e2e8f0 0%, #f8fafc 40%, #f5f7fb 100%);
     color: #1f2933;
 }
 
@@ -163,6 +163,17 @@
     padding: 18px 20px;
     border-radius: 18px;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+    border: 1px solid #e8eef6;
+}
+
+.stat-card-accent {
+    background: linear-gradient(145deg, #111827 0%, #1f2937 100%);
+    color: #ffffff;
+}
+
+.stat-card-accent p,
+.stat-card-accent .stat-footnote {
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .stat-card p {
@@ -173,6 +184,13 @@
 .stat-card h3 {
     margin-top: 6px;
     font-size: 1.4rem;
+}
+
+.stat-footnote {
+    display: block;
+    margin-top: 6px;
+    font-size: 0.78rem;
+    color: #94a3b8;
 }
 
 .customers-table-card {
@@ -197,6 +215,30 @@
 .table-header p {
     color: #6b7280;
     font-size: 0.9rem;
+}
+
+.customer-filters {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.customer-filter-btn {
+    border: 1px solid #dbe3ef;
+    background: #f8fafc;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    color: #334155;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.customer-filter-btn.active {
+    background: #1e293b;
+    color: #ffffff;
+    border-color: #1e293b;
 }
 
 .search-box input {

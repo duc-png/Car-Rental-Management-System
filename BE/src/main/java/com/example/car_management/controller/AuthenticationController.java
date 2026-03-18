@@ -6,14 +6,21 @@ import com.example.car_management.dto.request.IntrospectRequest;
 import com.example.car_management.dto.request.LogoutRequest;
 import com.example.car_management.dto.request.RefreshRequest;
 import com.example.car_management.dto.request.RegisterRequest;
+import com.example.car_management.dto.request.VerifyRegistrationEmailOtpRequest;
 import com.example.car_management.dto.response.AuthenticationResponse;
 import com.example.car_management.dto.response.IntrospectResponse;
+import com.example.car_management.exception.AppException;
+import com.example.car_management.exception.ErrorCode;
 import com.example.car_management.service.AuthenticationService;
 import com.nimbusds.jose.JOSEException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -57,6 +64,18 @@ public class AuthenticationController {
                 .build();
     }
 
+    @PostMapping("/register/email-otp/send")
+    ApiResponse<Void> resendRegistrationEmailOtp() {
+        authenticationService.resendRegistrationEmailOtp(resolveUserId());
+        return ApiResponse.<Void>builder().build();
+    }
+
+    @PostMapping("/register/email-otp/verify")
+    ApiResponse<Void> verifyRegistrationEmailOtp(@RequestBody VerifyRegistrationEmailOtpRequest request) {
+        authenticationService.verifyRegistrationEmailOtp(resolveUserId(), request.getOtp());
+        return ApiResponse.<Void>builder().build();
+    }
+
     @PostMapping("/refresh")
     ApiResponse<AuthenticationResponse> refresh(@RequestBody RefreshRequest request)
             throws ParseException, JOSEException {
@@ -76,6 +95,38 @@ public class AuthenticationController {
         log.info("Received logout request");
         authenticationService.Logout(request);
         return ApiResponse.<Void>builder().build();
+    }
+
+    private Integer resolveUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof Jwt jwt) {
+            Object claim = jwt.getClaims().get("userId");
+            if (claim instanceof Number number) {
+                return number.intValue();
+            }
+            return Integer.valueOf(String.valueOf(claim));
+        }
+
+        if (principal instanceof UserDetails userDetails) {
+            String username = userDetails.getUsername();
+            return Integer.valueOf(username);
+        }
+
+        Object details = authentication.getDetails();
+        if (details instanceof Jwt jwtDetails) {
+            Object claim = jwtDetails.getClaims().get("userId");
+            if (claim instanceof Number number) {
+                return number.intValue();
+            }
+            return Integer.valueOf(String.valueOf(claim));
+        }
+
+        throw new AppException(ErrorCode.UNAUTHENTICATED);
     }
 
 }

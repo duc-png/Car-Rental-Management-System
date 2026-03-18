@@ -51,11 +51,13 @@ const formatPrice = (value) => {
     return `${amount.toLocaleString('vi-VN')} VNĐ/ngày`
 }
 
-const formatFuelConsumption = (value) => {
+const formatFuelConsumption = (value, fuelType) => {
     if (value == null) return '—'
     const consumption = Number(value)
     if (!Number.isFinite(consumption)) return String(value)
-    return `${consumption} L/100km`
+    return String(fuelType || '').toUpperCase() === 'ELECTRIC'
+        ? `${consumption} km/lần sạc đầy`
+        : `${consumption} L/100km`
 }
 
 const formatKm = (value) => {
@@ -99,6 +101,7 @@ export default function AdminVehicleRequestDetails() {
 
     const [selectedImage, setSelectedImage] = useState('')
     const [reviewComment, setReviewComment] = useState('')
+    const [rejectError, setRejectError] = useState('')
     const [actionLoading, setActionLoading] = useState(false)
 
     useEffect(() => {
@@ -138,15 +141,18 @@ export default function AdminVehicleRequestDetails() {
     const images = useMemo(() => (Array.isArray(vehicle?.images) ? vehicle.images : []), [vehicle])
     const bucket = statusBucket(vehicle?.status)
     const canAct = String(vehicle?.status) === 'PENDING_APPROVAL'
+    const rejectReason = reviewComment.trim()
+    const canReject = canAct && rejectReason.length >= 10
 
     const ownerName = owner?.fullName || (vehicle?.ownerId ? `Chủ xe #${vehicle.ownerId}` : '—')
     const ownerEmail = owner?.email || '—'
     const ownerPhone = owner?.phone || '—'
-    const ownerLocation = [vehicle?.city, vehicle?.district].filter(Boolean).join(', ') || '—'
+    const ownerLocation = [vehicle?.ward, vehicle?.district, vehicle?.province || vehicle?.city].filter(Boolean).join(', ') || '—'
     const ownerJoinedAt = formatJoinDate(owner?.joinedAt)
 
     const onApprove = async () => {
         if (!vehicle?.id || actionLoading) return
+        setRejectError('')
         const ok = window.confirm('Duyệt xe này?')
         if (!ok) return
 
@@ -164,12 +170,18 @@ export default function AdminVehicleRequestDetails() {
 
     const onReject = async () => {
         if (!vehicle?.id || actionLoading) return
-        const ok = window.confirm('Từ chối yêu cầu này?')
+        if (rejectReason.length < 10) {
+            setRejectError('Vui lòng nhập lý do từ chối tối thiểu 10 ký tự để chủ xe dễ điều chỉnh hồ sơ.')
+            return
+        }
+
+        setRejectError('')
+        const ok = window.confirm('Từ chối yêu cầu này và gửi lý do cho chủ xe?')
         if (!ok) return
 
         setActionLoading(true)
         try {
-            const updated = await rejectVehicle(vehicle.id, reviewComment.trim() || undefined)
+            const updated = await rejectVehicle(vehicle.id, rejectReason)
             if (updated) setVehicle(updated)
             toast.success('Đã từ chối yêu cầu')
         } catch (e) {
@@ -280,7 +292,7 @@ export default function AdminVehicleRequestDetails() {
                                 </div>
                                 <div className="request-spec-cell">
                                     <div className="request-spec-label">Mức tiêu thụ</div>
-                                    <div className="request-spec-value">{formatFuelConsumption(vehicle.fuelConsumption)}</div>
+                                    <div className="request-spec-value">{formatFuelConsumption(vehicle.fuelConsumption, vehicle.fuelType)}</div>
                                 </div>
                                 <div className="request-spec-cell">
                                     <div className="request-spec-label">Biển số</div>
@@ -358,11 +370,15 @@ export default function AdminVehicleRequestDetails() {
                             <div className="request-reviewer-sub">Ghi chú xử lý</div>
                             <textarea
                                 className="request-reviewer-textarea"
-                                placeholder="Nhập lý do duyệt hoặc từ chối..."
+                                placeholder="Nhập lý do xử lý. Nếu từ chối, cần tối thiểu 10 ký tự..."
                                 value={reviewComment}
-                                onChange={(e) => setReviewComment(e.target.value)}
+                                onChange={(e) => {
+                                    setReviewComment(e.target.value)
+                                    if (rejectError) setRejectError('')
+                                }}
                                 rows={4}
                             />
+                            {rejectError ? <div className="request-reviewer-error">{rejectError}</div> : null}
 
                             <button
                                 type="button"
@@ -376,7 +392,7 @@ export default function AdminVehicleRequestDetails() {
                                 type="button"
                                 className="request-reviewer-btn reject"
                                 onClick={onReject}
-                                disabled={!canAct || actionLoading}
+                                disabled={!canReject || actionLoading}
                             >
                                 Từ chối yêu cầu
                             </button>

@@ -1,6 +1,7 @@
 package com.example.car_management.entity;
 
 import com.example.car_management.entity.enums.BookingStatus;
+import com.example.car_management.entity.enums.FuelLevel;
 import com.example.car_management.entity.enums.ReturnStatus;
 import jakarta.persistence.*;
 import lombok.*;

@@ -22,6 +22,7 @@ public interface UserMapper {
     UserEntity toEntity(RegisterRequest request);
 
     @Mapping(target = "roleId", expression = "java(mapRoleId(user.getRoleId()))")
+    @Mapping(target = "licenseNumber", ignore = true)
     UserResponse toResponse(UserEntity user);
 
     default String mapRoleId(UserRole role) {

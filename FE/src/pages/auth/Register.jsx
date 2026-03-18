@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '../../hooks/useAuth'
-import { register } from '../../api/auth'
+import { register, resendRegistrationEmailOtp, verifyRegistrationEmailOtp } from '../../api/auth'
 import '../../styles/Auth.css'
 
 function Register() {
@@ -17,6 +16,12 @@ function Register() {
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
     const [errors, setErrors] = useState({})
+    const [otpModalOpen, setOtpModalOpen] = useState(false)
+    const [otpCode, setOtpCode] = useState('')
+    const [registerToken, setRegisterToken] = useState('')
+    const [otpLoading, setOtpLoading] = useState(false)
+    const [resendLoading, setResendLoading] = useState(false)
+    const [registeredEmail, setRegisteredEmail] = useState('')
     const navigate = useNavigate()
 
     const handleChange = (e) => {
@@ -31,7 +36,6 @@ function Register() {
         }
     }
 
-    const { login } = useAuth()
     const [loading, setLoading] = useState(false)
 
     // ... handleChange ...
@@ -79,7 +83,7 @@ function Register() {
             setLoading(true)
             try {
                 // 1. Gọi API đăng ký
-                await register({
+                const registerResult = await register({
                     fullName: formData.fullName,
                     email: formData.email,
                     password: formData.password,
@@ -88,21 +92,65 @@ function Register() {
                     avatar: formData.avatar?.trim() || null
                 })
 
-                // 2. Đăng ký thành công -> Gọi hàm login từ AuthContext (file chung)
-                // Sử dụng hàm login có sẵn để set token vào state/localStorage
-                const loginResult = await login(formData.email, formData.password)
-
-                if (loginResult.success) {
-                    navigate('/')
-                } else {
-                    setErrors({ submit: loginResult.error })
+                const token = registerResult?.result?.token || registerResult?.token || ''
+                if (!token) {
+                    throw new Error('Không nhận được token đăng ký để xác minh OTP')
                 }
+
+                setRegisterToken(token)
+                setRegisteredEmail(formData.email)
+                setOtpCode('')
+                setOtpModalOpen(true)
 
             } catch (error) {
                 setErrors({ submit: error.message || 'Registration failed' })
             } finally {
                 setLoading(false)
             }
+        }
+    }
+
+    const handleVerifyOtp = async (e) => {
+        e.preventDefault()
+        setErrors({})
+
+        const normalizedOtp = String(otpCode || '').trim()
+        if (normalizedOtp.length !== 6 || !/^\d{6}$/.test(normalizedOtp)) {
+            setErrors({ otp: 'OTP phải gồm đúng 6 chữ số' })
+            return
+        }
+
+        if (!registerToken) {
+            setErrors({ otp: 'Phiên xác minh không hợp lệ, vui lòng đăng ký lại' })
+            return
+        }
+
+        setOtpLoading(true)
+        try {
+            await verifyRegistrationEmailOtp(registerToken, normalizedOtp)
+            setOtpModalOpen(false)
+            navigate('/login')
+        } catch (error) {
+            setErrors({ otp: error.message || 'OTP không hợp lệ' })
+        } finally {
+            setOtpLoading(false)
+        }
+    }
+
+    const handleResendOtp = async () => {
+        setErrors({})
+        if (!registerToken) {
+            setErrors({ otp: 'Phiên xác minh không hợp lệ, vui lòng đăng ký lại' })
+            return
+        }
+
+        setResendLoading(true)
+        try {
+            await resendRegistrationEmailOtp(registerToken)
+        } catch (error) {
+            setErrors({ otp: error.message || 'Không thể gửi lại OTP' })
+        } finally {
+            setResendLoading(false)
         }
     }
 
@@ -300,6 +348,63 @@ function Register() {
                     </div>
                 </div>
             </div>
+
+            {otpModalOpen ? (
+                <div className="auth-otp-modal-overlay" role="dialog" aria-modal="true" aria-label="Xác minh OTP email">
+                    <div className="auth-otp-modal-card" onClick={(event) => event.stopPropagation()}>
+                        <h3>Xác minh email</h3>
+                        <p>
+                            Mã OTP đã được gửi tới <b>{registeredEmail || 'email của bạn'}</b>.
+                            Vui lòng nhập mã để hoàn tất đăng ký.
+                        </p>
+
+                        <form className="auth-form" onSubmit={handleVerifyOtp}>
+                            <div className="form-group">
+                                <label htmlFor="registerOtp">Mã OTP</label>
+                                <div className="input-wrapper">
+                                    <span className="input-icon">🔐</span>
+                                    <input
+                                        id="registerOtp"
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={6}
+                                        value={otpCode}
+                                        onChange={(event) => setOtpCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                                        placeholder="Nhập 6 số OTP"
+                                        required
+                                    />
+                                </div>
+                                {errors.otp && <span className="error-message">{errors.otp}</span>}
+                            </div>
+
+                            <button type="submit" className="btn-submit" disabled={otpLoading}>
+                                {otpLoading ? 'Đang xác minh...' : 'Xác minh OTP'}
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-social btn-google"
+                                style={{ marginTop: '10px' }}
+                                onClick={handleResendOtp}
+                                disabled={resendLoading}
+                            >
+                                {resendLoading ? 'Đang gửi lại...' : 'Gửi lại OTP'}
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-secondary"
+                                style={{ marginTop: '10px' }}
+                                onClick={() => {
+                                    setOtpModalOpen(false)
+                                    setOtpCode('')
+                                    setErrors({})
+                                }}
+                            >
+                                Đóng
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            ) : null}
         </div>
     )
 }
