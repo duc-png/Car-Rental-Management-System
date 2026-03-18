@@ -97,7 +97,7 @@ public class BookingEntity {
     private BigDecimal surchargeAmount;
 
     // ============ Return Inspection Fields ============
-    
+
     @Column(name = "actual_return_date")
     private LocalDateTime actualReturnDate;
 
@@ -116,7 +116,7 @@ public class BookingEntity {
     private FuelLevel fuelLevelEnd;
 
     // ============ Additional Fees ============
-    
+
     @Column(name = "late_fee", precision = 12, scale = 2)
     private BigDecimal lateFee;
 
@@ -145,10 +145,6 @@ public class BookingEntity {
     @Column(name = "discount_amount", precision = 12, scale = 2)
     private BigDecimal discountAmount;
 
-    // ============ Return Status ============
-    
-    @Enumerated(EnumType.STRING)
-    @Column(name = "return_status")
     // Customer handover confirmation — set to true when customer confirms they've
     // received the car
     @Column(name = "customer_confirmed_handover")

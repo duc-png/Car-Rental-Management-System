@@ -50,14 +50,14 @@ public class BookingResponse {
     private Integer endFuelLevel;
     private BigDecimal surchargeAmount;
     private BigDecimal pricePerDay; // Vehicle's daily rate, used for late return penalty calc
-    
+
     // Return inspection fields
     private LocalDateTime actualReturnDate;
     private Integer odometerStart;
     private Integer odometerEnd;
     private FuelLevel fuelLevelStart;
     private FuelLevel fuelLevelEnd;
-    
+
     // Additional fees
     private BigDecimal lateFee;
     private BigDecimal fuelFee;
@@ -65,7 +65,7 @@ public class BookingResponse {
     private BigDecimal totalAdditionalFees;
     private String damageDescription;
     private List<String> damageImages;
-    
+
     // Return status
     // Handover confirmation
     private Boolean customerConfirmedHandover;
