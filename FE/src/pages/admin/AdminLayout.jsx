@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
-import { BarChart4, CarFront, LayoutDashboard, LogOut, UserCheck, Users } from 'lucide-react'
+import { BarChart4, CarFront, LayoutDashboard, LogOut, ShieldAlert, User, UserCheck, Users } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth'
 import '../../styles/AdminLayout.css'
 
@@ -74,11 +74,25 @@ export default function AdminLayout() {
                             <span>Khách hàng</span>
                         </NavLink>
                         <NavLink
+                            to="/admin/owners"
+                            className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
+                        >
+                            <User size={18} strokeWidth={2.2} aria-hidden="true" />
+                            <span>Chủ xe</span>
+                        </NavLink>
+                        <NavLink
                             to="/admin/reports"
                             className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
                         >
                             <BarChart4 size={18} strokeWidth={2.2} aria-hidden="true" />
                             <span>Báo cáo</span>
+                        </NavLink>
+                        <NavLink
+                            to="/admin/incident-reports"
+                            className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
+                        >
+                            <ShieldAlert size={18} strokeWidth={2.2} aria-hidden="true" />
+                            <span>Duyệt report</span>
                         </NavLink>
                     </nav>
 

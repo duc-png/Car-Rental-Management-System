@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { MoonStar, SunMedium } from 'lucide-react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useAuth } from '../../hooks/useAuth'
 import { getDashboardPathByRole, getDisplayName } from '../../utils/authUser'
@@ -17,7 +18,6 @@ function Navbar({ sticky = true }) {
   const dashboardPath = getDashboardPathByRole(user)
   const isCustomerAccount = isAuthenticated && dashboardPath === '/my-bookings'
 
-
   return (
     <nav className={`navbar ${sticky ? '' : 'non-sticky'}`.trim()}>
       <div className="navbar-container">
@@ -30,34 +30,49 @@ function Navbar({ sticky = true }) {
           className="mobile-menu-btn"
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
-          ☰
+          menu
         </button>
 
         <ul className={`nav-menu ${isMobileMenuOpen ? 'active' : ''}`}>
           <li>
             <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
-              Home
+              Trang chủ
             </Link>
           </li>
           <li>
             <Link to="/cars" onClick={() => setIsMobileMenuOpen(false)}>
-              Cars
+              Xe
             </Link>
           </li>
           <li>
             <Link to="/become-owner" onClick={() => setIsMobileMenuOpen(false)}>
-              Trở thành chủ xe
+              Trở Thành Chủ Xe
             </Link>
           </li>
+          {isCustomerAccount && (
+            <li>
+              <Link to="/my-bookings" onClick={() => setIsMobileMenuOpen(false)}>
+                Đơn đặt xe của tôi
+              </Link>
+            </li>
+          )}
+          {isCustomerAccount && (
+            <li>
+              <Link to="/my-reports" onClick={() => setIsMobileMenuOpen(false)}>
+                Báo cáo của tôi
+              </Link>
+            </li>
+          )}
         </ul>
 
         <div className="nav-actions">
           <button
             className="theme-toggle"
             onClick={toggleTheme}
-            aria-label="Toggle theme"
+            aria-label="Đổi giao diện"
+            title={theme === 'light' ? 'Bật chế độ tối' : 'Bật chế độ sáng'}
           >
-            {theme === 'light' ? '🌙' : '☀️'}
+            {theme === 'light' ? <MoonStar size={19} aria-hidden="true" /> : <SunMedium size={19} aria-hidden="true" />}
           </button>
 
           {isCustomerAccount ? (
@@ -66,7 +81,7 @@ function Navbar({ sticky = true }) {
                 <span className="user-avatar" aria-hidden="true">
                   {avatarUrl ? <img src={avatarUrl} alt={displayName} /> : avatarInitial}
                 </span>
-                Hi, {displayName}
+                Xin chào, {displayName}
               </Link>
             </div>
           ) : isAuthenticated ? (
@@ -75,16 +90,16 @@ function Navbar({ sticky = true }) {
                 <span className="user-avatar" aria-hidden="true">
                   {avatarUrl ? <img src={avatarUrl} alt={displayName} /> : avatarInitial}
                 </span>
-                Hi, {displayName}
+                Xin chào, {displayName}
               </Link>
             </div>
           ) : (
             <>
               <Link to="/login" className="btn-login">
-                Login
+                Đăng nhập
               </Link>
               <Link to="/register" className="btn-register">
-                Sign Up
+                Đăng ký
               </Link>
             </>
           )}
@@ -95,5 +110,3 @@ function Navbar({ sticky = true }) {
 }
 
 export default Navbar
-
-

@@ -262,12 +262,49 @@ export function AuthProvider({ children }) {
      * @param {string} password 
      * @returns {Promise<{success: boolean, error?: string}>}
      */
-    const login = async (email, password) => {
+    const login = async (email, password, options = {}) => {
         try {
             // Gọi API login
             const data = await apiLogin(email, password)
 
             const accessToken = data.result.token
+
+            const decodedUser = decodeToken(accessToken)
+            if (!decodedUser) {
+                return {
+                    success: false,
+                    error: 'Token không hợp lệ. Vui lòng đăng nhập lại.'
+                }
+            }
+
+            const scopeText = String(decodedUser.role || decodedUser.scope || '')
+            const mode = String(options?.mode || 'any').toLowerCase()
+
+            if (mode === 'owner') {
+                const isOwner = scopeText.includes('ROLE_CAR_OWNER') || scopeText.includes('CAR_OWNER')
+                if (!isOwner) {
+                    return {
+                        success: false,
+                        error: 'Tài khoản không có quyền chủ xe'
+                    }
+                }
+            }
+
+            if (mode === 'customer') {
+                const isCustomerAdminOrOwner =
+                    scopeText.includes('ROLE_USER')
+                    || scopeText.includes('USER')
+                    || scopeText.includes('ROLE_ADMIN')
+                    || scopeText.includes('ADMIN')
+                    || scopeText.includes('ROLE_CAR_OWNER')
+                    || scopeText.includes('CAR_OWNER')
+                if (!isCustomerAdminOrOwner) {
+                    return {
+                        success: false,
+                        error: 'Tài khoản không phù hợp để đăng nhập ở màn hình này'
+                    }
+                }
+            }
 
             // Lưu token
             if (!applyToken(accessToken)) {
@@ -279,7 +316,7 @@ export function AuthProvider({ children }) {
 
             scheduleRefresh(accessToken)
 
-            return { success: true }
+            return { success: true, user: decodedUser }
         } catch (error) {
             console.error('Login failed:', error)
             return {

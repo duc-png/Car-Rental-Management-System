@@ -1,3 +1,5 @@
+import { Settings2 } from 'lucide-react'
+
 export default function OwnerVehicleSpecsSection({
     form,
     handleChange,
@@ -10,13 +12,16 @@ export default function OwnerVehicleSpecsSection({
     return (
         <div className="edit-card">
             <div className="card-header">
-                <span className="card-icon">⚙️</span>
+                <Settings2 className="card-icon" size={20} aria-hidden="true" />
                 <h2>Thông số kỹ thuật</h2>
             </div>
+            {immutable && (
+                <p className="field-note-danger">Lưu ý: Truyền động, nhiên liệu và năm sản xuất không thể thay đổi sau khi đăng ký.</p>
+            )}
             <div className="form-grid three-col">
                 <label>
-                    Hộp số
-                    <select name="transmission" value={form.transmission} onChange={handleChange}>
+                    Truyền động
+                    <select name="transmission" value={form.transmission} onChange={handleChange} disabled={immutable}>
                         <option value="">—</option>
                         {transmissionValues.map((v) => (
                             <option key={v} value={v}>{formatEnumLabel(v)}</option>

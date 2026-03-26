@@ -1,16 +1,12 @@
-// API calls for booking data
 const API_BASE_URL = 'http://localhost:8080/api/v1';
 
-// Helper function to get auth token
 const getAuthToken = () => localStorage.getItem('token');
 
-// Helper function to make authenticated requests
 const authFetch = async (url, options = {}) => {
     const token = getAuthToken();
     if (!token) {
         throw new Error('Chưa đăng nhập!');
     }
-
     const response = await fetch(url, {
         ...options,
         headers: {
@@ -19,12 +15,10 @@ const authFetch = async (url, options = {}) => {
             ...options.headers,
         },
     });
-
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `API Error: ${response.status}`);
     }
-
     return response.json();
 };
 
@@ -47,22 +41,12 @@ export const createBooking = async (vehicleId, startDate, endDate, voucherCode =
     return data.result;
 };
 
-/**
- * Lấy danh sách booking của user hiện tại
- */
 export const getMyBookings = async () => {
     const data = await authFetch(`${API_BASE_URL}/bookings`);
     return data.result || [];
 };
 
-/**
- * Lấy danh sách ngày đã đặt của một xe cụ thể
- * @param {number} vehicleId - ID của xe
- */
 export const getBookedDates = async (vehicleId) => {
-    // This is public/semi-public info, so we can fetch it even without auth for displaying calendar
-    // But since authFetch requires token in this file, we use standard fetch if we want it public
-    // Assuming backend endpoint is public or user is already logged in when opening modal
     const response = await fetch(`${API_BASE_URL}/bookings/vehicle/${vehicleId}/booked-dates`);
     if (!response.ok) {
         throw new Error('Không thể tải lịch đặt xe');
@@ -71,10 +55,6 @@ export const getBookedDates = async (vehicleId) => {
     return data.result || [];
 };
 
-/**
- * Lấy chi tiết 1 booking
- * @param {number} id - Booking ID
- */
 export const getBookingById = async (id) => {
     const data = await authFetch(`${API_BASE_URL}/bookings/${id}`);
     return data.result;
@@ -99,10 +79,6 @@ export const updateBookingStatus = async (id, status, extraData = {}) => {
     return data.result;
 };
 
-/**
- * Hủy booking (cho Renter)
- * @param {number} id - Booking ID
- */
 export const cancelBooking = async (id) => {
     return updateBookingStatus(id, 'CANCELLED');
 };
@@ -119,16 +95,13 @@ export const getOwnerBookingCalendar = async (fromDate, toDate, vehicleId) => {
     if (!(toDate instanceof Date) || Number.isNaN(toDate.getTime())) {
         throw new Error('toDate không hợp lệ');
     }
-
     const query = new URLSearchParams({
         from: formatLocalDateTime(fromDate),
         to: formatLocalDateTime(toDate),
     });
-
     if (vehicleId != null && vehicleId !== 'all') {
         query.set('vehicleId', String(vehicleId));
     }
-
     const data = await authFetch(`${API_BASE_URL}/bookings/owner/calendar?${query.toString()}`);
     return data.result || [];
 };

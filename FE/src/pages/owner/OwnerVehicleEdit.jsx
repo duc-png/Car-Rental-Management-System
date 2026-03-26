@@ -14,6 +14,7 @@ import OwnerVehicleImagesSection from '../../components/owner/edit/OwnerVehicleI
 import {
     getVehicleDetail,
     updateOwnerVehicle,
+    updateOwnerVehicleStatus,
     addVehicleImagesByUrl,
     uploadVehicleImages,
     setMainVehicleImage,
@@ -177,6 +178,13 @@ export default function OwnerVehicleEdit() {
         setSaving(true);
         setError('');
         const wasRejected = String(vehicle?.status || '') === 'REJECTED';
+        const nextStatus = String(form.status || '').trim().toUpperCase();
+        const currentStatus = String(vehicle?.status || '').trim().toUpperCase();
+        const shouldUpdateStatus =
+            !wasRejected &&
+            !isPendingApproval &&
+            Boolean(nextStatus) &&
+            nextStatus !== currentStatus;
 
         try {
             const payload = {
@@ -206,6 +214,10 @@ export default function OwnerVehicleEdit() {
             };
 
             await updateOwnerVehicle(id, ownerId, payload);
+
+            if (shouldUpdateStatus) {
+                await updateOwnerVehicleStatus(id, ownerId, nextStatus);
+            }
 
             // Xử lý ảnh
             if (uploadFiles.length > 0) {

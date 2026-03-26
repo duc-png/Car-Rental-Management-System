@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
@@ -14,6 +14,8 @@ import {
 import { useAuth } from '../hooks/useAuth'
 import FleetSidebar from '../components/owner/fleet/FleetSidebar'
 import { getRevenueReport, getUsageReport, getBookingStats } from '../api/reports'
+import { listOwnerVehicles } from '../api/ownerVehicles'
+import { ALL_STATUS_LABEL, STATUS_VALUES, formatEnumLabel } from '../utils/ownerFleetUtils'
 import '../styles/CarOwnerFleet.css'
 import '../styles/OwnerAnalytics.css'
 
@@ -40,33 +42,43 @@ function toYMD(d) {
 }
 
 const DATE_PRESETS = [
-    { id: 'month', label: 'Tháng này', getRange: () => {
-        const now = new Date()
-        const first = new Date(now.getFullYear(), now.getMonth(), 1)
-        const last = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-        return { fromDate: toYMD(first), toDate: toYMD(last) }
-    }},
-    { id: 'lastMonth', label: 'Tháng trước', getRange: () => {
-        const now = new Date()
-        const first = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-        const last = new Date(now.getFullYear(), now.getMonth(), 0)
-        return { fromDate: toYMD(first), toDate: toYMD(last) }
-    }},
-    { id: '3months', label: '3 tháng', getRange: () => {
-        const now = new Date()
-        const from = new Date(now.getFullYear(), now.getMonth() - 2, 1)
-        return { fromDate: toYMD(from), toDate: toYMD(now) }
-    }},
-    { id: '6months', label: '6 tháng', getRange: () => {
-        const now = new Date()
-        const from = new Date(now.getFullYear(), now.getMonth() - 5, 1)
-        return { fromDate: toYMD(from), toDate: toYMD(now) }
-    }},
-    { id: 'year', label: 'Năm nay', getRange: () => {
-        const now = new Date()
-        const first = new Date(now.getFullYear(), 0, 1)
-        return { fromDate: toYMD(first), toDate: toYMD(now) }
-    }}
+    {
+        id: 'month', label: 'Tháng này', getRange: () => {
+            const now = new Date()
+            const first = new Date(now.getFullYear(), now.getMonth(), 1)
+            const last = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+            return { fromDate: toYMD(first), toDate: toYMD(last) }
+        }
+    },
+    {
+        id: 'lastMonth', label: 'Tháng trước', getRange: () => {
+            const now = new Date()
+            const first = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+            const last = new Date(now.getFullYear(), now.getMonth(), 0)
+            return { fromDate: toYMD(first), toDate: toYMD(last) }
+        }
+    },
+    {
+        id: '3months', label: '3 tháng', getRange: () => {
+            const now = new Date()
+            const from = new Date(now.getFullYear(), now.getMonth() - 2, 1)
+            return { fromDate: toYMD(from), toDate: toYMD(now) }
+        }
+    },
+    {
+        id: '6months', label: '6 tháng', getRange: () => {
+            const now = new Date()
+            const from = new Date(now.getFullYear(), now.getMonth() - 5, 1)
+            return { fromDate: toYMD(from), toDate: toYMD(now) }
+        }
+    },
+    {
+        id: 'year', label: 'Năm nay', getRange: () => {
+            const now = new Date()
+            const first = new Date(now.getFullYear(), 0, 1)
+            return { fromDate: toYMD(first), toDate: toYMD(now) }
+        }
+    }
 ]
 
 const CHART_COLORS = ['#0f172a', '#334155', '#475569', '#64748b', '#94a3b8']
@@ -83,6 +95,8 @@ export default function OwnerAnalytics() {
     const [usage, setUsage] = useState(null)
     const [stats, setStats] = useState(null)
     const [granularity, setGranularity] = useState('DAILY')
+    const [usageStatus, setUsageStatus] = useState(ALL_STATUS_LABEL)
+    const [ownerVehicleStatusById, setOwnerVehicleStatusById] = useState({})
 
     useEffect(() => {
         if (!token) {
@@ -117,6 +131,28 @@ export default function OwnerAnalytics() {
         }
     }, [token, fromDate, toDate])
 
+    const loadOwnerVehicles = useCallback(async () => {
+        try {
+            const ownerId = Number(user?.userId || user?.id)
+            if (!ownerId || Number.isNaN(ownerId)) {
+                setOwnerVehicleStatusById({})
+                return
+            }
+
+            const vehicles = await listOwnerVehicles(ownerId)
+            const nextMap = (Array.isArray(vehicles) ? vehicles : []).reduce((acc, vehicle) => {
+                const vehicleId = Number(vehicle?.id)
+                if (!vehicleId || Number.isNaN(vehicleId)) return acc
+                acc[vehicleId] = String(vehicle?.status || '')
+                return acc
+            }, {})
+
+            setOwnerVehicleStatusById(nextMap)
+        } catch {
+            setOwnerVehicleStatusById({})
+        }
+    }, [user])
+
     const loadStats = useCallback(async () => {
         try {
             const res = await getBookingStats(token, { fromDate, toDate, granularity })
@@ -133,15 +169,87 @@ export default function OwnerAnalytics() {
         const isCarOwner = scope.includes('ROLE_CAR_OWNER') || scope.includes('CAR_OWNER') || scope.includes('ROLE_EXPERT')
         if (!isCarOwner) return
 
-        setLoading(true)
-        if (tab === 'revenue') {
-            loadRevenue().finally(() => setLoading(false))
-        } else if (tab === 'usage') {
-            loadUsage().finally(() => setLoading(false))
-        } else {
-            loadStats().finally(() => setLoading(false))
+        let active = true
+        const loadCurrentTab = async () => {
+            await Promise.resolve()
+            if (!active) return
+
+            setLoading(true)
+            try {
+                if (tab === 'revenue') {
+                    await loadRevenue()
+                } else if (tab === 'usage') {
+                    await loadUsage()
+                } else {
+                    await loadStats()
+                }
+            } finally {
+                if (active) {
+                    setLoading(false)
+                }
+            }
+        }
+
+        void loadCurrentTab()
+        return () => {
+            active = false
         }
     }, [tab, fromDate, toDate, granularity, token, user, loadRevenue, loadUsage, loadStats])
+
+    useEffect(() => {
+        if (!token) return
+        const scope = String(user?.role || user?.scope || '')
+        const isCarOwner = scope.includes('ROLE_CAR_OWNER') || scope.includes('CAR_OWNER') || scope.includes('ROLE_EXPERT')
+        if (!isCarOwner) return
+
+        let active = true
+        const loadOwnerVehiclesAsync = async () => {
+            await Promise.resolve()
+            if (!active) return
+            await loadOwnerVehicles()
+        }
+
+        void loadOwnerVehiclesAsync()
+        return () => {
+            active = false
+        }
+    }, [token, user, loadOwnerVehicles])
+
+    const usageStatusOptions = useMemo(() => {
+        const statuses = Object.values(ownerVehicleStatusById)
+            .filter(Boolean)
+            .map((value) => String(value).toUpperCase())
+        const unique = Array.from(new Set(statuses))
+        const sorted = STATUS_VALUES.filter((item) => unique.includes(item))
+            .concat(unique.filter((item) => !STATUS_VALUES.includes(item)))
+        return [ALL_STATUS_LABEL, ...sorted]
+    }, [ownerVehicleStatusById])
+
+    const filteredUsageBreakdown = useMemo(() => {
+        const items = Array.isArray(usage?.vehicleBreakdown) ? usage.vehicleBreakdown : []
+        if (usageStatus === ALL_STATUS_LABEL) {
+            return items
+        }
+
+        return items.filter((item) => {
+            const vehicleId = Number(item?.vehicleId)
+            if (!vehicleId || Number.isNaN(vehicleId)) return false
+            const status = String(ownerVehicleStatusById[vehicleId] || '').toUpperCase()
+            return status === String(usageStatus).toUpperCase()
+        })
+    }, [usage, usageStatus, ownerVehicleStatusById])
+
+    const filteredUsageSummary = useMemo(() => {
+        const totalBookingCount = filteredUsageBreakdown.reduce(
+            (sum, item) => sum + Number(item?.bookingCount || 0),
+            0
+        )
+        const totalRentalDays = filteredUsageBreakdown.reduce(
+            (sum, item) => sum + Number(item?.totalRentalDays || 0),
+            0
+        )
+        return { totalBookingCount, totalRentalDays }
+    }, [filteredUsageBreakdown])
 
     const handleLogout = async () => {
         await logout()
@@ -202,6 +310,18 @@ export default function OwnerAnalytics() {
                                 <option value="DAILY">Theo ngày</option>
                                 <option value="WEEKLY">Theo tuần</option>
                                 <option value="MONTHLY">Theo tháng</option>
+                            </select>
+                        </label>
+                    )}
+                    {tab === 'usage' && (
+                        <label>
+                            <span>Trạng thái xe</span>
+                            <select value={usageStatus} onChange={(e) => setUsageStatus(e.target.value)}>
+                                {usageStatusOptions.map((statusValue) => (
+                                    <option key={statusValue} value={statusValue}>
+                                        {statusValue === ALL_STATUS_LABEL ? statusValue : formatEnumLabel(statusValue)}
+                                    </option>
+                                ))}
                             </select>
                         </label>
                     )}
@@ -296,18 +416,18 @@ export default function OwnerAnalytics() {
                                     <div className="usage-summary">
                                         <div className="usage-stat">
                                             <p>Tổng số đặt chỗ</p>
-                                            <h3>{usage.totalBookingCount}</h3>
+                                            <h3>{filteredUsageSummary.totalBookingCount}</h3>
                                         </div>
                                         <div className="usage-stat">
                                             <p>Tổng số ngày thuê</p>
-                                            <h3>{usage.totalRentalDays}</h3>
+                                            <h3>{filteredUsageSummary.totalRentalDays}</h3>
                                         </div>
                                     </div>
-                                    {usage.vehicleBreakdown?.length > 0 && (
+                                    {filteredUsageBreakdown.length > 0 && (
                                         <div className="report-chart-wrap">
                                             <ResponsiveContainer width="100%" height={320}>
                                                 <BarChart
-                                                    data={usage.vehicleBreakdown.map((v, i) => ({
+                                                    data={filteredUsageBreakdown.map((v) => ({
                                                         name: v.licensePlate || v.vehicleDisplayName?.slice(0, 12) || `#${v.vehicleId}`,
                                                         count: v.bookingCount,
                                                         days: v.totalRentalDays
@@ -319,7 +439,7 @@ export default function OwnerAnalytics() {
                                                     <YAxis tick={{ fontSize: 12 }} />
                                                     <Tooltip formatter={(v, name) => [v, name === 'count' ? 'Số đặt chỗ' : 'Ngày thuê']} />
                                                     <Bar dataKey="count" name="count" radius={[4, 4, 0, 0]}>
-                                                        {usage.vehicleBreakdown.map((_, i) => (
+                                                        {filteredUsageBreakdown.map((_, i) => (
                                                             <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
                                                         ))}
                                                     </Bar>
@@ -327,7 +447,7 @@ export default function OwnerAnalytics() {
                                             </ResponsiveContainer>
                                         </div>
                                     )}
-                                    {usage.vehicleBreakdown?.length > 0 ? (
+                                    {filteredUsageBreakdown.length > 0 ? (
                                         <table className="report-table">
                                             <thead>
                                                 <tr>
@@ -338,7 +458,7 @@ export default function OwnerAnalytics() {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                {usage.vehicleBreakdown.map((row) => (
+                                                {filteredUsageBreakdown.map((row) => (
                                                     <tr key={row.vehicleId}>
                                                         <td>{row.vehicleDisplayName}</td>
                                                         <td>{row.licensePlate}</td>
@@ -349,7 +469,7 @@ export default function OwnerAnalytics() {
                                             </tbody>
                                         </table>
                                     ) : (
-                                        <p className="report-empty">Không có dữ liệu sử dụng trong kỳ.</p>
+                                        <p className="report-empty">Không có dữ liệu sử dụng trong kỳ với trạng thái đã chọn.</p>
                                     )}
                                 </>
                             )}

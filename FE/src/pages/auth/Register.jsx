@@ -45,30 +45,30 @@ function Register() {
         const newErrors = {}
 
         if (formData.fullName.trim().length < 2) {
-            newErrors.fullName = 'Full name must be at least 2 characters'
+            newErrors.fullName = 'Họ và tên phải có ít nhất 2 ký tự'
         }
 
         if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Please enter a valid email address'
+            newErrors.email = 'Vui lòng nhập email hợp lệ'
         }
 
         if (formData.password.length < 6) {
-            newErrors.password = 'Password must be at least 6 characters'
+            newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự'
         }
 
         if (formData.password !== formData.confirmPassword) {
-            newErrors.confirmPassword = 'Passwords do not match'
+            newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp'
         }
 
         // Validate VN Phone number: 10 digits, start with 0
         if (formData.phone && !/(03|05|07|08|09|01[2|6|8|9])+([0-9]{8})\b/.test(formData.phone)) {
-            newErrors.phone = 'Please enter a valid Vietnamese phone number (10 digits)'
+            newErrors.phone = 'Vui lòng nhập số điện thoại Việt Nam hợp lệ (10 số)'
         } else if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
-            newErrors.phone = 'Phone number must be exactly 10 digits'
+            newErrors.phone = 'Số điện thoại phải đúng 10 chữ số'
         }
 
         if (!formData.agreeToTerms) {
-            newErrors.agreeToTerms = 'You must agree to the terms and conditions'
+            newErrors.agreeToTerms = 'Bạn phải đồng ý với điều khoản và điều kiện'
         }
 
         setErrors(newErrors)
@@ -103,7 +103,7 @@ function Register() {
                 setOtpModalOpen(true)
 
             } catch (error) {
-                setErrors({ submit: error.message || 'Registration failed' })
+                setErrors({ submit: error.message || 'Đăng ký thất bại' })
             } finally {
                 setLoading(false)
             }
@@ -168,13 +168,13 @@ function Register() {
                         <div className="auth-logo">
                             <img src="/favicon.svg" alt="CarRental Logo" />
                         </div>
-                        <h1>Create Account</h1>
-                        <p>Join us and start your journey today</p>
+                        <h1>Tạo tài khoản</h1>
+                        <p>Tham gia cùng chúng tôi và bắt đầu hành trình ngay hôm nay</p>
                     </div>
 
                     <form className="auth-form" onSubmit={handleSubmit}>
                         <div className="form-group">
-                            <label htmlFor="fullName">Full Name</label>
+                            <label htmlFor="fullName">Họ và tên</label>
                             <div className="input-wrapper">
                                 <span className="input-icon">👤</span>
                                 <input
@@ -183,7 +183,7 @@ function Register() {
                                     name="fullName"
                                     value={formData.fullName}
                                     onChange={handleChange}
-                                    placeholder="Enter your full name"
+                                    placeholder="Nhập họ và tên của bạn"
                                     required
                                 />
                             </div>
@@ -191,7 +191,7 @@ function Register() {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="email">Email Address</label>
+                            <label htmlFor="email">Địa chỉ email</label>
                             <div className="input-wrapper">
                                 <span className="input-icon">✉️</span>
                                 <input
@@ -200,7 +200,7 @@ function Register() {
                                     name="email"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    placeholder="Enter your email"
+                                    placeholder="Nhập email của bạn"
                                     required
                                 />
                             </div>
@@ -208,7 +208,7 @@ function Register() {
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="phone">Phone Number (Optional)</label>
+                            <label htmlFor="phone">Số điện thoại (không bắt buộc)</label>
                             <div className="input-wrapper">
                                 <span className="input-icon">📱</span>
                                 <input
@@ -217,14 +217,14 @@ function Register() {
                                     name="phone"
                                     value={formData.phone}
                                     onChange={handleChange}
-                                    placeholder="Enter your phone number"
+                                    placeholder="Nhập số điện thoại của bạn"
                                 />
                             </div>
                             {errors.phone && <span className="error-message">{errors.phone}</span>}
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="avatar">Avatar URL (Optional)</label>
+                            <label htmlFor="avatar">URL ảnh đại diện (không bắt buộc)</label>
                             <div className="input-wrapper">
                                 <span className="input-icon">🖼️</span>
                                 <input
@@ -240,7 +240,7 @@ function Register() {
 
                         <div className="form-row">
                             <div className="form-group">
-                                <label htmlFor="password">Password</label>
+                                <label htmlFor="password">Mật khẩu</label>
                                 <div className="input-wrapper">
                                     <span className="input-icon">🔒</span>
                                     <input
@@ -249,7 +249,7 @@ function Register() {
                                         name="password"
                                         value={formData.password}
                                         onChange={handleChange}
-                                        placeholder="Create password"
+                                        placeholder="Tạo mật khẩu"
                                         required
                                     />
                                     <button
@@ -264,7 +264,7 @@ function Register() {
                             </div>
 
                             <div className="form-group">
-                                <label htmlFor="confirmPassword">Confirm Password</label>
+                                <label htmlFor="confirmPassword">Xác nhận mật khẩu</label>
                                 <div className="input-wrapper">
                                     <span className="input-icon">🔒</span>
                                     <input
@@ -273,7 +273,7 @@ function Register() {
                                         name="confirmPassword"
                                         value={formData.confirmPassword}
                                         onChange={handleChange}
-                                        placeholder="Confirm password"
+                                        placeholder="Nhập lại mật khẩu"
                                         required
                                     />
                                     <button
@@ -297,13 +297,13 @@ function Register() {
                                     onChange={handleChange}
                                 />
                                 <span>
-                                    I agree to the{' '}
+                                    Tôi đồng ý với{' '}
                                     <Link to="/terms" className="inline-link">
-                                        Terms of Service
+                                        Điều khoản dịch vụ
                                     </Link>
-                                    {' '}and{' '}
+                                    {' '}và{' '}
                                     <Link to="/privacy" className="inline-link">
-                                        Privacy Policy
+                                        Chính sách bảo mật
                                     </Link>
                                 </span>
                             </label>
@@ -311,13 +311,13 @@ function Register() {
                         </div>
 
                         <button type="submit" className="btn-submit" disabled={loading}>
-                            {loading ? 'Creating Account...' : 'Create Account'}
+                            {loading ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
                         </button>
                         {errors.submit && <div className="error-message" style={{ textAlign: 'center', marginTop: '10px' }}>{errors.submit}</div>}
                     </form>
 
                     <div className="auth-divider">
-                        <span>OR</span>
+                        <span>HOẶC</span>
                     </div>
 
                     <div className="social-login">
@@ -328,21 +328,21 @@ function Register() {
                                 <path fill="#FBBC05" d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07A9.973 9.973 0 000 10c0 1.61.39 3.14 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z" />
                                 <path fill="#EA4335" d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z" />
                             </svg>
-                            Sign up with Google
+                            Đăng ký với Google
                         </button>
                         <button className="btn-social btn-facebook">
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="#1877F2">
                                 <path d="M20 10c0-5.523-4.477-10-10-10S0 4.477 0 10c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V10h2.54V7.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V10h2.773l-.443 2.89h-2.33v6.988C16.343 19.128 20 14.991 20 10z" />
                             </svg>
-                            Sign up with Facebook
+                            Đăng ký với Facebook
                         </button>
                     </div>
 
                     <div className="auth-footer">
                         <p>
-                            Already have an account?{' '}
+                            Đã có tài khoản?{' '}
                             <Link to="/login" className="auth-link">
-                                Sign in
+                                Đăng nhập
                             </Link>
                         </p>
                     </div>

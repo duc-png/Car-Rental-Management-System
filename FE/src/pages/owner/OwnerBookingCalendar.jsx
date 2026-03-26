@@ -10,10 +10,8 @@ import { getOwnerBookingCalendar } from '../../api/bookings'
 import { getBookingStatusLabel } from '../../utils/bookingUtils'
 import 'react-day-picker/dist/style.css'
 import '../../styles/OwnerBookingCalendar.css'
-
 const startOfMonth = (date) => new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0)
 const endOfMonth = (date) => new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59)
-
 const formatDateTime = (value) => {
     if (!value) return '--'
     const date = new Date(value)
@@ -26,64 +24,50 @@ const formatDateTime = (value) => {
         minute: '2-digit',
     })
 }
-
 const expandDateRange = (startDate, endDate) => {
     const dates = []
     const current = new Date(startDate)
     current.setHours(0, 0, 0, 0)
-
     const end = new Date(endDate)
     end.setHours(0, 0, 0, 0)
-
     while (current <= end) {
         dates.push(new Date(current))
         current.setDate(current.getDate() + 1)
     }
-
     return dates
 }
-
 function OwnerBookingCalendar() {
     const navigate = useNavigate()
     const { user, isAuthenticated, logout } = useAuth()
     const canManage = Boolean(user?.role?.includes('ROLE_CAR_OWNER') || user?.role?.includes('ROLE_ADMIN'))
-
     const ownerId = Number(user?.userId || user?.id)
     const [loading, setLoading] = useState(true)
     const [month, setMonth] = useState(new Date())
     const [vehicles, setVehicles] = useState([])
     const [selectedVehicleId, setSelectedVehicleId] = useState('all')
     const [calendarEvents, setCalendarEvents] = useState([])
-
     const monthLabel = useMemo(() => month.toLocaleDateString('vi-VN', {
         month: 'long',
         year: 'numeric',
     }), [month])
-
     const fetchCalendar = useCallback(async () => {
         if (!ownerId) return
-
         setLoading(true)
         try {
             const vehicleList = await listOwnerVehicles(ownerId)
             const approvedVehicles = Array.isArray(vehicleList)
                 ? vehicleList.filter((vehicle) => String(vehicle?.status || '').toUpperCase() !== 'REJECTED')
                 : []
-
             setVehicles(approvedVehicles)
-
             const filteredVehicles = selectedVehicleId === 'all'
                 ? approvedVehicles
                 : approvedVehicles.filter((vehicle) => Number(vehicle.id) === Number(selectedVehicleId))
-
             if (filteredVehicles.length === 0) {
                 setCalendarEvents([])
                 return
             }
-
             const from = startOfMonth(month)
             const to = endOfMonth(month)
-
             const selectedId = selectedVehicleId === 'all' ? null : Number(selectedVehicleId)
             const merged = await getOwnerBookingCalendar(from, to, selectedId)
             merged.sort((a, b) => {
@@ -91,7 +75,6 @@ function OwnerBookingCalendar() {
                 const bTime = new Date(b.startDate).getTime()
                 return aTime - bTime
             })
-
             setCalendarEvents(merged)
         } catch (error) {
             console.error('Failed to load owner booking calendar:', error)
@@ -101,19 +84,16 @@ function OwnerBookingCalendar() {
             setLoading(false)
         }
     }, [month, ownerId, selectedVehicleId])
-
     useEffect(() => {
         if (!user) return
         fetchCalendar()
     }, [user, fetchCalendar])
-
     const dateModifiers = useMemo(() => {
         const byStatus = {
             confirmed: [],
             ongoing: [],
             completed: [],
         }
-
         calendarEvents.forEach((event) => {
             const expanded = expandDateRange(event.startDate, event.endDate)
             if (event.status === 'CONFIRMED') {
@@ -126,23 +106,18 @@ function OwnerBookingCalendar() {
                 byStatus.completed.push(...expanded)
             }
         })
-
         return byStatus
     }, [calendarEvents])
-
     const handleLogout = async () => {
         await logout()
         navigate('/login')
     }
-
     const goPrevMonth = () => {
         setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))
     }
-
     const goNextMonth = () => {
         setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))
     }
-
     if (!isAuthenticated) {
         return (
             <div className="fleet-guard">
@@ -152,7 +127,6 @@ function OwnerBookingCalendar() {
             </div>
         )
     }
-
     if (!canManage) {
         return (
             <div className="fleet-guard">
@@ -162,11 +136,9 @@ function OwnerBookingCalendar() {
             </div>
         )
     }
-
     return (
         <div className="fleet-dashboard owner-calendar-page">
             <FleetSidebar user={user} onLogout={handleLogout} />
-
             <section className="fleet-main">
                 <header className="fleet-header">
                     <div>
@@ -178,7 +150,6 @@ function OwnerBookingCalendar() {
                         <DashboardNotificationBell />
                     </div>
                 </header>
-
                 <section className="owner-calendar-toolbar">
                     <div className="toolbar-group">
                         <label htmlFor="vehicle-filter">Xe</label>
@@ -195,14 +166,12 @@ function OwnerBookingCalendar() {
                             ))}
                         </select>
                     </div>
-
                     <div className="toolbar-group month-switcher">
                         <button type="button" onClick={goPrevMonth}>Tháng trước</button>
                         <strong>{monthLabel}</strong>
                         <button type="button" onClick={goNextMonth}>Tháng sau</button>
                     </div>
                 </section>
-
                 {loading ? (
                     <div className="owner-calendar-loading">
                         <div className="loading-spinner"></div>
@@ -236,7 +205,6 @@ function OwnerBookingCalendar() {
                                 <span>Hoàn tất</span>
                             </div>
                         </div>
-
                         <div className="owner-calendar-events">
                             <h3>Danh sách booking trong tháng</h3>
                             {calendarEvents.length === 0 ? (
@@ -276,5 +244,4 @@ function OwnerBookingCalendar() {
         </div>
     )
 }
-
 export default OwnerBookingCalendar

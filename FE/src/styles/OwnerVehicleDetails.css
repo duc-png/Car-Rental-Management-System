@@ -232,6 +232,14 @@
     overflow-wrap: anywhere;
 }
 
+.vehicle-value.delivery-on {
+    color: #059669;
+}
+
+.vehicle-value.delivery-off {
+    color: #b91c1c;
+}
+
 .vehicle-details-description {
     border-top: 1px solid var(--fleet-border);
     padding-top: 12px;

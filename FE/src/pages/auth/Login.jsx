@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { jwtDecode } from 'jwt-decode'
 import { useAuth } from '../../hooks/useAuth'
 import '../../styles/Auth.css'
 
@@ -30,31 +29,31 @@ function Login() {
         setError('')
 
         try {
-            const result = await login(formData.email, formData.password)
+            const result = await login(formData.email, formData.password, { mode: 'customer' })
             if (result.success) {
-                const token = localStorage.getItem('token')
-                if (token) {
-                    try {
-                        const decoded = jwtDecode(token)
-                        const scope = String(decoded?.scope || '').replace(/\bROLE_EXPERT\b/g, 'ROLE_CAR_OWNER')
-                        if (scope.includes('ROLE_ADMIN')) {
-                            navigate('/admin/dashboard')
-                            return
-                        }
-                        if (scope.includes('ROLE_CAR_OWNER')) {
-                            navigate('/owner/fleet')
-                            return
-                        }
-                    } catch (decodeError) {
-                        console.error('Failed to decode token:', decodeError)
-                    }
+                const scope = String(result?.user?.role || result?.user?.scope || '')
+                const hasAdmin = scope.includes('ROLE_ADMIN') || scope.includes('ADMIN')
+                const hasCustomer = scope.includes('ROLE_USER') || scope.includes('USER')
+                const hasOwner = scope.includes('ROLE_CAR_OWNER') || scope.includes('CAR_OWNER')
+
+                if (hasAdmin) {
+                    navigate('/admin/dashboard')
+                    return
                 }
+
+                // Owner-only account can still login from customer screen.
+                // If account has both customer + owner, keep customer flow on this screen.
+                if (hasOwner && !hasCustomer) {
+                    navigate('/owner/fleet')
+                    return
+                }
+
                 navigate('/')
             } else {
                 setError(result.error)
             }
         } catch (err) {
-            setError(err.message || 'Login failed')
+            setError(err.message || 'Đăng nhập thất bại')
         } finally {
             setLoading(false)
         }
@@ -74,13 +73,13 @@ function Login() {
                         <div className="auth-logo">
                             <img src="/favicon.svg" alt="CarRental Logo" />
                         </div>
-                        <h1>Welcome Back</h1>
-                        <p>Sign in to your account to continue</p>
+                        <h1>Chào mừng quay lại</h1>
+                        <p>Đăng nhập để tiếp tục</p>
                     </div>
 
                     <form className="auth-form" onSubmit={handleSubmit}>
                         <div className="form-group">
-                            <label htmlFor="email">Email Address</label>
+                            <label htmlFor="email">Địa chỉ email</label>
                             <div className="input-wrapper">
                                 <span className="input-icon">✉️</span>
                                 <input
@@ -89,14 +88,14 @@ function Login() {
                                     name="email"
                                     value={formData.email}
                                     onChange={handleChange}
-                                    placeholder="Enter your email"
+                                    placeholder="Nhập email của bạn"
                                     required
                                 />
                             </div>
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="password">Password</label>
+                            <label htmlFor="password">Mật khẩu</label>
                             <div className="input-wrapper">
                                 <span className="input-icon">🔒</span>
                                 <input
@@ -105,7 +104,7 @@ function Login() {
                                     name="password"
                                     value={formData.password}
                                     onChange={handleChange}
-                                    placeholder="Enter your password"
+                                    placeholder="Nhập mật khẩu của bạn"
                                     required
                                 />
                                 <button
@@ -126,21 +125,21 @@ function Login() {
                                     checked={formData.rememberMe}
                                     onChange={handleChange}
                                 />
-                                <span>Remember me</span>
+                                <span>Ghi nhớ đăng nhập</span>
                             </label>
                             <Link to="/forgot-password" className="forgot-link">
-                                Forgot Password?
+                                Quên mật khẩu?
                             </Link>
                         </div>
 
                         <button type="submit" className="btn-submit" disabled={loading}>
-                            {loading ? 'Signing In...' : 'Sign In'}
+                            {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
                         </button>
                         {error && <div className="error-message" style={{ textAlign: 'center', marginTop: '10px' }}>{error}</div>}
                     </form>
 
                     <div className="auth-divider">
-                        <span>OR</span>
+                        <span>HOẶC</span>
                     </div>
 
                     <div className="social-login">
@@ -154,13 +153,13 @@ function Login() {
                                 <path fill="#FBBC05" d="M3.99 10c0-.69.12-1.35.32-1.97V5.51H1.07A9.973 9.973 0 000 10c0 1.61.39 3.14 1.07 4.49l3.24-2.52c-.2-.62-.32-1.28-.32-1.97z" />
                                 <path fill="#EA4335" d="M10 3.88c1.88 0 3.13.81 3.85 1.48l2.84-2.76C14.96.99 12.7 0 10 0 6.09 0 2.72 2.25 1.07 5.51l3.24 2.52C5.12 5.62 7.36 3.88 10 3.88z" />
                             </svg>
-                            Continue with Google
+                            Tiếp tục với Google
                         </button>
                         <button className="btn-social btn-facebook">
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="#1877F2">
                                 <path d="M20 10c0-5.523-4.477-10-10-10S0 4.477 0 10c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V10h2.54V7.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V10h2.773l-.443 2.89h-2.33v6.988C16.343 19.128 20 14.991 20 10z" />
                             </svg>
-                            Continue with Facebook
+                            Tiếp tục với Facebook
                         </button>
                     </div>
 
@@ -174,7 +173,7 @@ function Login() {
                         <p>
                             Bạn không có tài khoản?{' '}
                             <Link to="/register" className="auth-link">
-                                Đăng ký Ngày
+                                Đăng ký ngay
                             </Link>
                         </p>
                     </div>

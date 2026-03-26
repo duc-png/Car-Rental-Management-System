@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CarFront, Eye, EyeOff, ShieldCheck, Sparkles, Users } from 'lucide-react'
-import { jwtDecode } from 'jwt-decode'
 import { useAuth } from '../../hooks/useAuth'
 import '../../styles/OwnerLogin.css'
 
@@ -41,27 +40,12 @@ const OwnerLogin = () => {
         setLoading(true)
 
         try {
-            const result = await login(email, password)
+            const result = await login(email, password, { mode: 'owner' })
             if (!result.success) {
                 setError(result.error || 'Đăng nhập thất bại')
                 return
             }
-
-            const token = localStorage.getItem('token')
-            if (!token) {
-                setError('Không nhận được token đăng nhập')
-                return
-            }
-
-            const decoded = jwtDecode(token)
-            const scope = String(decoded?.scope || '').replace(/\bROLE_EXPERT\b/g, 'ROLE_CAR_OWNER')
-            const isOwner = scope.includes('ROLE_CAR_OWNER') || scope.includes('CAR_OWNER')
-
-            if (isOwner) {
-                navigate('/owner/fleet')
-            } else {
-                setError('Tài khoản không có quyền chủ xe')
-            }
+            navigate('/owner/fleet')
         } catch (err) {
             console.error(err)
             setError('Đăng nhập thất bại')

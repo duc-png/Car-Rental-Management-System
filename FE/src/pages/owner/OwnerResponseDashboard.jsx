@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { getConversationMessages, getMyConversations, sendMessage } from '../../api/chat'
+import { getConversationMessages, getMyConversations, sendMessage, subscribeConversationMessages } from '../../api/chat'
 import FleetSidebar from '../../components/owner/fleet/FleetSidebar'
 import DashboardNotificationBell from '../../components/layout/DashboardNotificationBell'
 import { useAuth } from '../../hooks/useAuth'
@@ -112,6 +112,7 @@ export default function OwnerResponseDashboard() {
         }
 
         let mounted = true
+        let unsubscribe = null
         const loadMessages = async (showLoading = false) => {
             if (showLoading) {
                 setLoadingMessages(true)
@@ -132,13 +133,23 @@ export default function OwnerResponseDashboard() {
         }
 
         loadMessages(true)
-        const timer = window.setInterval(() => {
-            loadMessages(false)
-        }, 5000)
+        unsubscribe = subscribeConversationMessages(
+            activeConversationId,
+            (nextMessages) => {
+                if (!mounted) return
+                setMessages(Array.isArray(nextMessages) ? nextMessages : [])
+            },
+            () => {
+                if (!mounted) return
+                setError('Khong the dong bo tin nhan realtime.')
+            }
+        )
 
         return () => {
             mounted = false
-            window.clearInterval(timer)
+            if (typeof unsubscribe === 'function') {
+                unsubscribe()
+            }
         }
     }, [activeConversationId, isAuthenticated, canManage])
 
@@ -170,8 +181,7 @@ export default function OwnerResponseDashboard() {
 
         setSending(true)
         try {
-            const sent = await sendMessage(activeConversationId, content)
-            setMessages((prev) => [...prev, sent])
+            await sendMessage(activeConversationId, content)
             setDraft('')
         } catch (err) {
             toast.error(err?.message || 'Không thể gửi phản hồi.')

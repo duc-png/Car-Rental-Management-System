@@ -413,7 +413,7 @@ function CarOwnerFleet() {
 
         if (yearValue) {
             const year = Number(yearValue)
-            const maxYear = new Date().getFullYear() + 1
+            const maxYear = new Date().getFullYear()
             if (!Number.isInteger(year) || year < 1900 || year > maxYear) {
                 errors.year = `Năm sản xuất phải trong khoảng 1900-${maxYear}.`
             }
@@ -524,7 +524,6 @@ function CarOwnerFleet() {
             }
 
             const payload = {
-                ownerId,
                 modelId,
                 licensePlate: String(createForm.licensePlate).trim(),
                 color: String(createForm.color || '').trim() || null,

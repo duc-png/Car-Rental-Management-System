@@ -93,6 +93,13 @@ public class VehicleEntity {
     @Column(name = "extra_fee_per_km", precision = 12, scale = 2)
     private BigDecimal extraFeePerKm;
 
+    // ===== Viewing Lock =====
+    @Column(name = "viewing_locked_by_user_id")
+    private Integer viewingLockedByUserId;
+
+    @Column(name = "viewing_lock_expires_at")
+    private Instant viewingLockExpiresAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_id")
     private LocationEntity location;

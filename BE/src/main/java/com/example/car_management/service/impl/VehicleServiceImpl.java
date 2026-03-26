@@ -13,6 +13,10 @@ import com.example.car_management.service.NotificationService;
 import com.example.car_management.service.VehicleService;
 import com.example.car_management.service.cloud.CloudinaryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -47,12 +51,11 @@ public class VehicleServiceImpl implements VehicleService {
         }
 
         // 2) Resolve owner/model/location tu request de tao entity day du lien ket.
-        UserEntity owner = userRepository.findById(req.getOwnerId())
+        UserEntity owner = userRepository.findById(getCurrentUserId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         VehicleModelEntity model = vehicleModelRepository.findByIdWithBrandAndType(req.getModelId())
                 .orElseThrow(() -> new AppException(ErrorCode.VEHICLE_MODEL_NOT_FOUND));
-
         LocationEntity location = resolveLocation(req.getLocationId(), req.getLocation());
 
         VehicleEntity v = VehicleEntity.builder()
@@ -247,19 +250,54 @@ public class VehicleServiceImpl implements VehicleService {
         }
 
         if (locationInput == null || !hasAnyLocationData(locationInput)) {
-            return null; // Return null để giữ location cũ (sẽ không set nếu null)
+            return currentLocation;
         }
 
-        // Nếu có location input, tạo/update location
+        String province = firstNonBlank(locationInput.getProvince(),
+                currentLocation != null ? currentLocation.getProvince() : null);
+        String district = firstNonBlank(locationInput.getDistrict(),
+                currentLocation != null ? currentLocation.getDistrict() : null);
+        String ward = firstNonBlank(locationInput.getWard(),
+                currentLocation != null ? currentLocation.getWard() : null);
+        String addressDetail = firstNonBlank(locationInput.getAddressDetail(),
+                currentLocation != null ? currentLocation.getAddressDetail() : null);
+
+        // locations table yêu cầu city/district/ward bắt buộc, nên chặn sớm để tránh
+        // DataIntegrityViolationException.
+        if (isBlank(province) || isBlank(district) || isBlank(ward)) {
+            throw new AppException(ErrorCode.INVALID_KEY);
+        }
+
+        if (currentLocation != null) {
+            currentLocation.setProvince(province);
+            currentLocation.setDistrict(district);
+            currentLocation.setWard(ward);
+            currentLocation.setAddressDetail(addressDetail);
+            return locationRepository.save(currentLocation);
+        }
+
         LocationEntity location = LocationEntity.builder()
-                .province(locationInput.getProvince() != null ? locationInput.getProvince().trim() : null)
-                .district(locationInput.getDistrict() != null ? locationInput.getDistrict().trim() : null)
-                .ward(locationInput.getWard() != null ? locationInput.getWard().trim() : null)
-                .addressDetail(
-                        locationInput.getAddressDetail() != null ? locationInput.getAddressDetail().trim() : null)
+                .province(province)
+                .district(district)
+                .ward(ward)
+                .addressDetail(addressDetail)
                 .build();
 
         return locationRepository.save(location);
+    }
+
+    private String firstNonBlank(String candidate, String fallback) {
+        if (!isBlank(candidate)) {
+            return candidate.trim();
+        }
+        if (!isBlank(fallback)) {
+            return fallback.trim();
+        }
+        return null;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     private LocationEntity resolveLocation(Integer locationId, LocationInputRequest locationInput) {
@@ -655,5 +693,38 @@ public class VehicleServiceImpl implements VehicleService {
             v.setImages(vehicleImageRepository.findByVehicle_Id(v.getId()));
             return VehicleMapper.toResponse(v);
         }).collect(Collectors.toList());
+    }
+
+    private Integer getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof Jwt jwt) {
+            Object claim = jwt.getClaims().get("userId");
+            if (claim instanceof Number number) {
+                return number.intValue();
+            }
+            if (claim != null) {
+                return Integer.valueOf(String.valueOf(claim));
+            }
+        }
+
+        if (principal instanceof UserDetails userDetails) {
+            return userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED))
+                    .getId();
+        }
+
+        String name = authentication.getName();
+        if (name != null && !name.isBlank()) {
+            return userRepository.findByEmail(name)
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED))
+                    .getId();
+        }
+
+        throw new AppException(ErrorCode.UNAUTHENTICATED);
     }
 }

@@ -12,7 +12,7 @@ function ForgotPassword() {
 
         // Validate email
         if (!/\S+@\S+\.\S+/.test(email)) {
-            setError('Please enter a valid email address')
+            setError('Vui lòng nhập địa chỉ email hợp lệ')
             return
         }
 
@@ -44,39 +44,39 @@ function ForgotPassword() {
                             </svg>
                         </div>
 
-                        <h1 className="success-title">Check Your Email</h1>
+                        <h1 className="success-title">Kiểm tra email của bạn</h1>
                         <p className="success-message">
-                            We&apos;ve sent a password reset link to <strong>{email}</strong>
+                            Chúng tôi đã gửi liên kết đặt lại mật khẩu đến <strong>{email}</strong>
                         </p>
                         <p className="success-description">
-                            Please check your inbox and click on the link to reset your password.
-                            The link will expire in 24 hours.
+                            Vui lòng kiểm tra hộp thư và nhấn vào liên kết để đặt lại mật khẩu.
+                            Liên kết sẽ hết hạn sau 24 giờ.
                         </p>
 
                         <div className="success-actions">
                             <Link to="/login" className="btn-submit">
-                                Back to Sign In
+                                Quay lại đăng nhập
                             </Link>
                             <button
                                 className="btn-secondary"
                                 onClick={() => setIsSubmitted(false)}
                             >
-                                Try Another Email
+                                Thử email khác
                             </button>
                         </div>
 
                         <div className="auth-footer">
                             <p>
-                                Didn&apos;t receive the email?{' '}
+                                Chưa nhận được email?{' '}
                                 <button
                                     className="inline-link resend-link"
                                     onClick={(e) => {
                                         e.preventDefault()
                                         console.log('Resend email to:', email)
-                                        alert('Email sent again!')
+                                        alert('Đã gửi lại email!')
                                     }}
                                 >
-                                    Resend
+                                    Gửi lại
                                 </button>
                             </p>
                         </div>
@@ -100,13 +100,13 @@ function ForgotPassword() {
                         <div className="auth-logo">
                             <img src="/favicon.svg" alt="CarRental Logo" />
                         </div>
-                        <h1>Forgot Password?</h1>
-                        <p>No worries, we&apos;ll send you reset instructions</p>
+                        <h1>Quên mật khẩu?</h1>
+                        <p>Đừng lo, chúng tôi sẽ gửi hướng dẫn đặt lại mật khẩu cho bạn</p>
                     </div>
 
                     <form className="auth-form" onSubmit={handleSubmit}>
                         <div className="form-group">
-                            <label htmlFor="email">Email Address</label>
+                            <label htmlFor="email">Địa chỉ email</label>
                             <div className="input-wrapper">
                                 <span className="input-icon">✉️</span>
                                 <input
@@ -115,7 +115,7 @@ function ForgotPassword() {
                                     name="email"
                                     value={email}
                                     onChange={handleChange}
-                                    placeholder="Enter your email"
+                                    placeholder="Nhập email của bạn"
                                     required
                                 />
                             </div>
@@ -123,30 +123,30 @@ function ForgotPassword() {
                         </div>
 
                         <button type="submit" className="btn-submit">
-                            Send Reset Link
+                            Gửi liên kết đặt lại
                         </button>
                     </form>
 
                     <div className="auth-footer">
                         <Link to="/login" className="back-link">
-                            <span className="back-arrow">←</span> Back to Sign In
+                            <span className="back-arrow">←</span> Quay lại đăng nhập
                         </Link>
                     </div>
 
                     <div className="help-section">
-                        <p className="help-title">Need more help?</p>
+                        <p className="help-title">Cần thêm trợ giúp?</p>
                         <div className="help-options">
                             <a href="mailto:support@carrental.com" className="help-option">
                                 <span className="help-icon">📧</span>
-                                <span>Email Support</span>
+                                <span>Hỗ trợ qua email</span>
                             </a>
                             <a href="tel:+14155552671" className="help-option">
                                 <span className="help-icon">📞</span>
-                                <span>Call Us</span>
+                                <span>Gọi cho chúng tôi</span>
                             </a>
                             <Link to="/faq" className="help-option">
                                 <span className="help-icon">❓</span>
-                                <span>Visit FAQ</span>
+                                <span>Xem câu hỏi thường gặp</span>
                             </Link>
                         </div>
                     </div>

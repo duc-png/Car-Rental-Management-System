@@ -1,3 +1,5 @@
+import { CarFront } from 'lucide-react'
+
 export default function OwnerVehicleTypeSection({
     modelsLoading,
     brandName,
@@ -16,10 +18,10 @@ export default function OwnerVehicleTypeSection({
         return (
             <div className="edit-card">
                 <div className="card-header">
-                    <span className="card-icon">🚗</span>
-                    <h2>Loại xe</h2>
+                    <CarFront className="card-icon" size={20} aria-hidden="true" />
+                    <h2>Thông tin cơ bản</h2>
                 </div>
-                <p className="field-immutable-note">Hãng xe, mẫu xe và loại xe không thể thay đổi sau khi đã tạo xe.</p>
+                <p className="field-note-danger">Lưu ý: Hãng xe, mẫu xe và loại xe không thể thay đổi sau khi đăng ký.</p>
                 <div className="form-grid three-col">
                     <label>
                         Hãng xe
@@ -41,8 +43,8 @@ export default function OwnerVehicleTypeSection({
     return (
         <div className="edit-card">
             <div className="card-header">
-                <span className="card-icon">🚗</span>
-                <h2>Loại xe</h2>
+                <CarFront className="card-icon" size={20} aria-hidden="true" />
+                <h2>Thông tin cơ bản</h2>
             </div>
             <div className="form-grid three-col">
                 <label>

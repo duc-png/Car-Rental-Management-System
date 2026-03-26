@@ -5,6 +5,7 @@ import com.example.car_management.dto.response.OwnerPerformanceResponse;
 import com.example.car_management.dto.response.OwnerPublicProfileResponse;
 import com.example.car_management.dto.response.OwnerReceivedReviewResponse;
 import com.example.car_management.dto.response.VehicleResponse;
+import com.example.car_management.dto.request.UpdateCustomerStatusRequest;
 import com.example.car_management.entity.ChatConversationEntity;
 import com.example.car_management.entity.ChatMessageEntity;
 import com.example.car_management.entity.UserEntity;
@@ -120,6 +121,24 @@ public class OwnerServiceImpl implements OwnerService {
                                 .build();
         }
 
+        @Override
+        @Transactional
+        public OwnerProfileResponse updateOwnerStatus(Integer ownerId, UpdateCustomerStatusRequest request) {
+                UserEntity owner = userRepository.findById(ownerId)
+                                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+                if (owner.getRoleId() != UserRole.CAR_OWNER) {
+                        throw new AppException(ErrorCode.UNAUTHORIZED);
+                }
+
+                if (request != null && request.getIsActive() != null) {
+                        owner.setIsActive(request.getIsActive());
+                        owner = userRepository.save(owner);
+                }
+
+                return toProfile(owner);
+        }
+
         private VehicleResponse toVehicleResponse(VehicleEntity vehicle) {
                 return VehicleMapper.toResponse(vehicle, vehicleImageRepository.findByVehicle_Id(vehicle.getId()));
         }
@@ -199,6 +218,7 @@ public class OwnerServiceImpl implements OwnerService {
                                 .email(owner.getEmail())
                                 .avatar(owner.getAvatar())
                                 .isVerified(owner.getIsVerified())
+                                .isActive(owner.getIsActive() == null || owner.getIsActive())
                                 .joinedAt(joinedAt)
                                 .avgRating(round1(avg))
                                 .totalReviews(reviews)

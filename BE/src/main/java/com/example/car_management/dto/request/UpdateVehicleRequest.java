@@ -3,6 +3,7 @@ package com.example.car_management.dto.request;
 import com.example.car_management.entity.enums.FuelType;
 import com.example.car_management.entity.enums.Transmission;
 import com.example.car_management.entity.enums.VehicleStatus;
+import com.example.car_management.validator.ValidVehicleYear;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -37,7 +38,7 @@ public class UpdateVehicleRequest {
     @Size(max = 2000)
     private String description;
 
-    @Min(1900)
+    @ValidVehicleYear(min = 1900)
     private Integer year;
 
     @Positive

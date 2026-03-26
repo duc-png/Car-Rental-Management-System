@@ -97,7 +97,7 @@ public class BookingEntity {
     private BigDecimal surchargeAmount;
 
     // ============ Return Inspection Fields ============
-
+    
     @Column(name = "actual_return_date")
     private LocalDateTime actualReturnDate;
 
@@ -116,7 +116,7 @@ public class BookingEntity {
     private FuelLevel fuelLevelEnd;
 
     // ============ Additional Fees ============
-
+    
     @Column(name = "late_fee", precision = 12, scale = 2)
     private BigDecimal lateFee;
 
@@ -146,7 +146,6 @@ public class BookingEntity {
     private BigDecimal discountAmount;
 
     // Customer handover confirmation — set to true when customer confirms they've
-    // received the car
     @Column(name = "customer_confirmed_handover")
     @Builder.Default
     private Boolean customerConfirmedHandover = false;

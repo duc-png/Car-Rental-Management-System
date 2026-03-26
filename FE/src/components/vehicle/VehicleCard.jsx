@@ -9,7 +9,7 @@ function VehicleCard({ vehicle }) {
     ? vehicle.images.find(img => img.isMain)?.imageUrl || vehicle.images[0]?.imageUrl
     : "/placeholder.svg"
 
-  const displayName = `${vehicle.brandName} ${vehicle.modelName}`
+  const displayName = `${vehicle.brandName} ${vehicle.modelName} ${vehicle.year}`
   const displayPrice = new Intl.NumberFormat('vi-VN', {
     style: 'currency',
     currency: 'VND'
@@ -28,8 +28,23 @@ function VehicleCard({ vehicle }) {
     }
   }
 
+  const getStatusLabel = (status) => {
+    const normalizedStatus = String(status || '').trim().toUpperCase()
+    const statusMap = {
+      AVAILABLE: 'Sẵn sàng',
+      RENTED: 'Đang được thuê',
+      MAINTENANCE: 'Bảo trì',
+      PENDING_APPROVAL: 'Chờ duyệt',
+      REJECTED: 'Bị từ chối',
+      INACTIVE: 'Tạm ngưng',
+      UNAVAILABLE: 'Không khả dụng'
+    }
+
+    return statusMap[normalizedStatus] || formatFeatureValue(status)
+  }
+
   const formatFeatureValue = (value) => {
-    if (value === null || value === undefined || value === '') return 'N/A'
+    if (value === null || value === undefined || value === '') return 'Không có'
     return value
       .toString()
       .replace(/_/g, ' ')
@@ -64,12 +79,12 @@ function VehicleCard({ vehicle }) {
           className="vehicle-image"
           onError={(e) => { e.target.src = "/placeholder.svg" }}
         />
-        <span className="price-badge">{displayPrice}/day</span>
+        <span className="price-badge">{displayPrice}/ngày</span>
         <span
           className="status-badge"
           style={{ backgroundColor: getStatusBadgeColor(vehicle.status) }}
         >
-          {vehicle.status}
+          {getStatusLabel(vehicle.status)}
         </span>
       </div>
 
@@ -109,7 +124,7 @@ function VehicleCard({ vehicle }) {
       </div>
 
       <button className="btn-book" disabled={vehicle.status !== 'AVAILABLE'}>
-        {vehicle.status === 'AVAILABLE' ? 'Book Now' : 'Unavailable'}
+        {vehicle.status === 'AVAILABLE' ? 'Đặt ngay' : 'Không khả dụng'}
       </button>
     </div>
   )

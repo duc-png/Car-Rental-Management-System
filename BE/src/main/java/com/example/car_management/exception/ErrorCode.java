@@ -60,6 +60,7 @@ public enum ErrorCode {
 
     // ===== Booking =====
     BOOKING_NOT_FOUND(3007, "Booking not found", HttpStatus.NOT_FOUND),
+    VEHICLE_LOCKED_BY_VIEWER(3017, "Xe đang được khách khác xem. Vui lòng thử lại sau ít phút.", HttpStatus.CONFLICT),
     BOOKING_NOT_ONGOING(3008, "Booking is not in ONGOING status", HttpStatus.BAD_REQUEST),
     BOOKING_ALREADY_INSPECTED(3009, "Booking already has return inspection", HttpStatus.BAD_REQUEST),
     BOOKING_NOT_INSPECTED(3010, "Booking has not been inspected yet", HttpStatus.BAD_REQUEST),
@@ -89,13 +90,20 @@ public enum ErrorCode {
     VOUCHER_ALREADY_USED(7002, "Voucher has been fully used", HttpStatus.BAD_REQUEST),
     VOUCHER_INVALID(7003, "Voucher is invalid or inactive", HttpStatus.BAD_REQUEST),
     VOUCHER_CODE_EXISTED(7004, "Voucher code already exists", HttpStatus.BAD_REQUEST),
-    VOUCHER_DISCOUNT_EXCEEDED(7005, "Discount percent must not exceed 30%", HttpStatus.BAD_REQUEST);
+    VOUCHER_DISCOUNT_EXCEEDED(7005, "Discount percent must not exceed 30%", HttpStatus.BAD_REQUEST),
+
+    // Incident Report
+    INCIDENT_REPORT_NOT_FOUND(8001, "Incident report not found", HttpStatus.NOT_FOUND),
+    INCIDENT_REPORT_INVALID_DECISION(8002, "Incident report decision is invalid", HttpStatus.BAD_REQUEST),
+    INCIDENT_REPORT_APPEAL_NOT_ALLOWED(8003, "Appeal is not allowed for this report", HttpStatus.BAD_REQUEST),
+    INCIDENT_REPORT_APPEAL_NOT_PENDING(8004, "Appeal is not pending", HttpStatus.BAD_REQUEST);
     // ===== Cloudinary / Image =====
     // IMAGE_UPLOAD_FAILED(2007, "Upload image failed", HttpStatus.BAD_REQUEST);
     //
     // IMAGE_DELETE_FAILED(2008,"Delete image failed",HttpStatus.BAD_REQUEST) {
     //
     // }
+
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

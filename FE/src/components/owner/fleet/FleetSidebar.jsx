@@ -1,5 +1,19 @@
 import { Link, useLocation } from 'react-router-dom'
-import { BarChart3, CalendarDays, Car, LayoutGrid, LogOut, MessageSquareText, ReceiptText, Settings, ShieldCheck, UsersRound, Wallet, Wrench } from 'lucide-react'
+import {
+    BarChart3,
+    CalendarDays,
+    Car,
+    LayoutGrid,
+    LogOut,
+    MessageSquareText,
+    ReceiptText,
+    Settings,
+    ShieldAlert,
+    ShieldCheck,
+    UsersRound,
+    Wallet,
+    Wrench
+} from 'lucide-react'
 import '../../../styles/FleetSidebar.css'
 
 function FleetSidebar({ user, onLogout }) {
@@ -15,6 +29,7 @@ function FleetSidebar({ user, onLogout }) {
     const isCalendarRoute = location.pathname.startsWith('/owner/booking-calendar')
     const isWalletRoute = location.pathname.startsWith('/owner/wallet')
     const isAnalyticsRoute = location.pathname.startsWith('/owner/analytics')
+    const isIncidentRoute = location.pathname.startsWith('/owner/incident-reports')
 
     const navItems = [
         {
@@ -53,7 +68,7 @@ function FleetSidebar({ user, onLogout }) {
             active: isCalendarRoute,
         },
         {
-            key: 'maintenance',
+            key: 'security',
             to: '/owner/maintenance',
             icon: ShieldCheck,
             label: 'Bảo dưỡng',
@@ -67,6 +82,13 @@ function FleetSidebar({ user, onLogout }) {
             active: isFeedbackRoute,
         },
         {
+            key: 'incident-reports',
+            to: `/owner/incident-reports${ownerQuery}`,
+            icon: ShieldAlert,
+            label: 'Report sự cố',
+            active: isIncidentRoute,
+        },
+        {
             key: 'customers',
             to: `/customers${ownerQuery}`,
             icon: UsersRound,
@@ -74,7 +96,7 @@ function FleetSidebar({ user, onLogout }) {
             active: location.pathname.startsWith('/customers'),
         },
         {
-            key: 'stats',
+            key: 'wallet',
             to: `/owner/wallet${ownerQuery}`,
             icon: Wallet,
             label: 'Ví của tôi',
@@ -84,7 +106,7 @@ function FleetSidebar({ user, onLogout }) {
             key: 'analytics',
             to: `/owner/analytics${ownerQuery}`,
             icon: BarChart3,
-            label: 'Báo cáo & Thống kê',
+            label: 'Báo cáo',
             active: isAnalyticsRoute,
         },
     ]
@@ -93,11 +115,11 @@ function FleetSidebar({ user, onLogout }) {
         <aside className="fleet-sidebar">
             <Link to="/" className="fleet-brand">
                 <div className="brand-icon">
-                    <img src="/favicon.svg" alt="Hệ thống CarRental" />
+                    <img src="/favicon.svg" alt="CarRental" />
                 </div>
                 <div>
-                    <h3>Vehicle Rental</h3>
-                    <p>MANAGEMENT</p>
+                    <h3>Thuê xe</h3>
+                    <p>QUẢN LÝ</p>
                 </div>
             </Link>
 
@@ -132,8 +154,8 @@ function FleetSidebar({ user, onLogout }) {
                 <div className="fleet-user">
                     <div className="user-avatar">{(user?.fullName || 'CO').slice(0, 2).toUpperCase()}</div>
                     <div className="user-info">
-                        <p className="user-name">{user?.fullName || 'Chủ xe Luxury'}</p>
-                        <p className="user-email">{user?.email || 'owner@luxury.com'}</p>
+                        <p className="user-name">{user?.fullName || 'Chủ xe'}</p>
+                        <p className="user-email">{user?.email || 'owner@example.com'}</p>
                     </div>
                 </div>
 
