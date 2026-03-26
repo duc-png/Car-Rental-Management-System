@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { MoonStar, SunMedium } from 'lucide-react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useAuth } from '../../hooks/useAuth'
 import { getDashboardPathByRole, getDisplayName } from '../../utils/authUser'
@@ -35,30 +36,30 @@ function Navbar({ sticky = true }) {
         <ul className={`nav-menu ${isMobileMenuOpen ? 'active' : ''}`}>
           <li>
             <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
-              Home
+              Trang chủ
             </Link>
           </li>
           <li>
             <Link to="/cars" onClick={() => setIsMobileMenuOpen(false)}>
-              Cars
+              Xe
             </Link>
           </li>
           <li>
             <Link to="/become-owner" onClick={() => setIsMobileMenuOpen(false)}>
-              Tro thanh chu xe
+              Trở Thành Chủ Xe
             </Link>
           </li>
           {isCustomerAccount && (
             <li>
               <Link to="/my-bookings" onClick={() => setIsMobileMenuOpen(false)}>
-                My Bookings
+                Đơn đặt xe của tôi
               </Link>
             </li>
           )}
           {isCustomerAccount && (
             <li>
               <Link to="/my-reports" onClick={() => setIsMobileMenuOpen(false)}>
-                My Reports
+                Báo cáo của tôi
               </Link>
             </li>
           )}
@@ -68,9 +69,10 @@ function Navbar({ sticky = true }) {
           <button
             className="theme-toggle"
             onClick={toggleTheme}
-            aria-label="Toggle theme"
+            aria-label="Đổi giao diện"
+            title={theme === 'light' ? 'Bật chế độ tối' : 'Bật chế độ sáng'}
           >
-            {theme === 'light' ? 'moon' : 'sun'}
+            {theme === 'light' ? <MoonStar size={19} aria-hidden="true" /> : <SunMedium size={19} aria-hidden="true" />}
           </button>
 
           {isCustomerAccount ? (
@@ -79,7 +81,7 @@ function Navbar({ sticky = true }) {
                 <span className="user-avatar" aria-hidden="true">
                   {avatarUrl ? <img src={avatarUrl} alt={displayName} /> : avatarInitial}
                 </span>
-                Hi, {displayName}
+                Xin chào, {displayName}
               </Link>
             </div>
           ) : isAuthenticated ? (
@@ -88,16 +90,16 @@ function Navbar({ sticky = true }) {
                 <span className="user-avatar" aria-hidden="true">
                   {avatarUrl ? <img src={avatarUrl} alt={displayName} /> : avatarInitial}
                 </span>
-                Hi, {displayName}
+                Xin chào, {displayName}
               </Link>
             </div>
           ) : (
             <>
               <Link to="/login" className="btn-login">
-                Login
+                Đăng nhập
               </Link>
               <Link to="/register" className="btn-register">
-                Sign Up
+                Đăng ký
               </Link>
             </>
           )}

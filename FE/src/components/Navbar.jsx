@@ -60,31 +60,31 @@ function Navbar({ sticky = true }) {
         <ul className={`nav-menu ${isMobileMenuOpen ? 'active' : ''}`}>
           <li>
             <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
-              Home
+              Trang chủ
             </Link>
           </li>
           <li>
             <Link to="/cars" onClick={() => setIsMobileMenuOpen(false)}>
-              Cars
+              Xe
             </Link>
           </li>
           {isAuthenticated && (
             <>
               <li>
                 <Link to="/my-bookings" onClick={() => setIsMobileMenuOpen(false)}>
-                  My Bookings
+                  Đơn đặt xe của tôi
                 </Link>
               </li>
               {user?.role?.includes('ROLE_EXPERT') && (
                 <>
                   <li>
                     <Link to="/owner/fleet" onClick={() => setIsMobileMenuOpen(false)}>
-                      Owner Dashboard
+                      Bảng điều khiển chủ xe
                     </Link>
                   </li>
                   <li>
                     <Link to="/manage-rentals" onClick={() => setIsMobileMenuOpen(false)}>
-                      Manage Rentals
+                      Quản lý cho thuê
                     </Link>
                   </li>
                 </>
@@ -102,7 +102,7 @@ function Navbar({ sticky = true }) {
           <button
             className="theme-toggle"
             onClick={toggleTheme}
-            aria-label="Toggle theme"
+            aria-label="Đổi giao diện"
           >
             {theme === 'light' ? '🌙' : '☀️'}
           </button>
@@ -118,7 +118,7 @@ function Navbar({ sticky = true }) {
                   aria-haspopup="menu"
                   aria-expanded={isUserMenuOpen}
                 >
-                  Hi, {displayName} ▾
+                  Xin chào, {displayName} ▾
                 </button>
 
                 {isUserMenuOpen && (
@@ -142,20 +142,20 @@ function Navbar({ sticky = true }) {
               // Owner / Admin: direct link to their dashboard + logout
               <div className="nav-user-menu">
                 <Link to={dashboardPath} className="user-name user-name-link">
-                  Hi, {displayName}
+                  Xin chào, {displayName}
                 </Link>
                 <button className="btn-logout" onClick={handleLogout}>
-                  Logout
+                  Đăng xuất
                 </button>
               </div>
             )
           ) : (
             <>
               <Link to="/login" className="btn-login">
-                Login
+                Đăng nhập
               </Link>
               <Link to="/register" className="btn-register">
-                Sign Up
+                Đăng ký
               </Link>
             </>
           )}

@@ -80,7 +80,6 @@ export const getVehicleCalendar = async (vehicleId, from, to) => {
 };
 
 export const createOwnerVehicle = async (payload) => {
-    if (!payload?.ownerId) throw new Error('Missing ownerId');
     const data = await requestJson(`${API_BASE_URL}/vehicles`, {
         method: 'POST',
         headers: withAuthHeaders({

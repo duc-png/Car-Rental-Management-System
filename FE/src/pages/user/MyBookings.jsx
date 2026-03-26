@@ -181,8 +181,8 @@ function MyBookings() {
   return (
     <div className="bookings-page">
       <div className="bookings-header">
-        <h1>Dat xe cua toi</h1>
-        <p>Quan ly cac chuyen di cua ban</p>
+        <h1>Đơn Đặt Xe Của Tôi</h1>
+        <p>Quản lý các chuyến đi của bạn</p>
       </div>
       {bookings.length > 0 ? (
         <div className="bookings-list">

@@ -81,6 +81,13 @@ export default function AdminLayout() {
                             <span>Chu xe</span>
                         </NavLink>
                         <NavLink
+                            to="/admin/owners"
+                            className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
+                        >
+                            <User size={18} strokeWidth={2.2} aria-hidden="true" />
+                            <span>Chủ xe</span>
+                        </NavLink>
+                        <NavLink
                             to="/admin/reports"
                             className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
                         >
@@ -93,6 +100,13 @@ export default function AdminLayout() {
                         >
                             <ShieldAlert size={18} strokeWidth={2.2} aria-hidden="true" />
                             <span>Duyet report</span>
+                        </NavLink>
+                        <NavLink
+                            to="/admin/incident-reports"
+                            className={({ isActive }) => `admin-layout-nav-item ${isActive ? 'active' : ''}`}
+                        >
+                            <ShieldAlert size={18} strokeWidth={2.2} aria-hidden="true" />
+                            <span>Duyệt report</span>
                         </NavLink>
                     </nav>
 

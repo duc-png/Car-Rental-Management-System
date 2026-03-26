@@ -1,7 +1,9 @@
 package com.example.car_management.configuration;
 
 import com.example.car_management.entity.UserEntity;
+import com.example.car_management.entity.enums.OwnerRegistrationStatus;
 import com.example.car_management.entity.enums.UserRole;
+import com.example.car_management.repository.OwnerRegistrationRepository;
 import com.example.car_management.repository.UserRepository;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -25,7 +27,8 @@ import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.StringJoiner;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -34,6 +37,7 @@ import java.util.UUID;
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final UserRepository userRepository;
+    private final OwnerRegistrationRepository ownerRegistrationRepository;
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -80,10 +84,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     private String generateToken(UserEntity user) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
 
-        StringJoiner scope = new StringJoiner(" ");
-        if (user.getRoleId() != null) {
-            scope.add("ROLE_" + user.getRoleId().name());
-        }
+        String scope = buildScope(user);
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
                 .subject(user.getEmail())
@@ -92,7 +93,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                 .expirationTime(new Date(
                         Instant.now().plus(VALID_DURATION, ChronoUnit.SECONDS).toEpochMilli()))
                 .jwtID(UUID.randomUUID().toString())
-                .claim("scope", scope.toString())
+                .claim("scope", scope)
                 .claim("userId", user.getId())
                 .claim("fullName", user.getFullName())
                 .build();
@@ -107,5 +108,33 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             log.error("Cannot create token for Google OAuth2 user");
             throw new RuntimeException(e);
         }
+    }
+
+    private String buildScope(UserEntity user) {
+        Set<String> authorities = new LinkedHashSet<>();
+
+        if (user.getRoleId() != null) {
+            authorities.add("ROLE_" + user.getRoleId().name());
+        }
+
+        if (user.getRoleId() == UserRole.USER) {
+            authorities.add("ROLE_USER");
+        }
+
+        boolean hasApprovedOwnerRegistration = user.getId() != null
+                && ownerRegistrationRepository
+                        .findFirstByApprovedOwner_IdAndStatusOrderByReviewedAtAsc(user.getId(),
+                                OwnerRegistrationStatus.APPROVED)
+                        .isPresent();
+
+        if (user.getRoleId() == UserRole.CAR_OWNER || hasApprovedOwnerRegistration) {
+            authorities.add("ROLE_CAR_OWNER");
+        }
+
+        if (user.getRoleId() == UserRole.USER && hasApprovedOwnerRegistration) {
+            authorities.add("ROLE_USER");
+        }
+
+        return String.join(" ", authorities);
     }
 }

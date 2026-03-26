@@ -2,6 +2,7 @@ package com.example.car_management.dto.request;
 
 import com.example.car_management.entity.enums.FuelType;
 import com.example.car_management.entity.enums.Transmission;
+import com.example.car_management.validator.ValidVehicleYear;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -71,8 +72,7 @@ public class CreateOwnerRegistrationRequest {
         private Integer seatCount;
 
         @NotNull
-        @Min(1980)
-        @Max(2100)
+        @ValidVehicleYear(min = 1900)
         private Integer manufacturingYear;
 
         @NotNull

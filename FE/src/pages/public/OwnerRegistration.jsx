@@ -173,6 +173,7 @@ function OwnerRegistration() {
         ? 'Số km đi được trong 1 lần sạc đầy.'
         : 'Số lít nhiên liệu cho quãng đường 100km.';
     const fuelConsumptionPlaceholder = isElectricFuel ? 'Ví dụ: 350' : 'Ví dụ: 6.8';
+    const currentYear = new Date().getFullYear();
 
     useEffect(() => {
         if (currentStep !== 2) return;
@@ -439,6 +440,12 @@ function OwnerRegistration() {
 
             if (!formData.vehicle.seatCount || !formData.vehicle.manufacturingYear) {
                 toast.error('Vui lòng nhập số ghế và năm sản xuất');
+                return false;
+            }
+
+            const manufacturingYear = Number(formData.vehicle.manufacturingYear);
+            if (!Number.isInteger(manufacturingYear) || manufacturingYear < 1900 || manufacturingYear > currentYear) {
+                toast.error(`Năm sản xuất phải trong khoảng 1900-${currentYear}`);
                 return false;
             }
         }
@@ -875,8 +882,8 @@ function OwnerRegistration() {
                                     Năm sản xuất
                                     <input
                                         type="number"
-                                        min="1980"
-                                        max="2100"
+                                        min="1900"
+                                        max={currentYear}
                                         value={formData.vehicle.manufacturingYear}
                                         onChange={(event) => updateVehicle('manufacturingYear', event.target.value)}
                                         required

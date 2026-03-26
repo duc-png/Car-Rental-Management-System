@@ -68,6 +68,7 @@ function FleetCreateModal({
         ? 'Số km đi được trong 1 lần sạc đầy'
         : 'Mức tiêu thụ nhiên liệu (L/100km)'
     const fuelConsumptionPlaceholder = isElectricFuel ? 'VD: 350' : 'VD: 6.8'
+    const currentYear = new Date().getFullYear()
 
     const onToggleDeliveryEnabled = (event) => {
         const checked = event.target.checked
@@ -108,8 +109,27 @@ function FleetCreateModal({
                     </div>
                     <div className="fleet-create-content">
                         <section className="fleet-form-section">
+                            <h3 className="fleet-form-section-title">Biển số xe</h3>
+                            <p className="fleet-form-note-danger">Lưu ý: Biển số xe không thể thay đổi sau khi đăng ký.</p>
+                            <div className="fleet-create-grid fleet-create-grid--1">
+                                <label>
+                                    Biển số xe
+                                    <input
+                                        className={invalidClass('licensePlate')}
+                                        type="text"
+                                        value={createForm.licensePlate}
+                                        placeholder="VD: 30A-123.45"
+                                        onChange={(event) => updateCreateField('licensePlate', event.target.value)}
+                                    />
+                                    {getFieldError('licensePlate') && <span className="fleet-field-error">{getFieldError('licensePlate')}</span>}
+                                </label>
+                            </div>
+                        </section>
+
+                        <section className="fleet-form-section">
                             <h3 className="fleet-form-section-title">Thông tin cơ bản</h3>
-                            <div className="fleet-create-grid fleet-create-grid--3">
+                            <p className="fleet-form-note-danger">Lưu ý: Các thông tin cơ bản sẽ không thể thay đổi sau khi đăng ký.</p>
+                            <div className="fleet-create-grid fleet-create-grid--2">
                                 <label>
                                     Hãng xe
                                     <select
@@ -158,23 +178,6 @@ function FleetCreateModal({
                                 </label>
 
                                 <label>
-                                    Biển số
-                                    <input
-                                        className={invalidClass('licensePlate')}
-                                        type="text"
-                                        value={createForm.licensePlate}
-                                        placeholder="VD: 30A-123.45"
-                                        onChange={(event) => updateCreateField('licensePlate', event.target.value)}
-                                    />
-                                    {getFieldError('licensePlate') && <span className="fleet-field-error">{getFieldError('licensePlate')}</span>}
-                                </label>
-                            </div>
-                        </section>
-
-                        <section className="fleet-form-section">
-                            <h3 className="fleet-form-section-title">Đặc điểm kỹ thuật</h3>
-                            <div className="fleet-create-grid fleet-create-grid--4">
-                                <label>
                                     Loại xe
                                     <input
                                         className={invalidClass('typeName')}
@@ -191,16 +194,6 @@ function FleetCreateModal({
                                         ))}
                                     </datalist>
                                     {getFieldError('typeName') && <span className="fleet-field-error">{getFieldError('typeName')}</span>}
-                                </label>
-
-                                <label>
-                                    Màu sắc
-                                    <input
-                                        type="text"
-                                        value={createForm.color}
-                                        placeholder="VD: Trắng, Đen..."
-                                        onChange={(event) => updateCreateField('color', event.target.value)}
-                                    />
                                 </label>
 
                                 <label>
@@ -222,7 +215,7 @@ function FleetCreateModal({
                                         className={invalidClass('year')}
                                         type="number"
                                         min="1900"
-                                        max="2100"
+                                        max={currentYear}
                                         placeholder="VD: 2023"
                                         value={createForm.year}
                                         onChange={(event) => updateCreateField('year', event.target.value)}
@@ -231,7 +224,7 @@ function FleetCreateModal({
                                 </label>
 
                                 <label>
-                                    Hộp số
+                                    Truyền động
                                     <select
                                         value={createForm.transmission}
                                         onChange={(event) => updateCreateField('transmission', event.target.value)}
@@ -254,6 +247,21 @@ function FleetCreateModal({
                                             <option key={v} value={v}>{formatEnumLabel(v)}</option>
                                         ))}
                                     </select>
+                                </label>
+                            </div>
+                        </section>
+
+                        <section className="fleet-form-section">
+                            <h3 className="fleet-form-section-title">Thông tin vận hành</h3>
+                            <div className="fleet-create-grid fleet-create-grid--4">
+                                <label>
+                                    Màu sắc
+                                    <input
+                                        type="text"
+                                        value={createForm.color}
+                                        placeholder="VD: Trắng, Đen..."
+                                        onChange={(event) => updateCreateField('color', event.target.value)}
+                                    />
                                 </label>
 
                                 <label>

@@ -224,8 +224,8 @@ public class OwnerRegistrationServiceImpl implements OwnerRegistrationService {
                     if (existingUser.getRoleId() == UserRole.ADMIN) {
                         throw new AppException(ErrorCode.UNAUTHORIZED);
                     }
-                    if (existingUser.getRoleId() != UserRole.CAR_OWNER) {
-                        existingUser.setRoleId(UserRole.CAR_OWNER);
+                    if (existingUser.getRoleId() == null) {
+                        existingUser.setRoleId(UserRole.USER);
                     }
                     if (existingUser.getIsActive() == null) {
                         existingUser.setIsActive(true);

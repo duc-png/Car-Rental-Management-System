@@ -25,6 +25,7 @@ public class VehicleController {
         // Flow tao xe: controller nhan request va service se tao ban ghi xe voi trang
         // thai PENDING_APPROVAL, sau do thong bao cho admin duyet.
         @PostMapping
+        @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ROLE_CAR_OWNER')")
         public ResponseEntity<ApiResponse<VehicleResponse>> create(@Valid @RequestBody CreateVehicleRequest req) {
                 VehicleResponse data = vehicleService.createVehicle(req);
                 return ResponseEntity.ok(ApiResponse.<VehicleResponse>builder()

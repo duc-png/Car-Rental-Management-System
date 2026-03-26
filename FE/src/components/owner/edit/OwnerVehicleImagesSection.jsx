@@ -1,4 +1,5 @@
 import { buildInvalidImageFilesMessage, splitImageFiles } from '../../../utils/imageFileValidation';
+import { Image as ImageIcon, Star, Trash2, UploadCloud } from 'lucide-react';
 
 export default function OwnerVehicleImagesSection({
     vehicle,
@@ -18,6 +19,7 @@ export default function OwnerVehicleImagesSection({
     return (
         <div className="edit-card">
             <div className="card-header">
+                <ImageIcon className="card-icon" size={20} aria-hidden="true" />
                 <h2>Hình ảnh</h2>
             </div>
 
@@ -35,7 +37,7 @@ export default function OwnerVehicleImagesSection({
                                         onClick={() => onSetMainImage(img.id)}
                                         disabled={imagesUpdating}
                                     >
-                                        ★ Làm chính
+                                        <Star size={14} aria-hidden="true" /> Làm chính
                                     </button>
                                 )}
                                 <button
@@ -44,7 +46,7 @@ export default function OwnerVehicleImagesSection({
                                     onClick={() => onDeleteImage(img.id)}
                                     disabled={imagesUpdating}
                                 >
-                                    Xóa
+                                    <Trash2 size={14} aria-hidden="true" /> Xóa
                                 </button>
                             </div>
                         </div>
@@ -54,7 +56,7 @@ export default function OwnerVehicleImagesSection({
 
             <div className="upload-zone">
                 <div className="upload-drop">
-                    <span className="upload-icon">↑</span>
+                    <UploadCloud className="upload-icon" size={44} aria-hidden="true" />
                     <p>Tải ảnh lên hoặc dán URL</p>
                     <p className="small">Mỗi dòng 1 URL hoặc kéo thả file</p>
                 </div>

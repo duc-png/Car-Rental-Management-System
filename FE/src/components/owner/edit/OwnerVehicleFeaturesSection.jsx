@@ -1,7 +1,10 @@
+import { Sparkles } from 'lucide-react'
+
 export default function OwnerVehicleFeaturesSection({ featureCatalog, selectedFeatureIds, onToggleFeature }) {
     return (
         <div className="edit-card">
             <div className="card-header">
+                <Sparkles className="card-icon" size={20} aria-hidden="true" />
                 <h2>Tính năng xe</h2>
             </div>
             <div className="feature-checkbox-grid">

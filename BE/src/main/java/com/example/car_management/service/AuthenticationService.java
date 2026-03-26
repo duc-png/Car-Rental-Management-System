@@ -5,11 +5,13 @@ import com.example.car_management.dto.response.AuthenticationResponse;
 import com.example.car_management.dto.response.IntrospectResponse;
 import com.example.car_management.entity.InvalidatedTokenEntity;
 import com.example.car_management.entity.UserEntity;
+import com.example.car_management.entity.enums.OwnerRegistrationStatus;
 import com.example.car_management.entity.enums.UserRole;
 import com.example.car_management.exception.AppException;
 import com.example.car_management.exception.ErrorCode;
 import com.example.car_management.mapper.UserMapper;
 import com.example.car_management.repository.InvalidatedTokenRepository;
+import com.example.car_management.repository.OwnerRegistrationRepository;
 import com.example.car_management.repository.UserRepository;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
@@ -33,6 +35,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.StringJoiner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
@@ -46,6 +50,7 @@ public class AuthenticationService {
     UserRepository userRepository;
     PasswordEncoder passwordEncoder;
     InvalidatedTokenRepository invalidatedTokenRepository;
+    OwnerRegistrationRepository ownerRegistrationRepository;
     UserMapper userMapper;
     ObjectProvider<JavaMailSender> mailSenderProvider;
 
@@ -281,17 +286,31 @@ public class AuthenticationService {
     }
 
     private String buildScope(UserEntity user) {
-        StringJoiner stringJoiner = new StringJoiner(" ");
+        Set<String> authorities = new LinkedHashSet<>();
 
         if (user.getRoleId() != null) {
-            stringJoiner.add("ROLE_" + user.getRoleId().name());
-            if (user.getRoleId() == UserRole.CAR_OWNER) {
-                // Keep customer capabilities after becoming owner.
-                stringJoiner.add("ROLE_USER");
-            }
+            authorities.add("ROLE_" + user.getRoleId().name());
         }
 
-        return stringJoiner.toString();
+        if (user.getRoleId() == UserRole.USER) {
+            authorities.add("ROLE_USER");
+        }
+
+        boolean hasApprovedOwnerRegistration = user.getId() != null
+                && ownerRegistrationRepository
+                        .findFirstByApprovedOwner_IdAndStatusOrderByReviewedAtAsc(user.getId(),
+                                OwnerRegistrationStatus.APPROVED)
+                        .isPresent();
+
+        if (user.getRoleId() == UserRole.CAR_OWNER || hasApprovedOwnerRegistration) {
+            authorities.add("ROLE_CAR_OWNER");
+        }
+
+        if (user.getRoleId() == UserRole.USER && hasApprovedOwnerRegistration) {
+            authorities.add("ROLE_USER");
+        }
+
+        return String.join(" ", authorities);
     }
 
     private void issueRegistrationEmailOtp(UserEntity user) {

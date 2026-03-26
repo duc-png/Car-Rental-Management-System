@@ -136,6 +136,10 @@ export default function OwnerVehicleDetails() {
             .map((feature) => String(feature?.name || '').trim())
             .filter(Boolean)
         : []
+    const deliveryEnabled = Boolean(vehicle?.deliveryEnabled)
+    const freeDeliveryWithinKm = Number(vehicle?.freeDeliveryWithinKm ?? 0)
+    const maxDeliveryDistanceKm = Number(vehicle?.maxDeliveryDistanceKm ?? 0)
+    const extraFeePerKm = Number(vehicle?.extraFeePerKm ?? 0)
     const canEditVehicle = String(vehicle?.status || '') !== 'PENDING_APPROVAL'
 
     return (
@@ -286,6 +290,24 @@ export default function OwnerVehicleDetails() {
                                                 {[vehicle?.addressDetail, ward, district, province].filter(Boolean).join(', ') || '—'}
                                             </span>
                                         </div>
+                                        <div className="vehicle-field">
+                                            <span className="vehicle-label">Giao xe tận nơi</span>
+                                            <span className={`vehicle-value ${deliveryEnabled ? 'delivery-on' : 'delivery-off'}`}>
+                                                {deliveryEnabled ? 'Có hỗ trợ' : 'Không hỗ trợ'}
+                                            </span>
+                                        </div>
+                                        <div className="vehicle-field">
+                                            <span className="vehicle-label">Miễn phí trong vòng</span>
+                                            <span className="vehicle-value">{deliveryEnabled ? `${freeDeliveryWithinKm} km` : '—'}</span>
+                                        </div>
+                                        <div className="vehicle-field">
+                                            <span className="vehicle-label">Giao xe tối đa</span>
+                                            <span className="vehicle-value">{deliveryEnabled ? `${maxDeliveryDistanceKm} km` : '—'}</span>
+                                        </div>
+                                        <div className="vehicle-field">
+                                            <span className="vehicle-label">Phí giao nhận/km</span>
+                                            <span className="vehicle-value">{deliveryEnabled ? `${extraFeePerKm.toLocaleString('vi-VN')}đ` : '—'}</span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -329,6 +351,10 @@ export default function OwnerVehicleDetails() {
                                     <div className="vehicle-kpi">
                                         <span className="label">Loại xe</span>
                                         <strong>{carType || '—'}</strong>
+                                    </div>
+                                    <div className="vehicle-kpi">
+                                        <span className="label">Giao xe tận nơi</span>
+                                        <strong>{deliveryEnabled ? 'Có hỗ trợ' : 'Không hỗ trợ'}</strong>
                                     </div>
                                 </div>
                             </aside>

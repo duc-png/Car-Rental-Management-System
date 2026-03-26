@@ -2,6 +2,7 @@ package com.example.car_management.dto.request;
 
 import com.example.car_management.entity.enums.FuelType;
 import com.example.car_management.entity.enums.Transmission;
+import com.example.car_management.validator.ValidVehicleYear;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -15,9 +16,6 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class CreateVehicleRequest {
-
-    @NotNull
-    private Integer ownerId;
 
     @NotNull
     private Integer modelId;
@@ -43,7 +41,7 @@ public class CreateVehicleRequest {
     @Size(max = 2000)
     private String description;
 
-    @Min(1900)
+    @ValidVehicleYear(min = 1900)
     private Integer year;
 
     @Positive

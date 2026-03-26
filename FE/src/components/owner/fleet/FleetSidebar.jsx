@@ -85,7 +85,7 @@ function FleetSidebar({ user, onLogout }) {
             key: 'incident-reports',
             to: `/owner/incident-reports${ownerQuery}`,
             icon: ShieldAlert,
-            label: 'Report su co',
+            label: 'Report sự cố',
             active: isIncidentRoute,
         },
         {
@@ -106,7 +106,7 @@ function FleetSidebar({ user, onLogout }) {
             key: 'analytics',
             to: `/owner/analytics${ownerQuery}`,
             icon: BarChart3,
-            label: 'Bao cao',
+            label: 'Báo cáo',
             active: isAnalyticsRoute,
         },
     ]
@@ -118,8 +118,8 @@ function FleetSidebar({ user, onLogout }) {
                     <img src="/favicon.svg" alt="CarRental" />
                 </div>
                 <div>
-                    <h3>Vehicle Rental</h3>
-                    <p>MANAGEMENT</p>
+                    <h3>Thuê xe</h3>
+                    <p>QUẢN LÝ</p>
                 </div>
             </Link>
 
@@ -154,7 +154,7 @@ function FleetSidebar({ user, onLogout }) {
                 <div className="fleet-user">
                     <div className="user-avatar">{(user?.fullName || 'CO').slice(0, 2).toUpperCase()}</div>
                     <div className="user-info">
-                        <p className="user-name">{user?.fullName || 'Chu xe'}</p>
+                        <p className="user-name">{user?.fullName || 'Chủ xe'}</p>
                         <p className="user-email">{user?.email || 'owner@example.com'}</p>
                     </div>
                 </div>

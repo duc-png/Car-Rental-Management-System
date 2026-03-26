@@ -163,8 +163,19 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.fleet-create-grid--2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .fleet-create-grid--4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.fleet-form-note-danger {
+    margin: -6px 0 14px;
+    color: #ef4444;
+    font-size: 0.98rem;
+    font-weight: 700;
 }
 
 .fleet-create-grid label {
@@ -435,6 +446,7 @@
     }
 
     .fleet-create-grid--3,
+    .fleet-create-grid--2,
     .fleet-create-grid--4,
     .fleet-create-feature-list {
         grid-template-columns: 1fr;
