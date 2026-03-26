@@ -36,49 +36,49 @@ function FleetSidebar({ user, onLogout }) {
             key: 'overview',
             to: `/owner/fleet${ownerQuery}`,
             icon: LayoutGrid,
-            label: 'Tổng quan',
+            label: 'Tong quan',
             active: isOverviewRoute,
         },
         {
             key: 'vehicles',
             to: `/owner/fleet/vehicles${ownerQuery}`,
             icon: Car,
-            label: 'Xe của tôi',
+            label: 'Xe cua toi',
             active: isVehiclesRoute,
         },
         {
             key: 'maintenance',
             to: `/owner/maintenance${ownerQuery}`,
             icon: Wrench,
-            label: 'Bảo dưỡng xe',
+            label: 'Bao duong xe',
             active: isMaintenanceRoute,
         },
         {
             key: 'rentals',
             to: '/manage-rentals',
             icon: ReceiptText,
-            label: 'Đơn thuê',
+            label: 'Don thue',
             active: isRentalRoute,
         },
         {
             key: 'calendar',
             to: `/owner/booking-calendar${ownerQuery}`,
             icon: CalendarDays,
-            label: 'Lịch booking',
+            label: 'Lich booking',
             active: isCalendarRoute,
         },
         {
             key: 'security',
             to: '/owner/maintenance',
             icon: ShieldCheck,
-            label: 'Bảo dưỡng',
+            label: 'Bao duong',
             active: isMaintenanceRoute,
         },
         {
             key: 'feedback',
             to: `/owner/feedback${ownerQuery}`,
             icon: MessageSquareText,
-            label: 'Phản hồi khách',
+            label: 'Phan hoi khach',
             active: isFeedbackRoute,
         },
         {
@@ -92,14 +92,14 @@ function FleetSidebar({ user, onLogout }) {
             key: 'customers',
             to: `/customers${ownerQuery}`,
             icon: UsersRound,
-            label: 'Khách hàng',
+            label: 'Khach hang',
             active: location.pathname.startsWith('/customers'),
         },
         {
             key: 'wallet',
             to: `/owner/wallet${ownerQuery}`,
             icon: Wallet,
-            label: 'Ví của tôi',
+            label: 'Vi cua toi',
             active: isWalletRoute,
         },
         {
@@ -125,7 +125,7 @@ function FleetSidebar({ user, onLogout }) {
 
             <div className="fleet-sidebar-content">
                 <div className="fleet-nav">
-                    <p className="nav-section">Điều hướng</p>
+                    <p className="nav-section">Dieu huong</p>
                     {navItems.map((item) => {
                         const Icon = item.icon
                         return (
@@ -140,12 +140,12 @@ function FleetSidebar({ user, onLogout }) {
                 </div>
 
                 <div className="fleet-system">
-                    <p className="nav-section">Hệ thống</p>
+                    <p className="nav-section">He thong</p>
                     <Link to={`/owner/fleet${ownerQuery}`} className="nav-item">
                         <span className="nav-item-icon" aria-hidden="true">
                             <Settings size={20} strokeWidth={2.2} />
                         </span>
-                        <span>Cài đặt</span>
+                        <span>Cai dat</span>
                     </Link>
                 </div>
             </div>
@@ -163,7 +163,7 @@ function FleetSidebar({ user, onLogout }) {
                     <span className="fleet-logout-icon" aria-hidden="true">
                         <LogOut size={16} strokeWidth={2.2} />
                     </span>
-                    <span>Đăng xuất</span>
+                    <span>Dang xuat</span>
                 </button>
             </div>
         </aside>
